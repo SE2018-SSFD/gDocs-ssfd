@@ -3,9 +3,10 @@
 Enter your team members here:
 
 ```
-[Leader]   ID - Name: {X}%
-[Member 1] ID - Name: {Y}%
-[Member 2] ID - Name: {Z}%
+518021910896 - 杨亘: {X}%
+518021910270 - 蓝浩宁: {Y}%
+518021911145 - 莫戈泉: {Z}%
+518021910917 - 吴侃真: {Z}%
 ```
 
 where `X, Y, Z` represent the workload and  `X+Y+Z = 100` .
