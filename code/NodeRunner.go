@@ -1,0 +1,85 @@
+package main
+
+import (
+	"DFS/chunkserver"
+	"DFS/client"
+	"DFS/master"
+	"fmt"
+	"github.com/sirupsen/logrus"
+	"os"
+)
+
+func main(){
+	if len(os.Args)<3 {
+		printUsage()
+		return
+	}
+	setLoggingStrategy()
+	switch os.Args[1] {
+	case "master":
+		masterRun()
+	case "chunkServer":
+		chunkServerRun()
+	case "client":
+		clientRun()
+	default:
+		fmt.Println("Unsupported node type!")
+		printUsage()
+		return
+	}
+
+}
+
+func clientRun() {
+	if len(os.Args) < 3 {
+		printUsage()
+		return
+	}
+	masterAddr := os.Args[2]
+	c:=client.InitClient(masterAddr)
+	c.Serve()
+}
+
+func chunkServerRun() {
+	if len(os.Args) < 5 {
+		printUsage()
+		return
+	}
+	addr := os.Args[2]
+	dataPath := os.Args[3]
+	masterAddr := os.Args[4]
+	c := chunkserver.InitChunkServer(addr,dataPath,masterAddr)
+	logrus.Info(c.GetStatusString())
+	// block on ch; make it a daemon
+	ch := make(chan bool)
+	<-ch
+}
+
+func masterRun() {
+	if len(os.Args) < 4 {
+		printUsage()
+		return
+	}
+	addr := os.Args[2]
+	metaPath := os.Args[3]
+	m := master.InitMaster(addr,metaPath)
+	logrus.Info(m.GetStatusString())
+	// block on ch; make it a daemon
+	ch := make(chan bool)
+	<-ch
+}
+
+
+// set the default logging strategy of DFS
+func setLoggingStrategy(){
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+}
+
+func printUsage() {
+	fmt.Println("Usage:")
+	fmt.Println(" NodeRunner master <addr> <root path>")
+	fmt.Println(" NodeRunner chunkServer <addr> <root path> <master addr>")
+	fmt.Println(" NodeRunner client <master addr>")
+	fmt.Println()
+}
