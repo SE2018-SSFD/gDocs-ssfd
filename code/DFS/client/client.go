@@ -1,6 +1,8 @@
 package client
 
 import (
+	"DFS/util"
+	"encoding/json"
 	"github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -24,8 +26,8 @@ func InitClient(masterAddr string) *Client {
 	return c
 }
 
-func (c *Client)Serve(){
-	err := http.ListenAndServe("localhost:8000", nil)
+func (c *Client)Serve(addr string){
+	err := http.ListenAndServe(addr, nil)
 	if err != nil {
 		logrus.Fatal("Client server shutdown!\n")
 	}
@@ -34,6 +36,19 @@ func (c *Client)Serve(){
 
 // create a file.
 func (c *Client) create(w http.ResponseWriter, r *http.Request) {
+	var arg util.CreateArg
+	var ret util.CreateRet
+	err := json.NewDecoder(r.Body).Decode(&arg)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = util.Call(c.masterAddr, "Master.CreateRPC", arg, &ret)
+	if err != nil {
+		logrus.Fatalln("CreateRPC failed:",err)
+		return
+	}
+	return
 }
 
 // delete a file.

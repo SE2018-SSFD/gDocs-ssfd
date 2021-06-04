@@ -31,13 +31,14 @@ func main(){
 }
 
 func clientRun() {
-	if len(os.Args) < 3 {
+	if len(os.Args) < 4 {
 		printUsage()
 		return
 	}
-	masterAddr := os.Args[2]
+	addr := os.Args[2]
+	masterAddr := os.Args[3]
 	c:=client.InitClient(masterAddr)
-	c.Serve()
+	c.Serve(addr)
 }
 
 func chunkServerRun() {
@@ -78,6 +79,6 @@ func printUsage() {
 	fmt.Println("Usage:")
 	fmt.Println(" NodeRunner master <addr> <root path>")
 	fmt.Println(" NodeRunner chunkServer <addr> <root path> <master addr>")
-	fmt.Println(" NodeRunner client <master addr>")
+	fmt.Println(" NodeRunner client <addr> <master addr>")
 	fmt.Println()
 }

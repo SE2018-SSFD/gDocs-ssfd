@@ -1,6 +1,7 @@
 package master
 
 import (
+	"DFS/util"
 	"github.com/sirupsen/logrus"
 	"log"
 	"net"
@@ -17,6 +18,7 @@ type Master struct {
 }
 
 func InitMaster(addr string, metaPath string) *Master{
+	// Init master & RPC server
 	m := &Master{
 		addr: addr,
 		metaPath: metaPath,
@@ -33,10 +35,14 @@ func InitMaster(addr string, metaPath string) *Master{
 		log.Fatal("listen error:", err)
 	}
 	m.l = l
+	// Init zookeeper
+	//c, _, err := zk.Connect([]string{"127.0.0.1"}, time.Second) //*10)
+
 	return m
 }
 
 func (m *Master)Serve(){
+	// listening thread
 	go func() {
 		for {
 			conn, err := m.l.Accept()
@@ -54,6 +60,14 @@ func (m *Master)Serve(){
 	ch := make(chan bool)
 	<-ch
 }
+
 func (m *Master)GetStatusString()string{
 	return "Master address :"+m.addr+ ",metaPath :"+m.metaPath
+}
+
+// CreateRPC is called by client to create a new file
+func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
+	logrus.Debugf("File Path : %s\n",args.Path)
+	reply.Result = true
+	return nil
 }
