@@ -64,9 +64,7 @@ func masterRun() {
 	metaPath := os.Args[3]
 	m := master.InitMaster(addr,metaPath)
 	logrus.Info(m.GetStatusString())
-	// block on ch; make it a daemon
-	ch := make(chan bool)
-	<-ch
+	m.Serve()
 }
 
 
