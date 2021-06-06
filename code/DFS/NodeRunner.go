@@ -4,6 +4,7 @@ import (
 	"DFS/chunkserver"
 	"DFS/client"
 	"DFS/master"
+	"DFS/util"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"
@@ -61,8 +62,8 @@ func masterRun() {
 		printUsage()
 		return
 	}
-	addr := os.Args[2]
-	metaPath := os.Args[3]
+	addr := util.Address(os.Args[2])
+	metaPath := util.LinuxPath(os.Args[3])
 	m := master.InitMaster(addr,metaPath)
 	logrus.Info(m.GetStatusString())
 	m.Serve()

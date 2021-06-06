@@ -22,7 +22,7 @@ type Master struct {
 }
 
 func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master{
-	// Init master & RPC server
+	// Init RPC server
 	m := &Master{
 		addr: addr,
 		metaPath: metaPath,
@@ -41,6 +41,8 @@ func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master{
 	// Init zookeeper
 	//c, _, err := zk.Connect([]string{"127.0.0.1"}, time.Second) //*10)
 
+	// Init metadata manager
+	m.ns = newNamespaceState()
 	return m
 }
 
@@ -72,15 +74,28 @@ func (m *Master)GetStatusString()string{
 func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
 	logrus.Debugf("RPC create, File Path : %s\n",args.Path)
 	err := m.ns.Mknod(args.Path,false)
-	reply.Result = true
-	return err
+	if err!=nil{
+		logrus.Debugf("RPC create failed : %s\n",err)
+		reply.Err = err
+	}else{
+		logrus.Debugf("RPC create succeed\n")
+		reply.Err = err
+
+	}
+	return nil
 }
 
 // MkdirRPC is called by client to create a new dir
 func (m *Master) MkdirRPC(args util.CreateArg, reply *util.CreateRet) error {
 	logrus.Debugf("RPC mkdir, Dir Path : %s\n",args.Path)
 	err := m.ns.Mknod(args.Path,true)
-	reply.Result = true
-	return err
+	if err!=nil{
+		logrus.Debugf("RPC mkdir failed : %s\n",err)
+		reply.Err = err
+	}else{
+		logrus.Debugf("RPC mkdir succeed\n")
+		reply.Err = err
+	}
+	return nil
 }
 

@@ -18,6 +18,7 @@ func InitClient(masterAddr string) *Client {
 		masterAddr:   masterAddr,
 	}
 	http.HandleFunc("/create", c.create)
+	http.HandleFunc("/mkdir", c.mkdir)
 	http.HandleFunc("/delete", c.delete)
 	http.HandleFunc("/read", c.read)
 	http.HandleFunc("/write", c.write)
@@ -46,6 +47,23 @@ func (c *Client) create(w http.ResponseWriter, r *http.Request) {
 	err = util.Call(c.masterAddr, "Master.CreateRPC", arg, &ret)
 	if err != nil {
 		logrus.Fatalln("CreateRPC failed:",err)
+		return
+	}
+	return
+}
+
+// mkdir a dir.
+func (c *Client) mkdir(w http.ResponseWriter, r *http.Request) {
+	var arg util.CreateArg
+	var ret util.CreateRet
+	err := json.NewDecoder(r.Body).Decode(&arg)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = util.Call(c.masterAddr, "Master.MkdirRPC", arg, &ret)
+	if err != nil {
+		logrus.Fatalln("MkdirRPC failed:",err)
 		return
 	}
 	return
