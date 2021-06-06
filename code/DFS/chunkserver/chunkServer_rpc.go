@@ -84,6 +84,29 @@ func (cs *ChunkServer) CreateChunkRPC(args util.CreateChunkArgs, reply *util.Cre
 }
 
 //call by client
-// func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error {
+func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error {
+	data, err := cs.cache.GetAndRemove(args.CID)
+	if err != nil {
+		return err
+	}
+	cs.SetChunk(args.CID.Handle, args.Off, data)
+	ch := make(chan error)
+	for _, secondaryAddr := range args.Addrs {
+		go func(addr util.Address) {
+			ch <- util.Call(string(secondaryAddr), "ChunkServer.SetChunk")
+		}(secondaryAddr)
+	}
 
-// }
+	// error handler?
+
+	return nil
+}
+
+func (cs *ChunkServer) StoreDataRPC(args util.StoreDataArgs, reply *util.StoreDataReply) error {
+	data, err := cs.cache.GetAndRemove(args.CID)
+	if err != nil {
+		return err
+	}
+	cs.SetChunk(args.CID.Handle, args.Off, data)
+	return nil
+}
