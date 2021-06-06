@@ -43,12 +43,12 @@ func (cs *ChunkServer) StartRPCServer() error {
 }
 
 func (cs *ChunkServer) LoadDataRPC(args util.LoadDataArgs, reply *util.LoadDataReply) error {
-	cs.cache.Set(args.Handle, args.Data)
+	cs.cache.Set(args.CID, args.Data)
 	if len(args.Addrs) > 0 {
 		newArgs := util.LoadDataArgs{
-			Data:   args.Data,
-			Handle: args.Handle,
-			Addrs:  args.Addrs[1:],
+			Data:  args.Data,
+			CID:   args.CID,
+			Addrs: args.Addrs[1:],
 		}
 		err := util.Call(string(args.Addrs[0]), "ChunkServer.LoadDataRPC", newArgs, reply)
 		return err
@@ -73,6 +73,8 @@ func (cs *ChunkServer) ReadChunkRPC(args util.ReadChunkArgs, reply *util.ReadChu
 
 	return nil
 }
+
+// func (cs *ChunkServer)
 
 func (cs *ChunkServer) CreateChunkRPC(args util.CreateChunkArgs, reply *util.CreateChunkReply) error {
 	filename := cs.GetFileName(args.Handle)

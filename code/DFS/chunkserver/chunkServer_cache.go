@@ -11,7 +11,7 @@ type Buffer struct {
 
 type Cache struct {
 	sync.RWMutex
-	buf map[int64]Buffer
+	buf map[util.CacheID]Buffer
 }
 
 func InitCache() *Cache {
@@ -19,26 +19,31 @@ func InitCache() *Cache {
 	return c
 }
 
-func (c *Cache) Get(handle util.Handle, buf []byte) error {
+func (c *Cache) Get(cid util.CacheID, buf []byte) error {
 	c.Lock()
-	buf = c.buf[handle].data
+	buf = c.buf[cid].data
 	c.Unlock()
 	return nil
 }
 
-func (c *Cache) Set(handle util.Handle, buf []byte) error {
+func (c *Cache) Set(cid util.CacheID, buf []byte) error {
 	c.Lock()
-	c.buf[handle] = Buffer{data: buf}
+	c.buf[cid] = Buffer{data: buf}
 	c.Unlock()
 	return nil
 }
 
-func (c *Cache) Remove(handle util.Handle) error {
-
+func (c *Cache) Remove(cid util.CacheID) error {
+	c.Lock()
+	delete(c.buf, cid)
+	c.Unlock()
+	return nil
 }
 
-func (c *Cache) GetAndRemove(handle util.Handle, buf []byte) error {
+func (c *Cache) GetAndRemove(cid util.CacheID, buf []byte) error {
 	c.Lock()
-	buf = c.buf[handle].data
-	delete(buf)
+	buf = c.buf[cid].data
+	delete(c.buf, cid)
+	c.Unlock()
+	return nil
 }

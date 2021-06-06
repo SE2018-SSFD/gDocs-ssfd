@@ -1,9 +1,14 @@
 package util
 
+type CacheID struct {
+	Handle     Handle
+	ClientAddr string
+}
+
 type LoadDataArgs struct {
-	Data   []byte
-	Handle Handle
-	Addrs  []Address
+	Data  []byte
+	CID   CacheID
+	Addrs []Address
 }
 
 type LoadDataReply struct {
