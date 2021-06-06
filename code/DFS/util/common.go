@@ -1,4 +1,5 @@
 package util
+
 // Master
 type Handle string
 type DFSPath string
@@ -10,13 +11,13 @@ type Address string
 // Client
 
 // RPC structure
-type CreateArg struct{
+type CreateArg struct {
 	Path DFSPath
 }
 type CreateRet struct {
 	Result bool
 }
-type MkdirArg struct{
+type MkdirArg struct {
 	Path DFSPath
 }
 type MkdirRet struct {
@@ -28,3 +29,7 @@ type GetReplicasArg struct {
 type GetReplicasRet struct {
 	ChunkServerAddrs []string
 }
+
+const (
+	MAXCHUNKSIZE = 64 << 20 // 64MB
+)
