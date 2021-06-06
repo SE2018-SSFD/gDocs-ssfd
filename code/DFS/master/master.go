@@ -9,8 +9,6 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/sirupsen/logrus"
 )
 
 type Master struct {
@@ -48,6 +46,7 @@ func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master {
 	// Init metadata manager
 	m.ns = newNamespaceState()
 	m.cs = newChunkStates()
+	m.css = newChunkServerState()
 	return m
 }
 
@@ -81,10 +80,14 @@ func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
 	err := m.ns.Mknod(args.Path, false)
 	if err != nil {
 		logrus.Debugf("RPC create failed : %s\n", err)
-	} else {
-		logrus.Debugf("RPC create succeed\n")
+		return err
 	}
-	return err
+	err = m.cs.NewFile(args.Path)
+	if err != nil {
+		logrus.Debugf("RPC create failed : %s\n", err)
+		return err
+	}
+	return nil
 }
 
 // MkdirRPC is called by client to create a new dir
@@ -93,10 +96,9 @@ func (m *Master) MkdirRPC(args util.MkdirArg, reply *util.MkdirRet) error {
 	err := m.ns.Mknod(args.Path, true)
 	if err != nil {
 		logrus.Debugf("RPC mkdir failed : %s\n", err)
-	} else {
-		logrus.Debugf("RPC mkdir succeed\n")
+		return err
 	}
-	return err
+	return nil
 }
 
 // ListRPC is called by client to list content of a dir
@@ -105,13 +107,33 @@ func (m *Master) ListRPC(args util.ListArg, reply *util.ListRet) (err error) {
 	reply.Files, err = m.ns.List(args.Path)
 	if err != nil {
 		logrus.Debugf("RPC list failed : %s\n", err)
-	} else {
-		logrus.Debugf("RPC list succeed\n")
 	}
 	return err
 }
 
-// getReplicasRPC get a chunk handle
+// GetFileMetaRPC retrieve the file metadata by path
+func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMetaRet) error {
+	logrus.Debugf("RPC getFileMeta, File Path : %s\n", args.Path)
+	node,err := m.ns.GetNode(args.Path)
+	if err != nil {
+		logrus.Debugf("RPC getFileMeta failed : %s\n", err)
+		reply = &util.GetFileMetaRet{
+			Exist: false,
+			IsDir: false,
+			Size: 0,
+		}
+		return err
+	}
+	reply = &util.GetFileMetaRet{
+		Exist: true,
+		IsDir: node.isDir,
+		Size: m.cs.file[args.Path].size,
+	}
+	return nil
+}
+
+// getReplicasRPC get a chunk handle by file path and offset
+// as well as the addresses of servers which store the chunk (and its replicas)
 func (m *Master) getReplicasRPC(args util.GetReplicasArg, reply *util.GetReplicasRet) (err error) {
 	// Check if file exist
 	logrus.Debugf("RPC getReplica, file path : %s, chunk index : %d\n", args.Path, args.ChunkIndex)
@@ -125,9 +147,15 @@ func (m *Master) getReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 	// Note that ChunkIndex <= len(fs.chunks) should be checked by client
 	var targetChunk util.Handle
 	if int(args.ChunkIndex) == len(fs.chunks) {
-		// addrs := m.css.randomServers()
-
-		//TODO : Create new replicated chunks
+		// randomly choose servers to store chunk replica
+		var addrs []util.Address
+		addrs,err = m.css.randomServers(util.REPLICATIONTIMES)
+		if err!= nil{
+			return err
+		}
+		targetChunk,err = m.cs.CreateChunkAndReplica(args.Path,addrs)
+		//TODO : Update ChunkServerState
+		//m.css.xxx
 	} else {
 		targetChunk = fs.chunks[args.ChunkIndex]
 	}

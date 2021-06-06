@@ -92,4 +92,5 @@ func (c *Client) write(w http.ResponseWriter, r *http.Request) {
 	// out of range
 	//err = fmt.Errorf("OutOfRangeError : the file %s has only %d chunks, requested the %d!\n",string(args.Path),len(fileState.chunks),args.ChunkIndex)
 	//return err
+
 }
