@@ -102,6 +102,7 @@ func (ns *NamespaceState) List(path util.DFSPath)(files []string,err error){
 	return files,nil
 }
 
+// GetDir get a directory from DFS namespace
 func (ns *NamespaceState) GetDir(path util.DFSPath)(*treeNode,error){
 	symbols := strings.FieldsFunc(string(path),func(c rune) bool {return c=='/'})
 	curNode := ns.root
@@ -115,3 +116,16 @@ func (ns *NamespaceState) GetDir(path util.DFSPath)(*treeNode,error){
 	return curNode,nil
 }
 
+// GetNode get a directory or file from DFS namespace
+func (ns *NamespaceState) GetNode(path util.DFSPath)(*treeNode,error){
+	symbols := strings.FieldsFunc(string(path),func(c rune) bool {return c=='/'})
+	curNode := ns.root
+	for _,symbol := range symbols {
+		var found bool
+		curNode,found = curNode.treeNodes[symbol]
+		if !found{
+			return nil,fmt.Errorf("FileNotExistsError : the requested DFS path %s is non-existing!\n",string(path))
+		}
+	}
+	return curNode,nil
+}
