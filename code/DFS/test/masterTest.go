@@ -19,7 +19,7 @@ func main(){
 
 func NamespaceTest(m *master.Master){
 	var reply util.CreateRet
-	err := m.CreateRPC(util.CreateArg{Path: "/abc"},&reply)
+	err := m.CreateRPC(util.CreateArg{Path: "/abc"}, &reply)
 	fmt.Println(err)
 	err = m.CreateRPC(util.CreateArg{Path: "/abc"},&reply)
 	fmt.Println(err)

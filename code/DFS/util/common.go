@@ -14,18 +14,17 @@ type CreateArg struct{
 	Path DFSPath
 }
 type CreateRet struct {
-	Err error
+	Result bool
 }
 type MkdirArg struct{
 	Path DFSPath
 }
 type MkdirRet struct {
-	Err error
+	Result bool
 }
 type GetReplicasArg struct {
 	chunkHandle Handle
 }
 type GetReplicasRet struct {
 	ChunkServerAddrs []string
-	Err error
 }

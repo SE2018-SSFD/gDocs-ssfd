@@ -75,27 +75,28 @@ func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
 	logrus.Debugf("RPC create, File Path : %s\n",args.Path)
 	err := m.ns.Mknod(args.Path,false)
 	if err!=nil{
+		reply.Result = false
 		logrus.Debugf("RPC create failed : %s\n",err)
-		reply.Err = err
 	}else{
+		reply.Result = true
 		logrus.Debugf("RPC create succeed\n")
-		reply.Err = err
 
 	}
-	return nil
+	return err
 }
 
 // MkdirRPC is called by client to create a new dir
 func (m *Master) MkdirRPC(args util.CreateArg, reply *util.CreateRet) error {
 	logrus.Debugf("RPC mkdir, Dir Path : %s\n",args.Path)
 	err := m.ns.Mknod(args.Path,true)
+	reply.Result = true
 	if err!=nil{
+		reply.Result = false
 		logrus.Debugf("RPC mkdir failed : %s\n",err)
-		reply.Err = err
 	}else{
+		reply.Result = true
 		logrus.Debugf("RPC mkdir succeed\n")
-		reply.Err = err
 	}
-	return nil
+	return err
 }
 
