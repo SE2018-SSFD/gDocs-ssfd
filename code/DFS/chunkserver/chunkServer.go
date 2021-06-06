@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/rpc"
 	"os"
 	"path"
 	"sync"
@@ -15,33 +14,58 @@ type ChunkServer struct {
 	addr       string
 	masterAddr string
 	dir        string
-	dataPath   string
 	l          net.Listener
 	lock       sync.RWMutex
+
+	chunks   map[util.Handle]*ChunkInfo
+	cache    *Cache
+	shutdown chan struct{}
+}
+
+type ChunkInfo struct {
+	size      int64
+	verNum    int64 //version number
+	mutations map[int64]*Mutation
+	checksum  int64
+}
+
+type Mutation struct {
 }
 
 func InitChunkServer(chunkAddr string, dataPath string, masterAddr string) *ChunkServer {
 	cs := &ChunkServer{
 		addr:       chunkAddr,
-		dataPath:   dataPath,
+		dir:        dataPath,
 		masterAddr: masterAddr,
+		cache:      InitCache(),
+		shutdown:   make(chan struct{}),
 	}
-	rpcs := rpc.NewServer()
-	rpcs.Register(cs)
 
+	_, err := os.Stat(cs.dir)
+	if err != nil {
+		err := os.Mkdir(cs.dir, 0644)
+		if err != nil {
+			log.Fatalf("mkdir %v error\n", cs.dir)
+		}
+	}
+
+	cs.StartRPCServer()
+
+	log.Printf("chunkserver %v init success\n", chunkAddr)
 	return cs
 }
+
 func (cs *ChunkServer) GetStatusString() string {
-	return "ChunkServer address :" + cs.addr + ",dataPath :" + cs.dataPath
+	return "ChunkServer address :" + cs.addr + ",dir :" + cs.dir
 }
 
-func (cs *ChunkServer) GetFileName(cid int64) string {
-	name := fmt.Sprintf("chunk-%v.dat", cid)
+func (cs *ChunkServer) GetFileName(handle int64) string {
+	name := fmt.Sprintf("chunk-%v.dat", handle)
 	return path.Join(cs.dir, name)
 }
 
-func (cs *ChunkServer) GetChunk(cid int64, off int64, buf []byte) (int, error) {
-	filename := cs.GetFileName(cid)
+func (cs *ChunkServer) GetChunk(handle int64, off int64, buf []byte) (int, error) {
+	filename := cs.GetFileName(handle)
 
 	fd, err := os.Open(filename)
 	if err != nil {
@@ -51,12 +75,12 @@ func (cs *ChunkServer) GetChunk(cid int64, off int64, buf []byte) (int, error) {
 	return fd.ReadAt(buf, off)
 }
 
-func (cs *ChunkServer) SetChunk(cid int64, off int64, buf []byte) (int, error) {
+func (cs *ChunkServer) SetChunk(handle int64, off int64, buf []byte) (int, error) {
 	if off+int64(len(buf)) > util.MAXCHUNKSIZE {
 		log.Panic("chunk size cannot be larger than maxchunksize\n")
 	}
 
-	filename := cs.GetFileName(cid)
+	filename := cs.GetFileName(handle)
 
 	fd, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0644)
 
@@ -69,7 +93,7 @@ func (cs *ChunkServer) SetChunk(cid int64, off int64, buf []byte) (int, error) {
 	return fd.WriteAt(buf, off)
 }
 
-func (cs *ChunkServer) removeChunk(cid int64) error {
-	filename := cs.GetFileName(cid)
+func (cs *ChunkServer) RemoveChunk(handle int64) error {
+	filename := cs.GetFileName(handle)
 	return os.Remove(filename)
 }

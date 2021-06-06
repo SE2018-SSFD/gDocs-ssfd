@@ -2,35 +2,36 @@ package master
 
 import (
 	"DFS/util"
-	"github.com/sirupsen/logrus"
 	"log"
 	"net"
 	"net/rpc"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Master struct {
-	addr    util.Address
+	addr     util.Address
 	metaPath util.LinuxPath
-	l          net.Listener
-	rpcs       *rpc.Server
+	l        net.Listener
+	rpcs     *rpc.Server
 	// manage the state of chunkserver node
-	css        *ChunkServerStates
+	css *ChunkServerStates
 	// manage the state of chunk
-	cs		   *ChunkStates
-	ns		   *NamespaceState
+	cs *ChunkStates
+	ns *NamespaceState
 }
 
-func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master{
+func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master {
 	// Init RPC server
 	m := &Master{
-		addr: addr,
+		addr:     addr,
 		metaPath: metaPath,
-		rpcs : rpc.NewServer(),
+		rpcs:     rpc.NewServer(),
 	}
 	err := m.rpcs.Register(m)
 	if err != nil {
-		logrus.Fatal("Register error:",err)
+		logrus.Fatal("Register error:", err)
 		os.Exit(1)
 	}
 	l, err := net.Listen("tcp", string(m.addr))
@@ -46,7 +47,7 @@ func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master{
 	return m
 }
 
-func (m *Master)Serve(){
+func (m *Master) Serve() {
 	// listening thread
 	go func() {
 		for {
@@ -66,17 +67,17 @@ func (m *Master)Serve(){
 	<-ch
 }
 
-func (m *Master)GetStatusString()string{
-	return "Master address :"+string(m.addr)+ ",metaPath :"+string(m.metaPath)
+func (m *Master) GetStatusString() string {
+	return "Master address :" + string(m.addr) + ",metaPath :" + string(m.metaPath)
 }
 
 // CreateRPC is called by client to create a new file
 func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
-	logrus.Debugf("RPC create, File Path : %s\n",args.Path)
-	err := m.ns.Mknod(args.Path,false)
-	if err!=nil{
-		logrus.Debugf("RPC create failed : %s\n",err)
-	}else{
+	logrus.Debugf("RPC create, File Path : %s\n", args.Path)
+	err := m.ns.Mknod(args.Path, false)
+	if err != nil {
+		logrus.Debugf("RPC create failed : %s\n", err)
+	} else {
 		logrus.Debugf("RPC create succeed\n")
 	}
 	return err
@@ -84,11 +85,11 @@ func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
 
 // MkdirRPC is called by client to create a new dir
 func (m *Master) MkdirRPC(args util.MkdirArg, reply *util.MkdirRet) error {
-	logrus.Debugf("RPC mkdir, Dir Path : %s\n",args.Path)
-	err := m.ns.Mknod(args.Path,true)
-	if err!=nil{
-		logrus.Debugf("RPC mkdir failed : %s\n",err)
-	}else{
+	logrus.Debugf("RPC mkdir, Dir Path : %s\n", args.Path)
+	err := m.ns.Mknod(args.Path, true)
+	if err != nil {
+		logrus.Debugf("RPC mkdir failed : %s\n", err)
+	} else {
 		logrus.Debugf("RPC mkdir succeed\n")
 	}
 	return err
@@ -96,11 +97,11 @@ func (m *Master) MkdirRPC(args util.MkdirArg, reply *util.MkdirRet) error {
 
 // ListRPC is called by client to list content of a dir
 func (m *Master) ListRPC(args util.ListArg, reply *util.ListRet) (err error) {
-	logrus.Debugf("RPC list, Dir Path : %s\n",args.Path)
-	reply.Files,err = m.ns.List(args.Path)
-	if err!=nil{
-		logrus.Debugf("RPC list failed : %s\n",err)
-	}else{
+	logrus.Debugf("RPC list, Dir Path : %s\n", args.Path)
+	reply.Files, err = m.ns.List(args.Path)
+	if err != nil {
+		logrus.Debugf("RPC list failed : %s\n", err)
+	} else {
 		logrus.Debugf("RPC list succeed\n")
 	}
 	return err
