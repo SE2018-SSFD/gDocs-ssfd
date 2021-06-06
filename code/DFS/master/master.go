@@ -2,10 +2,13 @@ package master
 
 import (
 	"DFS/util"
+	"fmt"
 	"log"
 	"net"
 	"net/rpc"
 	"os"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/sirupsen/logrus"
 )
@@ -44,6 +47,7 @@ func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master {
 
 	// Init metadata manager
 	m.ns = newNamespaceState()
+	m.cs = newChunkStates()
 	return m
 }
 
@@ -105,4 +109,32 @@ func (m *Master) ListRPC(args util.ListArg, reply *util.ListRet) (err error) {
 		logrus.Debugf("RPC list succeed\n")
 	}
 	return err
+}
+
+// getReplicasRPC get a chunk handle
+func (m *Master) getReplicasRPC(args util.GetReplicasArg, reply *util.GetReplicasRet) (err error) {
+	// Check if file exist
+	logrus.Debugf("RPC getReplica, file path : %s, chunk index : %d\n", args.Path, args.ChunkIndex)
+	fs, exist := m.cs.file[args.Path]
+	if !exist {
+		err = fmt.Errorf("FileNotExistsError : the requested DFS path %s is non-existing!\n", string(args.Path))
+		return err
+	}
+
+	// Find the target chunk, if not exists, create one
+	// Note that ChunkIndex <= len(fs.chunks) should be checked by client
+	var targetChunk util.Handle
+	if int(args.ChunkIndex) == len(fs.chunks) {
+		// addrs := m.css.randomServers()
+
+		//TODO : Create new replicated chunks
+	} else {
+		targetChunk = fs.chunks[args.ChunkIndex]
+	}
+	// Get target servers which store the replicate
+	reply.ChunkServerAddrs = make([]util.Address, 0)
+	for _, addr := range m.cs.chunk[targetChunk].locations {
+		reply.ChunkServerAddrs = append(reply.ChunkServerAddrs, addr)
+	}
+	return nil
 }

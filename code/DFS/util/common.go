@@ -33,10 +33,12 @@ type ListRet struct {
 	Files []string
 }
 type GetReplicasArg struct {
-	chunkHandle Handle
+	Path       DFSPath
+	ChunkIndex int64
 }
 type GetReplicasRet struct {
-	ChunkServerAddrs []string
+	ChunkHandle      Handle
+	ChunkServerAddrs []Address
 }
 
 const (
