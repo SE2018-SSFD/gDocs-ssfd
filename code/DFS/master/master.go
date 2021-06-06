@@ -10,21 +10,24 @@ import (
 )
 
 type Master struct {
-	addr    string
-	 string
-	metaPath string
+	addr    util.Address
+	metaPath util.LinuxPath
 	l          net.Listener
 	rpcs       *rpc.Server
+	// manage the state of chunkserver node
+	css        *ChunkServerStates
+	// manage the state of chunk
+	cs		   *ChunkStates
+	ns		   *NamespaceState
 }
 
-func InitMaster(addr string, metaPath string) *Master{
+func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master{
 	// Init master & RPC server
 	m := &Master{
 		addr: addr,
 		metaPath: metaPath,
 		rpcs : rpc.NewServer(),
 	}
-
 	err := m.rpcs.Register(m)
 	if err != nil {
 		logrus.Fatal("Register error:",err)
@@ -62,12 +65,22 @@ func (m *Master)Serve(){
 }
 
 func (m *Master)GetStatusString()string{
-	return "Master address :"+m.addr+ ",metaPath :"+m.metaPath
+	return "Master address :"+string(m.addr)+ ",metaPath :"+string(m.metaPath)
 }
 
 // CreateRPC is called by client to create a new file
 func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
-	logrus.Debugf("File Path : %s\n",args.Path)
+	logrus.Debugf("RPC create, File Path : %s\n",args.Path)
+	err := m.ns.Mknod(args.Path,false)
 	reply.Result = true
-	return nil
+	return err
 }
+
+// MkdirRPC is called by client to create a new dir
+func (m *Master) MkdirRPC(args util.CreateArg, reply *util.CreateRet) error {
+	logrus.Debugf("RPC mkdir, Dir Path : %s\n",args.Path)
+	err := m.ns.Mknod(args.Path,true)
+	reply.Result = true
+	return err
+}
+

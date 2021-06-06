@@ -14,7 +14,6 @@ func Call(srv string, rpcname string, args interface{}, reply interface{}) error
 			//TODO:handle error
 		}
 	}(c)
-
 	err := c.Call(rpcname, args, reply)
 	return err
 }
