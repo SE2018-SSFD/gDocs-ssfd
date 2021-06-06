@@ -1,6 +1,6 @@
 package util
 // Master
-type Handle string
+type Handle int64
 type DFSPath string
 type LinuxPath string
 type Address string
@@ -32,8 +32,11 @@ type ListRet struct {
 	Files []string
 }
 type GetReplicasArg struct {
-	chunkHandle Handle
+	Path DFSPath
+	ChunkIndex int64
 }
 type GetReplicasRet struct {
-	ChunkServerAddrs []string
+	ChunkHandle Handle
+	ChunkServerAddrs []Address
 }
+
