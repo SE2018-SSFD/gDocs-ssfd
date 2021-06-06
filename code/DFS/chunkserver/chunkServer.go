@@ -59,12 +59,12 @@ func (cs *ChunkServer) GetStatusString() string {
 	return "ChunkServer address :" + cs.addr + ",dir :" + cs.dir
 }
 
-func (cs *ChunkServer) GetFileName(handle int64) string {
+func (cs *ChunkServer) GetFileName(handle util.Handle) string {
 	name := fmt.Sprintf("chunk-%v.dat", handle)
 	return path.Join(cs.dir, name)
 }
 
-func (cs *ChunkServer) GetChunk(handle int64, off int64, buf []byte) (int, error) {
+func (cs *ChunkServer) GetChunk(handle util.Handle, off int, buf []byte) (int, error) {
 	filename := cs.GetFileName(handle)
 
 	fd, err := os.Open(filename)
@@ -72,11 +72,11 @@ func (cs *ChunkServer) GetChunk(handle int64, off int64, buf []byte) (int, error
 		return 0, err
 	}
 	defer fd.Close()
-	return fd.ReadAt(buf, off)
+	return fd.ReadAt(buf, int64(off))
 }
 
-func (cs *ChunkServer) SetChunk(handle int64, off int64, buf []byte) (int, error) {
-	if off+int64(len(buf)) > util.MAXCHUNKSIZE {
+func (cs *ChunkServer) SetChunk(handle util.Handle, off int, buf []byte) (int, error) {
+	if off+len(buf) > util.MAXCHUNKSIZE {
 		log.Panic("chunk size cannot be larger than maxchunksize\n")
 	}
 
@@ -90,10 +90,10 @@ func (cs *ChunkServer) SetChunk(handle int64, off int64, buf []byte) (int, error
 
 	defer fd.Close()
 
-	return fd.WriteAt(buf, off)
+	return fd.WriteAt(buf, int64(off))
 }
 
-func (cs *ChunkServer) RemoveChunk(handle int64) error {
+func (cs *ChunkServer) RemoveChunk(handle util.Handle) error {
 	filename := cs.GetFileName(handle)
 	return os.Remove(filename)
 }
