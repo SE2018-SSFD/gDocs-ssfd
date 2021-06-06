@@ -54,8 +54,8 @@ func (c *Client) create(w http.ResponseWriter, r *http.Request) {
 
 // mkdir a dir.
 func (c *Client) mkdir(w http.ResponseWriter, r *http.Request) {
-	var arg util.CreateArg
-	var ret util.CreateRet
+	var arg util.MkdirArg
+	var ret util.MkdirRet
 	err := json.NewDecoder(r.Body).Decode(&arg)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

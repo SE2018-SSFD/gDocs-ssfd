@@ -3,7 +3,6 @@ package master
 import (
 	"DFS/util"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -30,19 +29,29 @@ func newNamespaceState()*NamespaceState{
 	}
 	return ns
 }
+
+// checkValidPath check if a DFS path is valid
+func checkValidPath(path util.DFSPath) bool{
+	if len(path)==0 || path[0]!='/' || path[len(path)-1]=='/'{
+		return false
+	}else{
+		return true
+	}
+}
+
+// parsePath is a helper method to parse a path string into parent and file
 func parsePath(path util.DFSPath)(parent util.DFSPath,filename string,err error){
-	pos := strings.LastIndexByte(string(path),'/')
 	// Check invalid path
-	if pos == -1 || path[0]!='/' || path[len(path)-1]=='/' {
+	if !checkValidPath(path) {
 		err = fmt.Errorf("InvalidPathError : the requested DFS path %s is invalid!\n",string(path))
 		return
 	}
-	// Parent should be /a/b/
+	pos := strings.LastIndexByte(string(path),'/')
 	parent = path[:pos]
 	filename = string(path[pos+1:])
 	return
-
 }
+
 // Mknod create a directory if isDir is true, else a file
 func (ns *NamespaceState) Mknod(path util.DFSPath,isDir bool)error{
 	parent,filename,err := parsePath(path)
@@ -52,9 +61,8 @@ func (ns *NamespaceState) Mknod(path util.DFSPath,isDir bool)error{
 
 	// Get parent node
 	// TODO: lock the parents for concurrency control
-	parentNode := ns.GetDir(parent)
-	if parentNode == nil{
-		err = fmt.Errorf("ParentNotExistsError : the requested DFS path %s has non-existing parent!\n",string(path))
+	parentNode,err := ns.GetDir(parent)
+	if err != nil{
 		return err
 	}
 
@@ -74,15 +82,36 @@ func (ns *NamespaceState) Mknod(path util.DFSPath,isDir bool)error{
 	return nil
 }
 
-func (ns *NamespaceState) GetDir(path util.DFSPath) *treeNode{
+// List list all files in a given dir
+func (ns *NamespaceState) List(path util.DFSPath)(files []string,err error){
+	// Check invalid path
+	if !checkValidPath(path) {
+		err = fmt.Errorf("InvalidPathError : the requested DFS path %s is invalid!\n",string(path))
+		return
+	}
+	// Get given dir
+	dir,err := ns.GetDir(path)
+	if err != nil{
+		return nil,err
+	}
+	// List files
+	files = make([]string,0)
+	for file,_ := range dir.treeNodes{
+		files = append(files,file)
+	}
+	return files,nil
+}
+
+func (ns *NamespaceState) GetDir(path util.DFSPath)(*treeNode,error){
 	symbols := strings.FieldsFunc(string(path),func(c rune) bool {return c=='/'})
 	curNode := ns.root
 	for _,symbol := range symbols {
-		logrus.Debugln(symbol)
-		curNode,found := curNode.treeNodes[symbol]
+		var found bool
+		curNode,found = curNode.treeNodes[symbol]
 		if !found || curNode.isDir == false{
-			return nil
+			return nil,fmt.Errorf("ParentNotExistsError : the requested DFS path %s has non-existing parent!\n",string(path))
 		}
 	}
-	return curNode
+	return curNode,nil
 }
+

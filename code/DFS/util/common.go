@@ -14,13 +14,22 @@ type CreateArg struct{
 	Path DFSPath
 }
 type CreateRet struct {
-	Result bool
 }
 type MkdirArg struct{
 	Path DFSPath
 }
 type MkdirRet struct {
-	Result bool
+}
+type DeleteArg struct{
+	Path DFSPath
+}
+type DeleteRet struct {
+}
+type ListArg struct{
+	Path DFSPath
+}
+type ListRet struct {
+	Files []string
 }
 type GetReplicasArg struct {
 	chunkHandle Handle
