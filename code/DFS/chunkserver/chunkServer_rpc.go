@@ -68,7 +68,7 @@ func (cs *ChunkServer) ReadChunkRPC(args util.ReadChunkArgs, reply *util.ReadChu
 	reply.Len = len
 
 	if args.Len > len {
-		return fmt.Errorf("the length in args is larger than chunk len\n")
+		return fmt.Errorf("the length in args is larger than chunk len")
 	}
 
 	return nil
@@ -93,7 +93,11 @@ func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error 
 	ch := make(chan error)
 	for _, secondaryAddr := range args.Addrs {
 		go func(addr util.Address) {
-			ch <- util.Call(string(secondaryAddr), "ChunkServer.SetChunk")
+			ch <- util.Call(string(addr), "ChunkServer.StoreDataRPC",
+				util.StoreDataArgs{
+					CID: args.CID,
+					Off: args.Off,
+				}, nil)
 		}(secondaryAddr)
 	}
 
