@@ -75,28 +75,33 @@ func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
 	logrus.Debugf("RPC create, File Path : %s\n",args.Path)
 	err := m.ns.Mknod(args.Path,false)
 	if err!=nil{
-		reply.Result = false
 		logrus.Debugf("RPC create failed : %s\n",err)
 	}else{
-		reply.Result = true
 		logrus.Debugf("RPC create succeed\n")
-
 	}
 	return err
 }
 
 // MkdirRPC is called by client to create a new dir
-func (m *Master) MkdirRPC(args util.CreateArg, reply *util.CreateRet) error {
+func (m *Master) MkdirRPC(args util.MkdirArg, reply *util.MkdirRet) error {
 	logrus.Debugf("RPC mkdir, Dir Path : %s\n",args.Path)
 	err := m.ns.Mknod(args.Path,true)
-	reply.Result = true
 	if err!=nil{
-		reply.Result = false
 		logrus.Debugf("RPC mkdir failed : %s\n",err)
 	}else{
-		reply.Result = true
 		logrus.Debugf("RPC mkdir succeed\n")
 	}
 	return err
 }
 
+// ListRPC is called by client to list content of a dir
+func (m *Master) ListRPC(args util.ListArg, reply *util.ListRet) (err error) {
+	logrus.Debugf("RPC list, Dir Path : %s\n",args.Path)
+	reply.Files,err = m.ns.List(args.Path)
+	if err!=nil{
+		logrus.Debugf("RPC list failed : %s\n",err)
+	}else{
+		logrus.Debugf("RPC list succeed\n")
+	}
+	return err
+}
