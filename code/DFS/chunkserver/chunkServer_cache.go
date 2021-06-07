@@ -19,11 +19,11 @@ func InitCache() *Cache {
 	return c
 }
 
-func (c *Cache) Get(cid util.CacheID, buf []byte) error {
+func (c *Cache) Get(cid util.CacheID) ([]byte, error) {
 	c.Lock()
-	buf = c.buf[cid].data
+	buf := c.buf[cid].data
 	c.Unlock()
-	return nil
+	return buf, nil
 }
 
 func (c *Cache) Set(cid util.CacheID, buf []byte) error {
@@ -40,10 +40,10 @@ func (c *Cache) Remove(cid util.CacheID) error {
 	return nil
 }
 
-func (c *Cache) GetAndRemove(cid util.CacheID, buf []byte) error {
+func (c *Cache) GetAndRemove(cid util.CacheID) ([]byte, error) {
 	c.Lock()
-	buf = c.buf[cid].data
+	buf := c.buf[cid].data
 	delete(c.buf, cid)
 	c.Unlock()
-	return nil
+	return buf, nil
 }

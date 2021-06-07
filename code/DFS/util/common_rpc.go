@@ -14,9 +14,18 @@ type LoadDataArgs struct {
 type LoadDataReply struct {
 }
 
+type StoreDataArgs struct {
+	CID CacheID
+	Off int
+}
+
+type StoreDataReply struct {
+}
+
 type SyncArgs struct {
-	Handle Handle
-	Addrs  []Address
+	CID   CacheID
+	Off   int
+	Addrs []Address
 }
 
 type SyncReply struct {

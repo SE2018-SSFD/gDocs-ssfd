@@ -68,7 +68,7 @@ func (cs *ChunkServer) ReadChunkRPC(args util.ReadChunkArgs, reply *util.ReadChu
 	reply.Len = len
 
 	if args.Len > len {
-		return fmt.Errorf("the length in args is larger than chunk len\n")
+		return fmt.Errorf("the length in args is larger than chunk len")
 	}
 
 	return nil
@@ -84,6 +84,33 @@ func (cs *ChunkServer) CreateChunkRPC(args util.CreateChunkArgs, reply *util.Cre
 }
 
 //call by client
-// func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error {
+func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error {
+	data, err := cs.cache.GetAndRemove(args.CID)
+	if err != nil {
+		return err
+	}
+	cs.SetChunk(args.CID.Handle, args.Off, data)
+	ch := make(chan error)
+	for _, secondaryAddr := range args.Addrs {
+		go func(addr util.Address) {
+			ch <- util.Call(string(addr), "ChunkServer.StoreDataRPC",
+				util.StoreDataArgs{
+					CID: args.CID,
+					Off: args.Off,
+				}, nil)
+		}(secondaryAddr)
+	}
 
-// }
+	// error handler?
+
+	return nil
+}
+
+func (cs *ChunkServer) StoreDataRPC(args util.StoreDataArgs, reply *util.StoreDataReply) error {
+	data, err := cs.cache.GetAndRemove(args.CID)
+	if err != nil {
+		return err
+	}
+	cs.SetChunk(args.CID.Handle, args.Off, data)
+	return nil
+}
