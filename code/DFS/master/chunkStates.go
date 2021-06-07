@@ -22,7 +22,7 @@ type chunkState struct {
 }
 type fileState struct{
 	chunks []util.Handle
-	size int32
+	size int
 }
 
 

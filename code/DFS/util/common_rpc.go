@@ -2,7 +2,7 @@ package util
 
 type CacheID struct {
 	Handle     Handle
-	ClientAddr string
+	ClientAddr Address
 }
 
 type LoadDataArgs struct {
@@ -81,9 +81,18 @@ type ListArg struct {
 type ListRet struct {
 	Files []string	`json:"files"`
 }
+type WriteArg struct {
+	Fd int	`json:"fd"`
+	Offset int `json:"offset"`
+	Data string `json:"data"`
+
+}
+type WriteRet struct {
+	BytesWritten int `json:"bytes_written"`
+}
 type GetReplicasArg struct {
 	Path       DFSPath	`json:"path"`
-	ChunkIndex int64	`json:"chunk_index"`
+	ChunkIndex int	`json:"chunk_index"`
 }
 type GetReplicasRet struct {
 	ChunkHandle      Handle	`json:"chunk_handle"`
@@ -95,6 +104,6 @@ type GetFileMetaArg struct {
 type GetFileMetaRet struct{
 	Exist bool	`json:"exist"`
 	IsDir bool	`json:"is_dir"`
-	Size int32	`json:"size"`
+	Size int	`json:"size"`
 }
 

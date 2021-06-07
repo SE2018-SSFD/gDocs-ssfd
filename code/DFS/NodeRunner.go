@@ -38,7 +38,7 @@ func clientRun() {
 	}
 	addr := os.Args[2]
 	masterAddr := os.Args[3]
-	c:=client.InitClient(masterAddr)
+	c:=client.InitClient(addr,masterAddr)
 	c.Serve(addr)
 }
 
