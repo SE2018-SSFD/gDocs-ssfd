@@ -40,6 +40,17 @@ type ReadChunkReply struct {
 }
 
 // Master RPC structure
+type OpenArg struct {
+	Path DFSPath
+}
+type OpenRet struct {
+	Fd int
+}
+type CloseArg struct {
+	Fd int
+}
+type CloseRet struct {
+}
 type CreateArg struct {
 	Path DFSPath
 }

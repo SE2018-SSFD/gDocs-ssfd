@@ -120,14 +120,17 @@ func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMet
 		reply = &util.GetFileMetaRet{
 			Exist: false,
 			IsDir: false,
-			Size: 0,
+			Size: -1,
 		}
 		return err
 	}
-	reply = &util.GetFileMetaRet{
-		Exist: true,
-		IsDir: node.isDir,
-		Size: m.cs.file[args.Path].size,
+
+	reply.Exist = true
+	reply.IsDir = node.isDir
+	if node.isDir{
+		reply.Size = -1
+	}else{
+		reply.Size = m.cs.file[args.Path].size
 	}
 	return nil
 }

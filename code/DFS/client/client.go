@@ -4,11 +4,14 @@ import (
 	"DFS/util"
 	"encoding/json"
 	"github.com/sirupsen/logrus"
+	"io"
 	"net/http"
+	"strconv"
 )
 
 type Client struct {
 	masterAddr string
+	fdTable map[int]util.DFSPath
 	//TODO:add lease
 }
 
@@ -16,6 +19,7 @@ type Client struct {
 func InitClient(masterAddr string) *Client {
 	c := &Client{
 		masterAddr:   masterAddr,
+		fdTable: make(map[int]util.DFSPath),
 	}
 	http.HandleFunc("/create", c.create)
 	http.HandleFunc("/mkdir", c.mkdir)
@@ -74,11 +78,42 @@ func (c *Client) delete(w http.ResponseWriter, r *http.Request) {
 }
 
 // open a file.
+// if fd is not enough, return -1
 func (c *Client) open(w http.ResponseWriter, r *http.Request) {
+	var arg util.OpenArg
+	err := json.NewDecoder(r.Body).Decode(&arg)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	for i:=0;i<util.MAXFD;i++{
+		_,exist := c.fdTable[i]
+		if !exist{
+			logrus.Debugf("Client open : assign %d",i)
+			c.fdTable[i] = arg.Path
+			io.WriteString(w,strconv.Itoa(i))
+			return
+		}
+	}
+	w.WriteHeader(400)
+	io.WriteString(w,strconv.Itoa(-1))
 }
 
 // close a file.
 func (c *Client) close(w http.ResponseWriter, r *http.Request) {
+	var arg util.CloseArg
+	err := json.NewDecoder(r.Body).Decode(&arg)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	_,exist := c.fdTable[arg.Fd]
+	if !exist{
+		w.WriteHeader(400)
+		return
+	}
+	delete(c.fdTable, arg.Fd)
+	return
 }
 
 // read a file.

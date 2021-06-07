@@ -21,6 +21,7 @@ func NamespaceTest(m *master.Master){
 	var createReply util.CreateRet
 	var mkdirReply util.MkdirRet
 	var listReply util.ListRet
+	var getFileMetaReply util.GetFileMetaRet
 	err := m.CreateRPC(util.CreateArg{Path: "/file1"}, &createReply)
 	if err!=nil{
 		fmt.Println(err)
@@ -66,5 +67,16 @@ func NamespaceTest(m *master.Master){
 		}
 		fmt.Println()
 	}
-
+	err = m.GetFileMetaRPC(util.GetFileMetaArg{Path: "/dir1"}, &getFileMetaReply)
+	if err!=nil{
+		fmt.Println(err)
+	}else{
+		fmt.Println(getFileMetaReply.Exist," ",getFileMetaReply.IsDir," ",getFileMetaReply.Size)
+	}
+	err = m.GetFileMetaRPC(util.GetFileMetaArg{Path: "/dir1/file1"}, &getFileMetaReply)
+	if err!=nil{
+		fmt.Println(err)
+	}else{
+		fmt.Println(getFileMetaReply.Exist," ",getFileMetaReply.IsDir," ",getFileMetaReply.Size)
+	}
 }

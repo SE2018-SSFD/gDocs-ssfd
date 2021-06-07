@@ -11,4 +11,5 @@ type Address string
 const (
 	MAXCHUNKSIZE = 64 << 20 // 64MB
 	REPLICATIONTIMES = 3
+	MAXFD = 128
 )
