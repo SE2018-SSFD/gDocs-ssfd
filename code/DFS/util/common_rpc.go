@@ -50,51 +50,51 @@ type ReadChunkReply struct {
 
 // Master RPC structure
 type OpenArg struct {
-	Path DFSPath
+	Path DFSPath   `json:"path"`
 }
 type OpenRet struct {
-	Fd int
+	Fd int 			`json:"fd"`
 }
 type CloseArg struct {
-	Fd int
+	Fd int			`json:"fd"`
 }
 type CloseRet struct {
 }
 type CreateArg struct {
-	Path DFSPath
+	Path DFSPath	`json:"path"`
 }
 type CreateRet struct {
 }
 type MkdirArg struct {
-	Path DFSPath
+	Path DFSPath	`json:"path"`
 }
 type MkdirRet struct {
 }
 type DeleteArg struct {
-	Path DFSPath
+	Path DFSPath	`json:"path"`
 }
 type DeleteRet struct {
 }
 type ListArg struct {
-	Path DFSPath
+	Path DFSPath	`json:"path"`
 }
 type ListRet struct {
-	Files []string
+	Files []string	`json:"files"`
 }
 type GetReplicasArg struct {
-	Path       DFSPath
-	ChunkIndex int64
+	Path       DFSPath	`json:"path"`
+	ChunkIndex int64	`json:"chunk_index"`
 }
 type GetReplicasRet struct {
-	ChunkHandle      Handle
-	ChunkServerAddrs []Address
+	ChunkHandle      Handle	`json:"chunk_handle"`
+	ChunkServerAddrs []Address	`json:"chunk_server_addrs"`
 }
 type GetFileMetaArg struct {
-	Path       DFSPath
+	Path       DFSPath	`json:"path"`
 }
 type GetFileMetaRet struct{
-	Exist bool
-	IsDir bool
-	Size int32
+	Exist bool	`json:"exist"`
+	IsDir bool	`json:"is_dir"`
+	Size int32	`json:"size"`
 }
 
