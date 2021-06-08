@@ -9,7 +9,8 @@ type Address string
 
 // Client
 const (
-	MAXCHUNKSIZE = 64 << 20 // 64MB
+	//MAXCHUNKSIZE = 64 << 20 // 64MB
+	MAXCHUNKSIZE = 64 // 64B
 	REPLICATIONTIMES = 3
 	MAXFD = 128
 )

@@ -38,8 +38,8 @@ func clientRun() {
 	}
 	addr := os.Args[2]
 	masterAddr := os.Args[3]
-	c:=client.InitClient(addr,masterAddr)
-	c.Serve(addr)
+	c:=client.InitClient(util.Address(addr),util.Address(masterAddr))
+	c.Serve()
 }
 
 func chunkServerRun() {

@@ -7,11 +7,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+
+// TODO : use go testing package to rewrite an assert-style program
 func main() {
-	//str := "/a/b/"
-	//for index,symbol := range strings.FieldsFunc(str,func(c rune) bool {return c=='/'}){
-	//	fmt.Println(index," ",symbol)
-	//}
 	logrus.SetLevel(logrus.DebugLevel)
 	m := master.InitMaster("127.0.0.1:1234", ".")
 	NamespaceTest(m)

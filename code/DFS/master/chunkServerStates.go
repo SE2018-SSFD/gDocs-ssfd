@@ -34,6 +34,17 @@ func (s *ChunkServerStates) randomServers(times int) (addrs []util.Address,err e
 	return
 }
 
+func (s *ChunkServerStates) RegisterServer(addr util.Address) error {
+	_,exist := s.servers[addr]
+	if exist{
+		return fmt.Errorf("ServerReRegisterError : Server %s is registered\n",addr)
+	}
+	s.servers[addr] = &ChunkServerState{
+		lastHeartbeat: time.Now(),
+	}
+	return nil
+}
+
 type ChunkServerState struct{
 	lastHeartbeat time.Time
 }

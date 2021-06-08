@@ -70,6 +70,11 @@ func (m *Master) Serve() {
 	<-ch
 }
 
+func (m*Master) RegisterServer(addr util.Address)error{
+	err := m.css.RegisterServer(addr)
+	return err
+}
+
 func (m *Master) GetStatusString() string {
 	return "Master address :" + string(m.addr) + ",metaPath :" + string(m.metaPath)
 }
@@ -124,7 +129,6 @@ func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMet
 		}
 		return err
 	}
-
 	reply.Exist = true
 	reply.IsDir = node.isDir
 	if node.isDir{
@@ -135,9 +139,16 @@ func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMet
 	return nil
 }
 
-// getReplicasRPC get a chunk handle by file path and offset
+// SetFileMetaRPC set the file metadata by path
+func (m *Master) SetFileMetaRPC(args util.SetFileMetaArg, reply *util.SetFileMetaRet) error {
+	logrus.Debugf("RPC getFileMeta, File Path : %s\n", args.Path)
+	m.cs.file[args.Path].size = args.Size
+	return nil
+}
+
+// GetReplicasRPC get a chunk handle by file path and offset
 // as well as the addresses of servers which store the chunk (and its replicas)
-func (m *Master) getReplicasRPC(args util.GetReplicasArg, reply *util.GetReplicasRet) (err error) {
+func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplicasRet) (err error) {
 	// Check if file exist
 	logrus.Debugf("RPC getReplica, file path : %s, chunk index : %d\n", args.Path, args.ChunkIndex)
 	fs, exist := m.cs.file[args.Path]

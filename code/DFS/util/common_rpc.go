@@ -84,8 +84,7 @@ type ListRet struct {
 type WriteArg struct {
 	Fd int	`json:"fd"`
 	Offset int `json:"offset"`
-	Data string `json:"data"`
-
+	Data []byte `json:"data"`
 }
 type WriteRet struct {
 	BytesWritten int `json:"bytes_written"`
@@ -106,4 +105,10 @@ type GetFileMetaRet struct{
 	IsDir bool	`json:"is_dir"`
 	Size int	`json:"size"`
 }
+type SetFileMetaArg struct {
+	Path       DFSPath	`json:"path"`
+	Size int	`json:"size"`
+}
 
+type SetFileMetaRet struct{
+}
