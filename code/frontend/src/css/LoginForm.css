@@ -34,14 +34,14 @@
     text-align: center;
     transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
     color: #fff;
-    background-color: #2ea44f;
+    background-color: rgb(20,140,253);
     border-color: rgba(27, 31, 35, 0.15);
     box-shadow: 0 1px 0 rgba(27, 31, 35, 0.1), inset 0 1px 0 hsla(0, 0%, 100%, 0.03);
     font-weight: 500;
 }
 
 .login-button:hover {
-    background-color: rgb(5, 136, 41);
+    background-color: rgb(20,140,253);
     color: #fff;
 }
 

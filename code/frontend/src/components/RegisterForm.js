@@ -6,12 +6,12 @@ import {Button, Col, Input, Row} from 'antd';
 import React from 'react';
 import {Link} from 'react-router-dom';
 
-import {login} from '../services/userService';
+import {register} from '../services/userService';
 
-class LoginForm extends React.Component {
+class RegisterForm extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {username: '', password: ''};
+        this.state = {username: '', password: '',email:''};
     }
 
     usernameOnChange = (e) => {
@@ -22,12 +22,17 @@ class LoginForm extends React.Component {
         this.setState({password: e.target.value});
     };
 
+    emailOnChange = (e) => {
+        this.setState({email:e.target.value});
+    }
+
     onSubmit = () => {
         const data = {
             userName: this.state.username,
             password: this.state.password,
+            email: this.state.email,
         };
-        login(data);
+        register(data);
     }
 
     render() {
@@ -40,7 +45,7 @@ class LoginForm extends React.Component {
                                 <FileTextOutlined className="icon"/>
                             </div>
                             <div>
-                                <h1>登录到超级文档</h1>
+                                <h1>注册到超级文档</h1>
                             </div>
                         </div>
                     </Col>
@@ -61,9 +66,16 @@ class LoginForm extends React.Component {
                             <Input placeholder="请输入密码" value={this.state.password} onChange={this.passwordOnChange}
                                    className="login-input"/>
                         </div>
+                        <div>
+                            <p className="login-hint">邮箱</p>
+                        </div>
+                        <div>
+                            <Input placeholder="请输入邮箱" value={this.state.password} onChange={this.passwordOnChange}
+                                   className="login-input"/>
+                        </div>
                         <div style={{textAlign: 'center'}}>
                             <Button onClick={this.onSubmit} className="login-button">
-                                登&nbsp;&nbsp;&nbsp;录
+                                注&nbsp;&nbsp;&nbsp;册
                             </Button>
                         </div>
                     </Col>
@@ -72,7 +84,7 @@ class LoginForm extends React.Component {
                     <Col span={24} style={{padding: '15px 20px'}}>
                         <div style={{textAlign: 'center'}}>
                             <p className="register-link">
-                                没有账号？<Link to={{pathname: '/register'}}>注册一个账号</Link>
+                                已有账号？<Link to={{pathname: '/login'}}>立即登录</Link>
                             </p>
                         </div>
                     </Col>
@@ -82,4 +94,4 @@ class LoginForm extends React.Component {
     }
 }
 
-export default LoginForm;
+export default RegisterForm;

@@ -1,5 +1,5 @@
 import {postRequest} from "../utils/ajax";
-import {apiUrl} from "../config";
+import {apiUrl} from "../utils/config";
 
 export const newSheet = (data,callback) =>{
     const url = apiUrl+'newsheet';

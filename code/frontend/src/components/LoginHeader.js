@@ -3,6 +3,7 @@ import {Button, Col, Divider, Image, Input, Layout, Row, Space} from "antd";
 import logo from '../assets/logo.png'
 import {MenuOutlined} from "@ant-design/icons";
 import '../css/login.css'
+import {Link} from "react-router-dom";
 
 const {Header} = Layout
 
@@ -15,12 +16,12 @@ export class LoginHeader extends React.Component {
                         <Image src={logo} alt={'logo'} height={50} width={50}/>
                     </Col>
                     <Col span={1}>
-                        <h1>SSFDoc</h1>
+                        <strong><h1>SSFDoc</h1></strong>
                     </Col>
                     <Col span={1} offset={17}>
                         <Space>
                             <Button type="text">下载</Button>
-                            <Button type="text">进入官网</Button>
+                            <Link to={'/'}><Button type="text">进入官网</Button></Link>
                         </Space>
                     </Col>
 

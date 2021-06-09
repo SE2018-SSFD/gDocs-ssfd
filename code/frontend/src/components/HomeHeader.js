@@ -26,7 +26,6 @@ export class HomeHeader extends React.Component{
                         <UserAvatar/>
                     </Col>
                 </Row>
-
             </Header>
         )
     }

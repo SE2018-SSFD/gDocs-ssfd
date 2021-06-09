@@ -1,7 +1,7 @@
 import {postRequest} from "../utils/ajax";
 import {history} from '../utils/history';
 import {message} from 'antd';
-import {apiUrl} from "../config";
+import {apiUrl} from "../utils/config";
 
 const login_register_callback = (data) => {
     if (data.status >= 0) {

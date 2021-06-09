@@ -53,7 +53,7 @@ class HomeView extends React.Component {
                         </Col>
                     </Row>
 
-                    <Menu mode="inline" defaultSelectedKeys={['2']} openKeys={'2'}>
+                    <Menu mode="inline">
                         <Menu.Item key="1" icon={<HomeOutlined/>}>
                             首页
                         </Menu.Item>
@@ -69,7 +69,7 @@ class HomeView extends React.Component {
                 <Layout>
                     <HomeHeader/>
                     <Content style={{margin: '24px 16px 0'}}>
-                        <Menu onClick={this.handleClick} mode="horizontal">
+                        <Menu mode="horizontal">
                             <Menu.Item key="nearlyLook">
                                 最近查看
                             </Menu.Item>

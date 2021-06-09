@@ -18,11 +18,11 @@ export class DocHeader extends React.Component {
     render() {
         return (
             <Header className="site-layout-sub-header-background" style={{padding: 0}}>
-                <Row align={"middle"} justify={"center"}>
-                    <Col span={2}>
+                <Row align={"middle"}>
+                    <Col span={2} offset={1}>
                     <Link to={{
                         pathname: '/',
-                    }} target="_blank"
+                    }}
                     >
                         <LeftOutlined/>
                         <Image src={docs} alt={'docs'} height={50} width={50} preview={false}/>
@@ -37,11 +37,8 @@ export class DocHeader extends React.Component {
                     <Col span={1}>
                         <CheckCircleOutlined />
                     </Col>
-                    <Col span={1} offset={10}>
+                    <Col span={1} offset={13}>
                         <MenuOutlined/>
-                    </Col>
-                    <Col span={1}>
-                        <EditOutlined/>
                     </Col>
                     <Col span={1}>
                         <EditOutlined/>
@@ -54,7 +51,6 @@ export class DocHeader extends React.Component {
                     <Col span={1}>
                         <UserAvatar/>
                     </Col>
-
                 </Row>
             </Header>
         )
