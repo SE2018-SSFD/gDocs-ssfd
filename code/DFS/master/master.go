@@ -141,7 +141,7 @@ func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMet
 
 // SetFileMetaRPC set the file metadata by path
 func (m *Master) SetFileMetaRPC(args util.SetFileMetaArg, reply *util.SetFileMetaRet) error {
-	logrus.Debugf("RPC getFileMeta, File Path : %s\n", args.Path)
+	logrus.Debugf("RPC setFileMeta, File Path : %s\n", args.Path)
 	m.cs.file[args.Path].size = args.Size
 	return nil
 }

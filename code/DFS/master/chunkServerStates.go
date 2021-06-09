@@ -3,7 +3,6 @@ package master
 import (
 	"DFS/util"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"math/rand"
 	"time"
 )
@@ -29,7 +28,7 @@ func (s *ChunkServerStates) randomServers(times int) (addrs []util.Address,err e
 	}
 	for _,serverIndex := range rand.Perm(len(s.servers))[:times]{
 		addrs = append(addrs,all[serverIndex])
-		logrus.Debugln(all[serverIndex]," ")
+		//logrus.Debugln(all[serverIndex]," ")
 	}
 	return
 }

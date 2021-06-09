@@ -3,6 +3,7 @@ package main
 import (
 	"DFS/client"
 	"DFS/master"
+	"DFS/util"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -52,7 +53,10 @@ func WriteTest(c *client.Client,m *master.Master){
 	if err!=nil{
 		fmt.Println(err)
 	}
+	fileState,err := HTTPGetFileInfo(CLIENTADDR,"/file1")
+	fmt.Println(fileState)
 }
+
 
 func OpenCloseTest(c *client.Client,m *master.Master) {
 	err := HTTPCreate(CLIENTADDR,"/file1")
@@ -157,5 +161,24 @@ func HTTPWrite(addr string,fd int,offset int,data []byte)(err error){
 	}
 	defer resp.Body.Close()
 	_, err = ioutil.ReadAll(resp.Body)
+	return
+}
+
+// HTTPGetFileInfo : get file info according to path
+func HTTPGetFileInfo(addr string, path string) (fileState util.GetFileMetaRet, err error) {
+	url := "http://"+addr+"/fileInfo"
+	postBody, _ := json.Marshal(map[string]interface{}{
+		"path":  path,
+	})
+	responseBody := bytes.NewBuffer(postBody)
+	resp, err := http.Post(url, "application/json", responseBody)
+	if err != nil {
+		return
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	err = json.NewDecoder(bytes.NewReader(body)).Decode(&fileState)
 	return
 }

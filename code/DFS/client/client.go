@@ -2,7 +2,7 @@ package client
 
 import (
 	"DFS/util"
-	"encoding/json"
+	json "encoding/json"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -32,6 +32,7 @@ func InitClient(clientAddr util.Address,masterAddr util.Address) *Client {
 	http.HandleFunc("/write", c.Write)
 	http.HandleFunc("/open", c.Open)
 	http.HandleFunc("/close", c.Close)
+	http.HandleFunc("/fileInfo",c.GetFileInfo)
 	return c
 }
 
@@ -87,6 +88,7 @@ func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
 // If fd is depleted, return -1
 func (c *Client) Open(w http.ResponseWriter, r *http.Request) {
 	var arg util.OpenArg
+	var ret util.OpenRet
 	err := json.NewDecoder(r.Body).Decode(&arg)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -102,7 +104,8 @@ func (c *Client) Open(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(400)
-	io.WriteString(w, strconv.Itoa(-1))
+	msg,_ := json.Marshal(ret)
+	w.Write(msg)
 }
 
 // Close a file.
@@ -213,4 +216,19 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(200)
 	return
+}
+
+func (c *Client) GetFileInfo(w http.ResponseWriter, r *http.Request) {
+	var arg util.GetFileMetaArg
+	var ret util.GetFileMetaRet
+	// Decode the params
+	err := json.NewDecoder(r.Body       ).Decode(&arg)
+	if err != nil {
+		logrus.Fatalln("Client getFileInfo failed :", err)
+		w.WriteHeader(400)
+		return
+	}
+	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", arg, &ret)
+	msg,_ := json.Marshal(ret)
+	w.Write(msg)
 }
