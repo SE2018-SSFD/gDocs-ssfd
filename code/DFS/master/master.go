@@ -160,7 +160,7 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 	// Find the target chunk, if not exists, create one
 	// Note that ChunkIndex <= len(fs.chunks) should be checked by client
 	var targetChunk util.Handle
-	if int(args.ChunkIndex) == len(fs.chunks) {
+	if args.ChunkIndex == len(fs.chunks) {
 		// randomly choose servers to store chunk replica
 		var addrs []util.Address
 		addrs,err = m.css.randomServers(util.REPLICATIONTIMES)
@@ -173,10 +173,12 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 	} else {
 		targetChunk = fs.chunks[args.ChunkIndex]
 	}
-	// Get target servers which store the replicate
-	reply.ChunkServerAddrs = make([]util.Address, 0)
+
+	 // Get target servers which store the replicate
+	 reply.ChunkServerAddrs = make([]util.Address, 0)
 	for _, addr := range m.cs.chunk[targetChunk].locations {
 		reply.ChunkServerAddrs = append(reply.ChunkServerAddrs, addr)
 	}
+	reply.ChunkHandle = targetChunk
 	return nil
 }

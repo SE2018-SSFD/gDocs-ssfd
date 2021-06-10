@@ -3,6 +3,7 @@ package master
 import (
 	"DFS/util"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"time"
 )
 /* The state of all chunks, maintained by the master */
@@ -28,8 +29,10 @@ type fileState struct{
 
 // CreateChunkAndReplica create metadatas of a chunk and its replicas
 // then it ask chunkservers to create chunks in Linux File System
-func (s ChunkStates) CreateChunkAndReplica(path util.DFSPath,addrs []util.Address) (newHandle util.Handle,err error) {
+func (s* ChunkStates) CreateChunkAndReplica(path util.DFSPath,addrs []util.Address) (newHandle util.Handle,err error) {
 	newHandle = s.curHandle+1
+	logrus.Infof(" CreateChunkAndReplica : new Handle %d\n",newHandle)
+	s.curHandle+=1
 	_,exist := s.file[path]
 	if !exist{
 		err = fmt.Errorf("UnexpectedError : file meta not exists in chunk states")
@@ -56,7 +59,7 @@ func newChunkStates()*ChunkStates{
 }
 
 // NewFile init the file metadata
-func (s ChunkStates) NewFile(path util.DFSPath) error {
+func (s* ChunkStates) NewFile(path util.DFSPath) error {
 	_,exist := s.file[path]
 	if exist{
 		return fmt.Errorf("UnexpectedError : file meta exists in chunk states\n")

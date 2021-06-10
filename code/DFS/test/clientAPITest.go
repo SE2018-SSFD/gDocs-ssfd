@@ -32,10 +32,15 @@ func main() {
 
 	// Start testing
 	OpenCloseTest(c,m)
-	WriteTest(c,m)
+	ReadWriteTest(c,m)
 }
-func WriteTest(c *client.Client,m *master.Master){
-	fd,err := HTTPOpen(CLIENTADDR,"/file1")
+func ReadWriteTest(c *client.Client,m *master.Master){
+	fd1,err := HTTPOpen(CLIENTADDR,"/file1")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fd2,err := HTTPOpen(CLIENTADDR,"/file2")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -47,13 +52,34 @@ func WriteTest(c *client.Client,m *master.Master){
 	err = m.RegisterServer("127.0.0.1:3003")
 	err = m.RegisterServer("127.0.0.1:3004")
 
+	// Write 4 chunks to file1
 	offset := 0
-	data := make([]byte,256)
-	err = HTTPWrite(CLIENTADDR,fd,offset,data)
+	data := make([]byte,util.MAXCHUNKSIZE*4)
+	err = HTTPWrite(CLIENTADDR,fd1,offset,data)
 	if err!=nil{
 		fmt.Println(err)
 	}
 	fileState,err := HTTPGetFileInfo(CLIENTADDR,"/file1")
+	fmt.Println(fileState)
+
+	// Write 3.5 chunks to file2
+	offset = 0
+	data = make([]byte,util.MAXCHUNKSIZE*3.5)
+	err = HTTPWrite(CLIENTADDR,fd2,offset,data)
+	if err!=nil{
+		fmt.Println(err)
+	}
+	fileState,err = HTTPGetFileInfo(CLIENTADDR,"/file2")
+	fmt.Println(fileState)
+
+	// Write 1 chunk at offset 3 in file2
+	offset = util.MAXCHUNKSIZE*3
+	data = make([]byte,util.MAXCHUNKSIZE)
+	err = HTTPWrite(CLIENTADDR,fd2,offset,data)
+	if err!=nil{
+		fmt.Println(err)
+	}
+	fileState,err = HTTPGetFileInfo(CLIENTADDR,"/file2")
 	fmt.Println(fileState)
 }
 

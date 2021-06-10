@@ -32,6 +32,7 @@ func InitClient(clientAddr util.Address,masterAddr util.Address) *Client {
 	http.HandleFunc("/write", c.Write)
 	http.HandleFunc("/open", c.Open)
 	http.HandleFunc("/close", c.Close)
+	http.HandleFunc("/append", c.Append)
 	http.HandleFunc("/fileInfo",c.GetFileInfo)
 	return c
 }
@@ -78,10 +79,6 @@ func (c *Client) Mkdir(w http.ResponseWriter, r *http.Request) {
 	}
 	io.WriteString(w,"0")
 	return
-}
-
-// Delete a file.
-func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 // Open a file.
@@ -132,7 +129,17 @@ func (c *Client) Close(w http.ResponseWriter, r *http.Request) {
 func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
 }
 
-// write a file.
+// Delete a file.
+func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
+
+}
+
+// Append to a file
+func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
+
+}
+
+// Write a file.
 // should contact the master first, then write the data directly to chunkserver
 func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	var argR util.GetReplicasArg
@@ -192,7 +199,7 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 			Handle: retR.ChunkHandle,
 			ClientAddr: c.clientAddr,
 		}
-		argL.Data = argW.Data[(argW.Offset + writtenBytes):(argW.Offset + writtenBytes + roundWrittenBytes)]
+		argL.Data = argW.Data[writtenBytes:(writtenBytes + roundWrittenBytes)]
 		argL.Addrs = retR.ChunkServerAddrs
 		//TODO: make it random
 		//argL.Addrs = make([]util.Address,0)
@@ -204,10 +211,13 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 		logrus.Debugf(" Write %d bytes to chunkserver %s, bytes written %d\n",roundWrittenBytes,argL.Addrs[0],writtenBytes)
 	}
 
-	// Set file metadata back to master
+	// Set new file metadata back to master
+	if argW.Offset + writtenBytes > fileSize{
+		fileSize = argW.Offset + writtenBytes
+	}
 	argS = util.SetFileMetaArg{
 		Path: path,
-		Size: fileSize+writtenBytes,
+		Size: fileSize,
 	}
 	err = util.Call(string(c.masterAddr), "Master.SetFileMetaRPC", argS, &retS)
 	if err!=nil{
@@ -232,3 +242,4 @@ func (c *Client) GetFileInfo(w http.ResponseWriter, r *http.Request) {
 	msg,_ := json.Marshal(ret)
 	w.Write(msg)
 }
+

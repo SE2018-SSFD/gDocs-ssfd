@@ -99,6 +99,34 @@ func (ns *NamespaceState) List(path util.DFSPath) (files []string, err error) {
 	return files, nil
 }
 
+// Delete delete a file or empty directory from DFS namespace
+func (ns *NamespaceState) Delete(path util.DFSPath) (err error) {
+	// Check path
+	parent, filename, err := parsePath(path)
+	if err != nil {
+		return err
+	}
+	if path == "/"{
+		err = fmt.Errorf("DeleteError : Cannot delete root directory\n")
+		return
+	}
+
+	// Get parent node
+	// TODO: lock the parents for concurrency control
+	parentNode, err := ns.GetDir(parent)
+	if err != nil {
+		return err
+	}
+
+	// Delete node (in namespace only)
+	if _, exist := parentNode.treeNodes[filename]; !exist {
+		err = fmt.Errorf("DeleteError : the requested DFS path %s is not exist\n", string(path))
+		return err
+	}
+	delete(parentNode.treeNodes,filename)
+	return nil
+}
+
 // GetDir get a directory from DFS namespace
 func (ns *NamespaceState) GetDir(path util.DFSPath) (*treeNode, error) {
 	symbols := strings.FieldsFunc(string(path), func(c rune) bool { return c == '/' })
