@@ -57,6 +57,14 @@ func (cs *ChunkServer) StartRPCServer() error {
 	return err
 }
 
+func (cs *ChunkServer) Exit() {
+	err := cs.l.Close()
+	close(cs.shutdown)
+	if err != nil {
+		return
+	}
+}
+
 func (cs *ChunkServer) GetChunkStatesRPC(args util.GetChunkStatesArgs, reply *util.GetChunkStatesReply) error {
 	var chunkStates []util.ChunkState
 	for handle, chunk := range cs.chunks {
