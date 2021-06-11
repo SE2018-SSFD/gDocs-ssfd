@@ -148,6 +148,7 @@ func (m *Master) SetFileMetaRPC(args util.SetFileMetaArg, reply *util.SetFileMet
 
 // GetReplicasRPC get a chunk handle by file path and offset
 // as well as the addresses of servers which store the chunk (and its replicas)
+// TODO : add lease
 func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplicasRet) (err error) {
 	// Check if file exist
 	logrus.Debugf("RPC getReplica, file path : %s, chunk index : %d\n", args.Path, args.ChunkIndex)

@@ -131,7 +131,38 @@ func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
 
 // Delete a file.
 func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
-
+	//var argR util.GetReplicasArg
+	//var retR util.GetReplicasRet
+	//var argF util.GetFileMetaArg
+	//var retF util.GetFileMetaRet
+	//var argW util.WriteArg
+	//var argL util.LoadDataArgs
+	//var argS util.SetFileMetaArg
+	//var retS util.SetFileMetaRet
+	//// var retL util.LoadDataReply
+	//
+	//// Decode the params
+	//err := json.NewDecoder(r.Body).Decode(&argW)
+	//if err != nil {
+	//	logrus.Fatalln("Client write failed :", err)
+	//	w.WriteHeader(400)
+	//	return
+	//}
+	//
+	//// Get the file metadata and check
+	//path := c.fdTable[argW.Fd]
+	//if path == "" {
+	//	logrus.Fatalf("Client write failed : fd %d is not opened\n", argW.Fd)
+	//	w.WriteHeader(400)
+	//	return
+	//}
+	//argF.Path = path
+	//err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
+	//if !retF.Exist {
+	//	logrus.Fatalln("Client write failed :", err)
+	//	w.WriteHeader(400)
+	//	return
+	//}
 }
 
 // Append to a file
@@ -210,7 +241,6 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 		writtenBytes += roundWrittenBytes
 		logrus.Debugf(" Write %d bytes to chunkserver %s, bytes written %d\n",roundWrittenBytes,argL.Addrs[0],writtenBytes)
 	}
-
 	// Set new file metadata back to master
 	if argW.Offset + writtenBytes > fileSize{
 		fileSize = argW.Offset + writtenBytes

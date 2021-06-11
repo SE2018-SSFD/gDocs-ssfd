@@ -4,6 +4,7 @@ import (
 	"DFS/util"
 	"fmt"
 	"strings"
+	"sync"
 )
 
 /* The state of the file system namespace, maintained by the master */
@@ -13,6 +14,7 @@ type NamespaceState struct {
 }
 
 type treeNode struct {
+	sync.RWMutex
 	isDir bool
 	// dir
 	treeNodes map[string]*treeNode
@@ -62,10 +64,13 @@ func (ns *NamespaceState) Mknod(path util.DFSPath, isDir bool) error {
 
 	// Get parent node
 	// TODO: lock the parents for concurrency control
-	parentNode, err := ns.GetDir(parent)
+	parentNode, err := ns.GetDir(parent,true)
+	defer ns.GetDir(parent,false)
 	if err != nil {
 		return err
 	}
+	parentNode.Lock()
+	parentNode.Unlock()
 
 	// Create node
 	if _, exist := parentNode.treeNodes[filename]; exist {
@@ -83,14 +88,20 @@ func (ns *NamespaceState) Mknod(path util.DFSPath, isDir bool) error {
 func (ns *NamespaceState) List(path util.DFSPath) (files []string, err error) {
 	// Check invalid path
 	if !checkValidPath(path) {
-		err = fmt.Errorf("InvalidPathError : the requested DFS path %s is invalid!\n", string(path))
+		err = fmt.Errorf("InvalidPathError : the requested DFS path %s is invalid\n", string(path))
 		return
 	}
-	// Get given dir
-	dir, err := ns.GetDir(path)
+	// Get given dir and RLock
+	dir, err := ns.GetDir(path,true)
+	defer ns.GetDir(path,false)
 	if err != nil {
 		return nil, err
 	}
+	if dir.isDir == false{
+		return nil,fmt.Errorf("ListError : the requested DFS path %s is not a directory\n",string(path))
+	}
+	dir.RLock()
+	defer dir.RUnlock()
 	// List files
 	files = make([]string, 0)
 	for file, _ := range dir.treeNodes {
@@ -111,12 +122,15 @@ func (ns *NamespaceState) Delete(path util.DFSPath) (err error) {
 		return
 	}
 
-	// Get parent node
+	// Get parent node and WLock
 	// TODO: lock the parents for concurrency control
-	parentNode, err := ns.GetDir(parent)
+	parentNode, err := ns.GetDir(parent,true)
+	defer ns.GetDir(parent,false)
 	if err != nil {
 		return err
 	}
+	parentNode.Lock()
+	defer parentNode.Unlock()
 
 	// Delete node (in namespace only)
 	if _, exist := parentNode.treeNodes[filename]; !exist {
@@ -128,10 +142,17 @@ func (ns *NamespaceState) Delete(path util.DFSPath) (err error) {
 }
 
 // GetDir get a directory from DFS namespace
-func (ns *NamespaceState) GetDir(path util.DFSPath) (*treeNode, error) {
+// if lock is true, then all intermediate dir will be RLocked,
+// if lock is false, then they will be RUnlocked
+func (ns *NamespaceState) GetDir(path util.DFSPath,lock bool) (*treeNode, error) {
 	symbols := strings.FieldsFunc(string(path), func(c rune) bool { return c == '/' })
 	curNode := ns.root
 	for _, symbol := range symbols {
+		if lock==true{
+			curNode.RLock()
+		}else if lock==false{
+			curNode.RUnlock()
+		}
 		var found bool
 		curNode, found = curNode.treeNodes[symbol]
 		if !found || curNode.isDir == false {
