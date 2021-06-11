@@ -179,9 +179,11 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	var retF util.GetFileMetaRet
 	var argW util.WriteArg
 	var argL util.LoadDataArgs
+	var retL util.LoadDataReply
 	var argS util.SetFileMetaArg
 	var retS util.SetFileMetaRet
-	// var retL util.LoadDataReply
+	//var argC util.SyncArgs
+	//var retC util.SyncReply
 
 	// Decode the params
 	err := json.NewDecoder(r.Body).Decode(&argW)
@@ -237,7 +239,7 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 		//for _,index := range rand.Perm(len(retR.ChunkServerAddrs)){
 		//	argL.Addrs = append(argL.Addrs,retR.ChunkServerAddrs[index])
 		//}
-		// err = util.Call(string(argL.Addrs[0]), "ChunkServer.LoadDataRPC", argL, &retL)
+		err = util.Call(string(argL.Addrs[0]), "ChunkServer.LoadDataRPC", argL, &retL)
 		writtenBytes += roundWrittenBytes
 		logrus.Debugf(" Write %d bytes to chunkserver %s, bytes written %d\n",roundWrittenBytes,argL.Addrs[0],writtenBytes)
 	}

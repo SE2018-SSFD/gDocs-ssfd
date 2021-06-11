@@ -1,6 +1,9 @@
 package util
 
-import "net/rpc"
+import (
+	"fmt"
+	"net/rpc"
+)
 
 // Call is RPC call helper
 func Call(srv string, rpcname string, args interface{}, reply interface{}) error {
@@ -16,4 +19,26 @@ func Call(srv string, rpcname string, args interface{}, reply interface{}) error
 	}(c)
 	err := c.Call(rpcname, args, reply)
 	return err
+}
+
+// CallAll applies the rpc call to all destinations.
+func CallAll(dst []Address, rpcname string, args interface{}) error {
+	ch := make(chan error)
+	for _, d := range dst {
+		go func(addr Address) {
+			ch <- Call(string(addr), rpcname, args, nil)
+		}(d)
+	}
+	errList := ""
+	for _ = range dst {
+		if err := <-ch; err != nil {
+			errList += err.Error() + ";"
+		}
+	}
+
+	if errList == "" {
+		return nil
+	} else {
+		return fmt.Errorf(errList)
+	}
 }
