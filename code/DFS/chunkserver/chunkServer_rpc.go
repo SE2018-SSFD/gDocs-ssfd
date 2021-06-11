@@ -184,3 +184,5 @@ func (cs *ChunkServer) StoreDataRPC(args util.StoreDataArgs, reply *util.StoreDa
 	log.Printf("ChunkServer %v: store handle %v, len %v\n", cs.addr, args.CID.Handle, len)
 	return err
 }
+
+// func (cs *ChunkServer)
