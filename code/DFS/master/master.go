@@ -19,8 +19,9 @@ type Master struct {
 	// manage the state of chunkserver node
 	css *ChunkServerStates
 	// manage the state of chunk
-	cs *ChunkStates
-	ns *NamespaceState
+	cs       *ChunkStates
+	ns       *NamespaceState
+	shutdown chan interface{}
 }
 
 func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master {
@@ -29,6 +30,7 @@ func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master {
 		addr:     addr,
 		metaPath: metaPath,
 		rpcs:     rpc.NewServer(),
+		shutdown: make(chan interface{}),
 	}
 	err := m.rpcs.Register(m)
 	if err != nil {
@@ -54,6 +56,11 @@ func (m *Master) Serve() {
 	// listening thread
 	go func() {
 		for {
+			select {
+			case <-m.shutdown:
+				return
+			default:
+			}
 			conn, err := m.L.Accept()
 			if err == nil {
 				go func() {
@@ -73,6 +80,7 @@ func (m *Master) Serve() {
 // Direct Exit without storing the metadata
 func (m*Master) Exit(){
 	err := m.L.Close()
+	close(m.shutdown)
 	if err != nil {
 		return
 	}
@@ -193,12 +201,15 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 			return err
 		}
 		targetChunk,err = m.cs.CreateChunkAndReplica(args.Path,addrs)
+		if err!=nil{
+			return err
+		}
 		//TODO : Update ChunkServerState
 		//m.css.xxx
 	} else {
 		targetChunk = fs.chunks[args.ChunkIndex]
 	}
-
+	logrus.Infoln("targetchunk : ",targetChunk)
 	 // Get target servers which store the replicate
 	 reply.ChunkServerAddrs = make([]util.Address, 0)
 	for _, addr := range m.cs.chunk[targetChunk].locations {

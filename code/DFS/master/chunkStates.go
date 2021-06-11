@@ -27,6 +27,8 @@ type fileState struct{
 // CreateChunkAndReplica create metadata of a chunk and its replicas
 // then it ask chunkservers to create chunks in Linux File System
 func (s* ChunkStates) CreateChunkAndReplica(path util.DFSPath,addrs []util.Address) (newHandle util.Handle,err error) {
+	var arg util.CreateChunkArgs
+	var ret util.CreateChunkReply
 	newHandle = s.curHandle+1
 	logrus.Infof(" CreateChunkAndReplica : new Handle %d\n",newHandle)
 	s.curHandle+=1
@@ -40,8 +42,11 @@ func (s* ChunkStates) CreateChunkAndReplica(path util.DFSPath,addrs []util.Addre
 		locations: make([]util.Address,0),
 	}
 	for _ , addr := range addrs{
-		//err := util.Call(string(addr), "ChunkServer.RPCCreateChunk", gfs.CreateChunkArg{handle}, &r)
-		//
+		arg.Handle = newHandle
+		err = util.Call(string(addr), "ChunkServer.CreateChunkRPC", arg, &ret)
+		if err != nil {
+			return 0, err
+		}
 		s.chunk[newHandle].locations = append(s.chunk[newHandle].locations,addr)
 	}
 	return

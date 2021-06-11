@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -16,6 +17,7 @@ type Client struct {
 	clientAddr util.Address
 	masterAddr util.Address
 	fdTable    map[int]util.DFSPath
+	s          *http.Server
 	//TODO:add lease
 }
 
@@ -26,28 +28,40 @@ func InitClient(clientAddr util.Address, masterAddr util.Address) *Client {
 		masterAddr: masterAddr,
 		fdTable:    make(map[int]util.DFSPath),
 	}
-	http.HandleFunc("/create", c.Create)
-	http.HandleFunc("/mkdir", c.Mkdir)
-	http.HandleFunc("/delete", c.Delete)
-	http.HandleFunc("/read", c.Read)
-	http.HandleFunc("/write", c.Write)
-	http.HandleFunc("/open", c.Open)
-	http.HandleFunc("/close", c.Close)
-	http.HandleFunc("/append", c.Append)
-	http.HandleFunc("/fileInfo", c.GetFileInfo)
 	return c
 }
 
 func (c *Client) Serve() {
-	err := http.ListenAndServe(string(c.clientAddr), nil)
-	if err != nil {
-		logrus.Fatal("Client server shutdown!\n")
+	mux := http.NewServeMux()
+	mux.HandleFunc("/create", c.Create)
+	mux.HandleFunc("/mkdir", c.Mkdir)
+	mux.HandleFunc("/delete", c.Delete)
+	mux.HandleFunc("/read", c.Read)
+	mux.HandleFunc("/write", c.Write)
+	mux.HandleFunc("/open", c.Open)
+	mux.HandleFunc("/close", c.Close)
+	mux.HandleFunc("/append", c.Append)
+	mux.HandleFunc("/fileInfo", c.GetFileInfo)
+	c.s = &http.Server{
+		Addr:           util.CLIENTADDR,
+		Handler:        mux,
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
 	}
+	err := c.s.ListenAndServe()
+	if err != nil {
+		logrus.Debug("Client server shutdown!\n")
+	}
+	//logrus.Fatalln("stop!")
 }
 
 // Exit Directly
 func (c *Client) Exit() {
-	//http.c
+	err := c.s.Close()
+	if err != nil {
+		return
+	}
 }
 
 // TODO:client should not return error due to DFS failure
@@ -115,6 +129,12 @@ func (c *Client) Open(w http.ResponseWriter, r *http.Request) {
 func (c *Client) Close(w http.ResponseWriter, r *http.Request) {
 	var arg util.CloseArg
 	err := json.NewDecoder(r.Body).Decode(&arg)
+	defer func(err error) {
+		logrus.Warn(err, "!\n")
+		if err != nil {
+			w.Write([]byte(err.Error()))
+		}
+	}(err)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -122,7 +142,9 @@ func (c *Client) Close(w http.ResponseWriter, r *http.Request) {
 	}
 	_, exist := c.fdTable[arg.Fd]
 	if !exist {
-		w.WriteHeader(400)
+		err = fmt.Errorf("FileClosedError : file has been closed\n")
+		print(err.Error())
+		http.Error(w, "Fd Nonexist", http.StatusBadRequest)
 		return
 	}
 	logrus.Debugf("Client close : free %d", arg.Fd)
@@ -241,11 +263,11 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte, fileSize int
 	var argR util.GetReplicasArg
 	var retR util.GetReplicasRet
 	var argL util.LoadDataArgs
-	//var retL util.LoadDataReply
+	var retL util.LoadDataReply
 	var argS util.SetFileMetaArg
 	var retS util.SetFileMetaRet
-	//var argC util.SyncArgs
-	//var retC util.SyncReply
+	var argC util.SyncArgs
+	var retC util.SyncReply
 
 	// Write the chunk (may add chunks)
 	// By default, the first entry int retR.ChunkServerAddr is the primary
@@ -271,23 +293,21 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte, fileSize int
 		//	argL.Addrs = append(argL.Addrs,retR.ChunkServerAddrs[index])
 		//}
 		// Send to Master now
-		//err = util.Call(string(argL.Addrs[0]), "ChunkServer.LoadDataRPC", argL, &retL)
-		//if err!=nil{
-		//	logrus.Fatalln("Client write failed :", err)
-		//	w.WriteHeader(400)
-		//	return
-		//}
-		//argC = util.SyncArgs{
-		//	CID: cid,
-		//	Off: (argW.Offset+writtenBytes) % util.MAXCHUNKSIZE,
-		//	Addrs: retR.ChunkServerAddrs[1:],
-		//}
-		//err = util.Call(string(argL.Addrs[0]), "ChunkServer.SyncRPC", argC, &retC)
-		//if err!=nil{
-		//	logrus.Fatalln("Client write failed :", err)
-		//	w.WriteHeader(400)
-		//	return
-		//}
+		err = util.Call(string(argL.Addrs[0]), "ChunkServer.LoadDataRPC", argL, &retL)
+		if err != nil {
+			logrus.Fatalln("Client write failed :", err)
+			return
+		}
+		argC = util.SyncArgs{
+			CID:   cid,
+			Off:   (offset + writtenBytes) % util.MAXCHUNKSIZE,
+			Addrs: retR.ChunkServerAddrs[1:],
+		}
+		err = util.Call(string(argL.Addrs[0]), "ChunkServer.SyncRPC", argC, &retC)
+		if err != nil {
+			logrus.Fatalln("Client write failed :", err)
+			return
+		}
 		writtenBytes += roundWrittenBytes
 		logrus.Debugf(" Write %d bytes to chunkserver %s, bytes written %d\n", roundWrittenBytes, argL.Addrs[0], writtenBytes)
 	}
