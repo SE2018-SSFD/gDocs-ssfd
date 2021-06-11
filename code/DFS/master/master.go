@@ -106,6 +106,22 @@ func (m *Master) MkdirRPC(args util.MkdirArg, reply *util.MkdirRet) error {
 	return nil
 }
 
+// DeleteRPC is called by client to deleet a dir or file
+func (m *Master) DeleteRPC(args util.DeleteArg, reply *util.DeleteRet) error {
+	logrus.Debugf("RPC delete, Dir Path : %s\n", args.Path)
+	err := m.ns.Delete(args.Path)
+	if err != nil {
+		logrus.Debugf("RPC delete failed : %s\n", err)
+		return err
+	}
+	err = m.cs.Delete(args.Path)
+	if err != nil {
+		logrus.Debugf("RPC delete failed : %s\n", err)
+		return err
+	}
+	return nil
+}
+
 // ListRPC is called by client to list content of a dir
 func (m *Master) ListRPC(args util.ListArg, reply *util.ListRet) (err error) {
 	logrus.Debugf("RPC list, Dir Path : %s\n", args.Path)
