@@ -33,12 +33,9 @@ func (cs *ChunkServer) StartRPCServer() error {
 					rpcs.ServeConn(conn)
 					conn.Close()
 				}()
-			} else {
-				log.Fatal("Chunkserver: accept error\n")
-				break
 			}
 		}
-		log.Fatal("ChunkServer: done\n")
+		log.Print("ChunkServer: done\n")
 	}()
 
 	//

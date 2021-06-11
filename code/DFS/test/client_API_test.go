@@ -17,7 +17,7 @@ import (
 )
 
 
-// TODO : use go testing package to rewrite an assert-style program
+// initTest init and return the handle of client,master and chunkservers
 func initTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer){
 	logrus.SetLevel(logrus.DebugLevel)
 	// Init master and client
@@ -59,21 +59,24 @@ func TestReadWrite(t *testing.T) {
 
 	// Write 3.5 chunks to file2
 	offset = 0
-	data = make([]byte,util.MAXCHUNKSIZE*3.5)
+	data = []byte(util.MakeString(util.MAXCHUNKSIZE*3.5))
 	err = HTTPWrite(util.CLIENTADDR,fd2,offset,data)
 	util.AssertNil(t,err)
 	fileState,err = HTTPGetFileInfo(util.CLIENTADDR,"/file2")
 	fmt.Println(fileState)
 
-	// Write 1 chunk at offset 3 in file2
-	offset = util.MAXCHUNKSIZE*3
-	data = make([]byte,util.MAXCHUNKSIZE)
+	// Write 1 chunk at offset 3*size+1 in file2
+	offset = util.MAXCHUNKSIZE*3+1
+	data = []byte(util.MakeString(util.MAXCHUNKSIZE-1))
 	err = HTTPWrite(util.CLIENTADDR,fd2,offset,data)
 	util.AssertNil(t,err)
 	fileState,err = HTTPGetFileInfo(util.CLIENTADDR,"/file2")
 	fmt.Println(fileState)
 	m.Exit()
 	c.Exit()
+	for _,_cs := range cs{
+		_cs.Exit()
+	}
 }
 
 
@@ -98,6 +101,9 @@ func TestOpenClose(t *testing.T) {
 	util.AssertEqual(t,code,400)
 	m.Exit()
 	c.Exit()
+	for _,_cs := range cs{
+		_cs.Exit()
+	}
 }
 
 // HTTPOpen : open a file
