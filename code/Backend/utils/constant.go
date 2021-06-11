@@ -81,16 +81,25 @@ type NewSheetParams struct {
 	InitColumns uint		`json:"initColumns"`
 }
 
-type ModifySheetParams struct {
+//type ModifySheetParams struct {
+//	Token		string		`json:"token"`
+//	Fid			uint		`json:"fid"`
+//	Name		string		`json:"name"`
+//	Oper		uint		`json:"oper"`		// Operations on the block: 0-insert; 1-delete; 2-overwrite; 3-meta
+//	Columns		uint		`json:"columns"`	// max columns of sheet
+//	Block		uint		`json:"block"`		// index of the block
+//	Offset		uint		`json:"offset"`
+//	Length		int64		`json:"length"`		// for delete only
+//	Content		string		`json:"content"`	// for insert and overwrite
+//}
+
+type ModifySheetParams struct {					// overwrite only
 	Token		string		`json:"token"`
 	Fid			uint		`json:"fid"`
-	Name		string		`json:"name"`
-	Oper		uint		`json:"oper"`		// Operations on the block: 0-insert; 1-delete; 2-overwrite; 3-meta
-	Columns		uint		`json:"columns"`	// max columns of sheet
-	Block		uint		`json:"block"`		// index of the block
-	Offset		uint		`json:"offset"`
-	Length		int64		`json:"length"`		// for delete only
-	Content		string		`json:"content"`	// for insert and overwrite
+	MaxCols		uint		`json:"maxcols"`	// max columns of sheet
+	Col			uint		`json:"col"`		// column index
+	Row			uint		`json:"row"`		// row index
+	Content		string		`json:"content"`	// overwrite
 }
 
 type GetSheetParams struct {
