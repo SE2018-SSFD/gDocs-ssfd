@@ -12,7 +12,6 @@ type LoadDataArgs struct {
 }
 
 type LoadDataReply struct {
-
 }
 
 type StoreDataArgs struct {
@@ -63,6 +62,18 @@ type HeartBeatArgs struct {
 type HeartBeatReply struct {
 }
 
+type CloneChunkArgs struct {
+	Handle Handle
+	Len    int //data length
+	Addrs  []Address
+}
+
+type CloneChunkReply struct {
+}
+
+type SyncChunkArgs struct {
+}
+
 // Master RPC structure
 type OpenArg struct {
 	Path DFSPath `json:"path"`
@@ -105,7 +116,7 @@ type WriteRet struct {
 	BytesWritten int `json:"bytes_written"`
 }
 type AppendArg struct {
-	Fd int	`json:"fd"`
+	Fd   int    `json:"fd"`
 	Data []byte `json:"data"`
 }
 type AppendRet struct {
@@ -133,4 +144,15 @@ type SetFileMetaArg struct {
 }
 
 type SetFileMetaRet struct {
+}
+
+type ReadArg struct {
+	Fd     int    `json:"fd"`
+	Offset int    `json:"offset"`
+	Len    int    `json:"len"`
+	Data   []byte `json:"data"`
+}
+
+type ReadRet struct {
+	Data []byte `json:"data"`
 }

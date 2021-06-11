@@ -194,3 +194,32 @@ func (cs *ChunkServer) StoreDataRPC(args util.StoreDataArgs, reply *util.StoreDa
 	log.Printf("ChunkServer %v: store handle %v, len %v\n", cs.addr, args.CID.Handle, len)
 	return err
 }
+
+func (cs *ChunkServer) CloneChunkRPC(args util.CloneChunkArgs, reply *util.CloneChunkReply) error {
+	buf := make([]byte, args.Len)
+
+	cs.RLock()
+	ck, exist := cs.chunks[args.Handle]
+	if !exist {
+		cs.RUnlock()
+		return fmt.Errorf("ChunkServer %v: chunk %v not exist", cs.addr, args.Handle)
+	}
+	ck.RLock()
+	cs.RUnlock()
+	defer ck.RUnlock()
+
+	len, err := cs.GetChunk(args.Handle, 0, buf)
+	if err != nil {
+		log.Fatalf("get chunk error\n")
+		return err
+	}
+
+	if args.Len != len {
+		return fmt.Errorf("ChunkServer %v: clone chunk len %v,but actual len %v", cs.addr, args.Len, len)
+	}
+
+	// util.CallAll(args.Addrs, "")
+	return nil
+}
+
+// func (cs *ChunkServer) SyncChunkRPC()
