@@ -8,6 +8,8 @@ import (
 	"os"
 	"path"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 )
 
 type ChunkServer struct {
@@ -23,14 +25,25 @@ type ChunkServer struct {
 }
 
 type ChunkInfo struct {
-	// size      int64
 	sync.RWMutex
 	verNum    int64 //version number
 	mutations map[int64]*Mutation
 	// checksum  int64
 }
 
+type ChunkInfoCP struct {
+	handle util.Handle
+	verNum int64
+}
+
 type Mutation struct {
+}
+
+func (cs *ChunkServer) Printf(format string, v ...interface{}) {
+	var vv []interface{}
+	vv = append(vv, cs.addr)
+	vv = append(vv, v)
+	logrus.Printf("chunkserver %v: "+format, vv...)
 }
 
 func InitChunkServer(chunkAddr string, dataPath string, masterAddr string) *ChunkServer {
@@ -53,27 +66,12 @@ func InitChunkServer(chunkAddr string, dataPath string, masterAddr string) *Chun
 
 	cs.StartRPCServer()
 
-	log.Printf("chunkserver %v init success\n", chunkAddr)
+	log.Printf("chunkserver %v: init success\n", chunkAddr)
 	return cs
 }
 
-// func (cs *ChunkServer)
-
-// func (cs *ChunkServer) HeartBeat() error {
-
-// }
-
-func (cs *ChunkServer) GetChunkStatesRPC(args util.GetChunkStatesArgs, reply *util.GetChunkStatesReply) error {
-	var chunkStates []util.ChunkState
-	for handle, chunk := range cs.chunks {
-		chunkStates = append(chunkStates, util.ChunkState{Handle: handle, VerNum: chunk.verNum})
-	}
-	reply.ChunkStates = chunkStates
-	return nil
-}
-
-func (cs *ChunkServer) GetStatusString() string {
-	return "ChunkServer address :" + cs.addr + ",dir :" + cs.dir
+func (cs *ChunkServer) GetAddr() string {
+	return string(cs.addr)
 }
 
 func (cs *ChunkServer) GetFileName(handle util.Handle) string {
@@ -81,75 +79,10 @@ func (cs *ChunkServer) GetFileName(handle util.Handle) string {
 	return path.Join(cs.dir, name)
 }
 
-func (cs *ChunkServer) GetChunk(handle util.Handle, off int, buf []byte) (int, error) {
-	filename := cs.GetFileName(handle)
-
-	fd, err := os.Open(filename)
-
-	if err != nil {
-		return 0, err
-	}
-	defer fd.Close()
-
-	return fd.ReadAt(buf, int64(off))
+func (cs *ChunkServer) GetCPName() string {
+	return path.Join(cs.dir, "checkpoint.dat")
 }
 
-// func (cs *ChunkServer) GetChunkWithOutLock(handle util.Handle, off int, buf []byte) (int, error) {
-// 	filename := cs.GetFileName(handle)
-
-// 	fd, err := os.Open(filename)
-
-// 	if err != nil {
-// 		return 0, err
-// 	}
-// 	defer fd.Close()
-
-// 	return fd.ReadAt(buf, int64(off))
-// }
-
-func (cs *ChunkServer) SetChunk(handle util.Handle, off int, buf []byte) (int, error) {
-
-	if off+len(buf) > util.MAXCHUNKSIZE {
-		log.Panic("chunk size cannot be larger than maxchunksize\n")
-	}
-
-	filename := cs.GetFileName(handle)
-
-	fd, err := os.OpenFile(filename, os.O_WRONLY, 0644)
-
-	if err != nil {
-		return 0, err
-	}
-
-	defer fd.Close()
-
-	return fd.WriteAt(buf, int64(off))
-}
-
-func (cs *ChunkServer) RemoveChunk(handle util.Handle) error {
-	filename := cs.GetFileName(handle)
-	err := os.Remove(filename)
-	if err != nil {
-		log.Panic(err)
-		return err
-	}
-	return nil
-}
-
-func (cs *ChunkServer) CreateChunk(handle util.Handle) error {
-	filename := cs.GetFileName(handle)
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		log.Panic(err)
-		return err
-	}
-
-	defer f.Close()
-	err = f.Truncate(util.MAXCHUNKSIZE)
-	if err != nil {
-		log.Panic(err)
-		return err
-	}
-
-	return nil
+func (cs *ChunkServer) GetLogName() string {
+	return path.Join(cs.dir, "log.dat")
 }

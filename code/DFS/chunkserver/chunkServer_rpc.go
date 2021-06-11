@@ -57,6 +57,15 @@ func (cs *ChunkServer) StartRPCServer() error {
 	return err
 }
 
+func (cs *ChunkServer) GetChunkStatesRPC(args util.GetChunkStatesArgs, reply *util.GetChunkStatesReply) error {
+	var chunkStates []util.ChunkState
+	for handle, chunk := range cs.chunks {
+		chunkStates = append(chunkStates, util.ChunkState{Handle: handle, VerNum: chunk.verNum})
+	}
+	reply.ChunkStates = chunkStates
+	return nil
+}
+
 func (cs *ChunkServer) LoadDataRPC(args util.LoadDataArgs, reply *util.LoadDataReply) error {
 	log.Printf("ChunkServer %v: load data \n", cs.addr)
 	cs.cache.Set(args.CID, args.Data)
@@ -118,6 +127,7 @@ func (cs *ChunkServer) CreateChunkRPC(args util.CreateChunkArgs, reply *util.Cre
 	return cs.CreateChunk(args.Handle)
 }
 
+//TODO : Append log to log file
 //call by client
 func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error {
 
@@ -159,7 +169,7 @@ func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error 
 			return fmt.Errorf(errs)
 		}
 	}
-	// error handler?
+	// TODO: error handler?
 
 	return nil
 }
