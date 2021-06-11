@@ -1,7 +1,5 @@
 package util
 
-import "time"
-
 // Master
 type Handle int64
 type DFSPath string
@@ -22,7 +20,8 @@ type ChunkState struct {
 
 // Client
 const (
-	MAXCHUNKSIZE      = 64 << 20 // 64MB
-	REPLICATIONTIMES  = 3
-	HEARTBEATDURATION = 200 * time.Millisecond
+	//MAXCHUNKSIZE = 64 << 20 // 64MB
+	MAXCHUNKSIZE     = 64 // 64B
+	REPLICATIONTIMES = 3
+	MAXFD            = 128
 )

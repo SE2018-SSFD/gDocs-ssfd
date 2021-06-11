@@ -3,7 +3,6 @@ package master
 import (
 	"DFS/util"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"math/rand"
 	"time"
 )
@@ -29,9 +28,20 @@ func (s *ChunkServerStates) randomServers(times int) (addrs []util.Address,err e
 	}
 	for _,serverIndex := range rand.Perm(len(s.servers))[:times]{
 		addrs = append(addrs,all[serverIndex])
-		logrus.Debugln(all[serverIndex]," ")
+		//logrus.Debugln(all[serverIndex]," ")
 	}
 	return
+}
+
+func (s *ChunkServerStates) RegisterServer(addr util.Address) error {
+	_,exist := s.servers[addr]
+	if exist{
+		return fmt.Errorf("ServerReRegisterError : Server %s is registered\n",addr)
+	}
+	s.servers[addr] = &ChunkServerState{
+		lastHeartbeat: time.Now(),
+	}
+	return nil
 }
 
 type ChunkServerState struct{
