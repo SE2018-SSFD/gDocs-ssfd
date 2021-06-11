@@ -150,7 +150,6 @@ type ReadArg struct {
 	Fd     int    `json:"fd"`
 	Offset int    `json:"offset"`
 	Len    int    `json:"len"`
-	Data   []byte `json:"data"`
 }
 
 type ReadRet struct {
