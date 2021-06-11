@@ -1,10 +1,6 @@
 package util
 
-type CacheID struct {
-	Handle     Handle
-	ClientAddr string
-}
-
+//ChunkServer RPC struct
 type LoadDataArgs struct {
 	Data  []byte
 	CID   CacheID
@@ -44,8 +40,22 @@ type ReadChunkArgs struct {
 	Len    int
 }
 type ReadChunkReply struct {
-	Len int
-	Buf []byte
+	Len    int
+	Buf    []byte
+	VerNum int64
+}
+
+type GetChunkStatesArgs struct {
+}
+
+type GetChunkStatesReply struct {
+	ChunkStates []ChunkState
+}
+
+type HeartBeatArgs struct {
+}
+
+type HeartBeatReply struct {
 }
 
 // Master RPC structure
@@ -79,11 +89,10 @@ type GetReplicasRet struct {
 	ChunkServerAddrs []Address
 }
 type GetFileMetaArg struct {
-	Path       DFSPath
+	Path DFSPath
 }
-type GetFileMetaRet struct{
+type GetFileMetaRet struct {
 	Exist bool
 	IsDir bool
-	Size int32
+	Size  int32
 }
-

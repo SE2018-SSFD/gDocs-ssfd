@@ -15,14 +15,14 @@ type Cache struct {
 }
 
 func InitCache() *Cache {
-	c := &Cache{}
+	c := &Cache{buf: make(map[util.CacheID]Buffer)}
 	return c
 }
 
 func (c *Cache) Get(cid util.CacheID) ([]byte, error) {
-	c.Lock()
+	c.RLock()
 	buf := c.buf[cid].data
-	c.Unlock()
+	c.RUnlock()
 	return buf, nil
 }
 
