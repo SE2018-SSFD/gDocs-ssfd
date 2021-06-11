@@ -1,6 +1,7 @@
 package main
 
 import (
+	"DFS/chunkserver"
 	"DFS/client"
 	"DFS/master"
 	"DFS/util"
@@ -17,20 +18,28 @@ import (
 
 
 // TODO : use go testing package to rewrite an assert-style program
-func initTest() (c *client.Client,m *master.Master){
+func initTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer){
 	logrus.SetLevel(logrus.DebugLevel)
 	// Init master and client
 	m = master.InitMaster(util.MASTERADDR, ".")
 	go func(){m.Serve()}()
 	c = client.InitClient(util.CLIENTADDR, util.MASTERADDR)
 	go func(){c.Serve()}()
+	// Register some virtual chunkServers
+	cs = make([]*chunkserver.ChunkServer, 5)
+	for index,port := range []int{3000,3001,3002,3003,3004}{
+		addr := util.Address("127.0.0.1:" + strconv.Itoa(port))
+		cs[index] = chunkserver.InitChunkServer(string(addr), "ck"+strconv.Itoa(port),  util.MASTERADDR)
+		_ = m.RegisterServer(addr)
+		//util.AssertNil(t,err)
+	}
 	time.Sleep(time.Second)
 	return
 }
 
 
 func TestReadWrite(t *testing.T) {
-	_,m := initTest()
+	c,m,cs := initTest()
 	err := HTTPCreate(util.CLIENTADDR,"/file1")
 	util.AssertNil(t,err)
 	err = HTTPCreate(util.CLIENTADDR,"/file2")
@@ -39,11 +48,6 @@ func TestReadWrite(t *testing.T) {
 	util.AssertNil(t,err)
 	fd2,err := HTTPOpen(util.CLIENTADDR,"/file2")
 	util.AssertNil(t,err)
-	// Register some virtual chunkServers
-	for _,port := range []int{3000,3001,3002,3003,3004}{
-		err = m.RegisterServer(util.Address("127.0.0.1:" + strconv.Itoa(port)))
-		util.AssertNil(t,err)
-	}
 
 	// Write 4 chunks to file1
 	offset := 0
@@ -69,11 +73,12 @@ func TestReadWrite(t *testing.T) {
 	fileState,err = HTTPGetFileInfo(util.CLIENTADDR,"/file2")
 	fmt.Println(fileState)
 	m.Exit()
+	c.Exit()
 }
 
 
 func TestOpenClose(t *testing.T) {
-	_,m := initTest()
+	c,m,cs := initTest()
 	err := HTTPCreate(util.CLIENTADDR,"/file1")
 	util.AssertNil(t,err)
 	err = HTTPCreate(util.CLIENTADDR,"/file2")
@@ -81,16 +86,18 @@ func TestOpenClose(t *testing.T) {
 	fd,err := HTTPOpen(util.CLIENTADDR,"/file1")
 	util.AssertNil(t,err)
 	logrus.Infoln("fd :",fd)
-	err = HTTPClose(util.CLIENTADDR,fd)
-	util.AssertNil(t,err)
+	code,err := HTTPClose(util.CLIENTADDR,fd)
+	util.AssertEqual(t,code,200)
 	fd,err = HTTPOpen(util.CLIENTADDR,"/file2")
 	util.AssertNil(t,err)
 	logrus.Infoln("fd :",fd)
-	err = HTTPClose(util.CLIENTADDR,fd)
+	code,err = HTTPClose(util.CLIENTADDR,fd)
+	util.AssertEqual(t,code,200)
 	util.AssertNil(t,err)
-	err = HTTPClose(util.CLIENTADDR,fd)
-	util.AssertNotNil(t,err)
+	code,err = HTTPClose(util.CLIENTADDR,fd)
+	util.AssertEqual(t,code,400)
 	m.Exit()
+	c.Exit()
 }
 
 // HTTPOpen : open a file
@@ -115,7 +122,7 @@ func HTTPOpen(addr string,path string)(fd int,err error){
 }
 
 // HTTPClose : close a file according to fd
-func HTTPClose(addr string,fd int)(err error){
+func HTTPClose(addr string,fd int)(statusCode int,err error){
 	url := "http://"+addr+"/close"
 	postBody, _ := json.Marshal(map[string]interface{}{
 		"fd":  fd,
@@ -125,8 +132,9 @@ func HTTPClose(addr string,fd int)(err error){
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 	_, err = ioutil.ReadAll(resp.Body)
+	statusCode = resp.StatusCode
+	defer resp.Body.Close()
 	return
 }
 

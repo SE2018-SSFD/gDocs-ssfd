@@ -22,3 +22,15 @@ rpc.Register(&m)
 零散的记录一点实现过程中的思考，最后再统一
 1. 回收站功能：后端在收到第二次delete时才向DFS发Delete操作
 2. 为了保证并发写，master管理namespace时，应该对写请求加读锁
+3. goroutine是协程，和主线程是等价的
+```go
+package doc
+func IsClosed(c chan int) bool {
+	select {
+	case <-c:
+		return true
+	default:
+	}
+	return false
+}
+```
