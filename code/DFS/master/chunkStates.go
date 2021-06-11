@@ -70,3 +70,16 @@ func (s* ChunkStates) NewFile(path util.DFSPath) error {
 	}
 	return nil
 }
+
+// Delete a file and its chunks
+func (s* ChunkStates) Delete(path util.DFSPath) error {
+	fs,exist := s.file[path]
+	if !exist{
+		return fmt.Errorf("DeleteError : path %s is not existed",path)
+	}
+	for _,chunk := range fs.chunks{
+		delete(s.chunk,chunk)
+	}
+	delete(s.file,path)
+	return nil
+}

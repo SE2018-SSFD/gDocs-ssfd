@@ -12,6 +12,7 @@ type LoadDataArgs struct {
 }
 
 type LoadDataReply struct {
+
 }
 
 type StoreDataArgs struct {
@@ -87,6 +88,13 @@ type WriteArg struct {
 	Data []byte `json:"data"`
 }
 type WriteRet struct {
+	BytesWritten int `json:"bytes_written"`
+}
+type AppendArg struct {
+	Fd int	`json:"fd"`
+	Data []byte `json:"data"`
+}
+type AppendRet struct {
 	BytesWritten int `json:"bytes_written"`
 }
 type GetReplicasArg struct {
