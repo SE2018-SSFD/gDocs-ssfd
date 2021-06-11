@@ -45,47 +45,61 @@ type ReadChunkArgs struct {
 	Len    int
 }
 type ReadChunkReply struct {
-	Len int
-	Buf []byte
+	Len    int
+	Buf    []byte
+	VerNum int64
+}
+
+type GetChunkStatesArgs struct {
+}
+
+type GetChunkStatesReply struct {
+	ChunkStates []ChunkState
+}
+
+type HeartBeatArgs struct {
+}
+
+type HeartBeatReply struct {
 }
 
 // Master RPC structure
 type OpenArg struct {
-	Path DFSPath   `json:"path"`
+	Path DFSPath `json:"path"`
 }
 type OpenRet struct {
-	Fd int 			`json:"fd"`
+	Fd int `json:"fd"`
 }
 type CloseArg struct {
-	Fd int			`json:"fd"`
+	Fd int `json:"fd"`
 }
 type CloseRet struct {
 }
 type CreateArg struct {
-	Path DFSPath	`json:"path"`
+	Path DFSPath `json:"path"`
 }
 type CreateRet struct {
 }
 type MkdirArg struct {
-	Path DFSPath	`json:"path"`
+	Path DFSPath `json:"path"`
 }
 type MkdirRet struct {
 }
 type DeleteArg struct {
-	Path DFSPath	`json:"path"`
+	Path DFSPath `json:"path"`
 }
 type DeleteRet struct {
 }
 type ListArg struct {
-	Path DFSPath	`json:"path"`
+	Path DFSPath `json:"path"`
 }
 type ListRet struct {
-	Files []string	`json:"files"`
+	Files []string `json:"files"`
 }
 type WriteArg struct {
-	Fd int	`json:"fd"`
-	Offset int `json:"offset"`
-	Data []byte `json:"data"`
+	Fd     int    `json:"fd"`
+	Offset int    `json:"offset"`
+	Data   []byte `json:"data"`
 }
 type WriteRet struct {
 	BytesWritten int `json:"bytes_written"`
@@ -98,25 +112,25 @@ type AppendRet struct {
 	BytesWritten int `json:"bytes_written"`
 }
 type GetReplicasArg struct {
-	Path       DFSPath	`json:"path"`
-	ChunkIndex int	`json:"chunk_index"`
+	Path       DFSPath `json:"path"`
+	ChunkIndex int     `json:"chunk_index"`
 }
 type GetReplicasRet struct {
-	ChunkHandle      Handle	`json:"chunk_handle"`
-	ChunkServerAddrs []Address	`json:"chunk_server_addrs"`
+	ChunkHandle      Handle    `json:"chunk_handle"`
+	ChunkServerAddrs []Address `json:"chunk_server_addrs"`
 }
 type GetFileMetaArg struct {
-	Path       DFSPath	`json:"path"`
+	Path DFSPath `json:"path"`
 }
-type GetFileMetaRet struct{
-	Exist bool	`json:"exist"`
-	IsDir bool	`json:"is_dir"`
-	Size int	`json:"size"`
+type GetFileMetaRet struct {
+	Exist bool `json:"exist"`
+	IsDir bool `json:"is_dir"`
+	Size  int  `json:"size"`
 }
 type SetFileMetaArg struct {
-	Path       DFSPath	`json:"path"`
-	Size int	`json:"size"`
+	Path DFSPath `json:"path"`
+	Size int     `json:"size"`
 }
 
-type SetFileMetaRet struct{
+type SetFileMetaRet struct {
 }
