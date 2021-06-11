@@ -14,9 +14,6 @@ type ChunkStates struct {
 	curHandle util.Handle
 }
 
-
-
-
 type chunkState struct {
 	locations []util.Address // set of replica locations
 	expire   time.Time           // lease expire time
@@ -27,7 +24,7 @@ type fileState struct{
 }
 
 
-// CreateChunkAndReplica create metadatas of a chunk and its replicas
+// CreateChunkAndReplica create metadata of a chunk and its replicas
 // then it ask chunkservers to create chunks in Linux File System
 func (s* ChunkStates) CreateChunkAndReplica(path util.DFSPath,addrs []util.Address) (newHandle util.Handle,err error) {
 	newHandle = s.curHandle+1

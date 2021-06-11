@@ -11,52 +11,45 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"testing"
 	"time"
 )
 
 
 // TODO : use go testing package to rewrite an assert-style program
-func main() {
+func initTest() (c *client.Client,m *master.Master){
 	logrus.SetLevel(logrus.DebugLevel)
 	// Init master and client
-	m := master.InitMaster(util.MASTERADDR, ".")
+	m = master.InitMaster(util.MASTERADDR, ".")
 	go func(){m.Serve()}()
-	c := client.InitClient(util.CLIENTADDR, util.MASTERADDR)
+	c = client.InitClient(util.CLIENTADDR, util.MASTERADDR)
 	go func(){c.Serve()}()
 	time.Sleep(time.Second)
-
-	// Start testing
-	OpenCloseTest(c,m)
-	ReadWriteTest(c,m)
+	return
 }
-//func SingleThreadTesting(){
-//
-//}
-func ReadWriteTest(c *client.Client,m *master.Master){
+
+
+func TestReadWrite(t *testing.T) {
+	_,m := initTest()
+	err := HTTPCreate(util.CLIENTADDR,"/file1")
+	util.AssertNil(t,err)
+	err = HTTPCreate(util.CLIENTADDR,"/file2")
+	util.AssertNil(t,err)
 	fd1,err := HTTPOpen(util.CLIENTADDR,"/file1")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	util.AssertNil(t,err)
 	fd2,err := HTTPOpen(util.CLIENTADDR,"/file2")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	util.AssertNil(t,err)
 	// Register some virtual chunkServers
-	err = m.RegisterServer("127.0.0.1:3000")
-	err = m.RegisterServer("127.0.0.1:3001")
-	err = m.RegisterServer("127.0.0.1:3002")
-	err = m.RegisterServer("127.0.0.1:3003")
-	err = m.RegisterServer("127.0.0.1:3004")
+	for _,port := range []int{3000,3001,3002,3003,3004}{
+		err = m.RegisterServer(util.Address("127.0.0.1:" + strconv.Itoa(port)))
+		util.AssertNil(t,err)
+	}
 
 	// Write 4 chunks to file1
 	offset := 0
 	data := make([]byte,util.MAXCHUNKSIZE*4)
 	err = HTTPWrite(util.CLIENTADDR,fd1,offset,data)
-	if err!=nil{
-		fmt.Println(err)
-	}
+	util.AssertNil(t,err)
 	fileState,err := HTTPGetFileInfo(util.CLIENTADDR,"/file1")
 	fmt.Println(fileState)
 
@@ -64,9 +57,7 @@ func ReadWriteTest(c *client.Client,m *master.Master){
 	offset = 0
 	data = make([]byte,util.MAXCHUNKSIZE*3.5)
 	err = HTTPWrite(util.CLIENTADDR,fd2,offset,data)
-	if err!=nil{
-		fmt.Println(err)
-	}
+	util.AssertNil(t,err)
 	fileState,err = HTTPGetFileInfo(util.CLIENTADDR,"/file2")
 	fmt.Println(fileState)
 
@@ -74,47 +65,32 @@ func ReadWriteTest(c *client.Client,m *master.Master){
 	offset = util.MAXCHUNKSIZE*3
 	data = make([]byte,util.MAXCHUNKSIZE)
 	err = HTTPWrite(util.CLIENTADDR,fd2,offset,data)
-	if err!=nil{
-		fmt.Println(err)
-	}
+	util.AssertNil(t,err)
 	fileState,err = HTTPGetFileInfo(util.CLIENTADDR,"/file2")
 	fmt.Println(fileState)
+	m.Exit()
 }
 
 
-func OpenCloseTest(c *client.Client,m *master.Master) {
+func TestOpenClose(t *testing.T) {
+	_,m := initTest()
 	err := HTTPCreate(util.CLIENTADDR,"/file1")
-	if err != nil {
-		fmt.Println(err)
-	}
+	util.AssertNil(t,err)
 	err = HTTPCreate(util.CLIENTADDR,"/file2")
-	if err != nil {
-		fmt.Println(err)
-	}
+	util.AssertNil(t,err)
 	fd,err := HTTPOpen(util.CLIENTADDR,"/file1")
-	if err != nil {
-		fmt.Println(err)
-	}else{
-		logrus.Infoln("fd :",fd)
-	}
+	util.AssertNil(t,err)
+	logrus.Infoln("fd :",fd)
 	err = HTTPClose(util.CLIENTADDR,fd)
-	if err != nil {
-		fmt.Println(err)
-	}
+	util.AssertNil(t,err)
 	fd,err = HTTPOpen(util.CLIENTADDR,"/file2")
-	if err != nil {
-		fmt.Println(err)
-	}else{
-		logrus.Infoln("fd :",fd)
-	}
+	util.AssertNil(t,err)
+	logrus.Infoln("fd :",fd)
 	err = HTTPClose(util.CLIENTADDR,fd)
-	if err != nil {
-		fmt.Println(err)
-	}
+	util.AssertNil(t,err)
 	err = HTTPClose(util.CLIENTADDR,fd)
-	if err != nil {
-		fmt.Println(err)
-	}
+	util.AssertNotNil(t,err)
+	m.Exit()
 }
 
 // HTTPOpen : open a file

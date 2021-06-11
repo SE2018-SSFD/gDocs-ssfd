@@ -14,7 +14,7 @@ import (
 type Master struct {
 	addr     util.Address
 	metaPath util.LinuxPath
-	l        net.Listener
+	L        net.Listener
 	rpcs     *rpc.Server
 	// manage the state of chunkserver node
 	css *ChunkServerStates
@@ -39,7 +39,7 @@ func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	m.l = l
+	m.L = l
 	// Init zookeeper
 	//c, _, err := zk.Connect([]string{"127.0.0.1"}, time.Second) //*10)
 
@@ -54,7 +54,7 @@ func (m *Master) Serve() {
 	// listening thread
 	go func() {
 		for {
-			conn, err := m.l.Accept()
+			conn, err := m.L.Accept()
 			if err == nil {
 				go func() {
 					m.rpcs.ServeConn(conn)
@@ -65,9 +65,17 @@ func (m *Master) Serve() {
 			}
 		}
 	}()
-	// block on ch; make it a daemon
-	ch := make(chan bool)
-	<-ch
+	//ch := make(chan bool)
+	//<-ch
+	//os.Exit(1)
+}
+
+// Direct Exit without storing the metadata
+func (m*Master) Exit(){
+	err := m.L.Close()
+	if err != nil {
+		return
+	}
 }
 
 func (m*Master) RegisterServer(addr util.Address)error{

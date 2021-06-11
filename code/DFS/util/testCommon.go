@@ -7,22 +7,30 @@ const (
 	MASTERADDR = "127.0.0.1:1234"
 )
 func AssertEqual(t *testing.T, a, b interface{}) {
+	t.Helper()
 	if a != b {
+		t.Fail()
 		t.Error("AssertEqual Failed :",a, b)
 	}
 }
 func AssertNotEqual(t *testing.T, a, b interface{}) {
+	t.Helper()
 	if a == b {
+		t.Fail()
 		t.Error("AssertNotEqual Failed :",a, b)
 	}
 }
 func AssertNil(t *testing.T, a interface{}) {
+	t.Helper()
 	if a != nil {
+		t.Fail()
 		t.Error("AssertNil Failed :",a)
 	}
 }
 func AssertNotNil(t *testing.T, a interface{}) {
+	t.Helper()
 	if a == nil {
+		t.Fail()
 		t.Error("AssertNotNil Failed :",a)
 	}
 }

@@ -42,8 +42,13 @@ func (c *Client) Serve() {
 	if err != nil {
 		logrus.Fatal("Client server shutdown!\n")
 	}
-
 }
+
+// Exit Directly
+func (c *Client) Exit() {
+	//http.c
+}
+
 // TODO:client should not return error due to DFS failure
 // Create a file.
 func (c *Client) Create(w http.ResponseWriter, r *http.Request) {
@@ -334,7 +339,6 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	}
 	msg,_ := json.Marshal(writtenBytes)
 	w.Write(msg)
-	w.WriteHeader(200)
 	return
 }
 
