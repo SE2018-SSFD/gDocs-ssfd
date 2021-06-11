@@ -130,7 +130,6 @@ func (c *Client) Close(w http.ResponseWriter, r *http.Request) {
 	var arg util.CloseArg
 	err := json.NewDecoder(r.Body).Decode(&arg)
 	defer func(err error) {
-		logrus.Warn(err, "!\n")
 		if err != nil {
 			w.Write([]byte(err.Error()))
 		}

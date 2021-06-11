@@ -42,3 +42,12 @@ func CallAll(dst []Address, rpcname string, args interface{}) error {
 		return fmt.Errorf(errList)
 	}
 }
+
+// MakeString make ordered string from a-z repeating size times
+func MakeString(size int) string {
+	str := ""
+	for i:=0;i<size;i++{
+		str += string(rune('a' + i%26))
+	}
+	return str
+}
