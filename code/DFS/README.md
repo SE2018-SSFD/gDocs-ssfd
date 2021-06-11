@@ -34,3 +34,17 @@ func IsClosed(c chan int) bool {
 	return false
 }
 ```
+4. Tricky pointer
+```go
+// when reply is a function param...
+*reply = util.GetFileMetaRet{
+	Exist: false,
+	IsDir: false,
+	Size: -1,
+}//correct
+reply = &util.GetFileMetaRet{
+Exist: false,
+IsDir: false,
+Size: -1,
+}//incorrect,doesn't change the value
+```

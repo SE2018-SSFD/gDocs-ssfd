@@ -5,6 +5,7 @@ import "testing"
 const (
 	CLIENTADDR = "127.0.0.1:1233"
 	MASTERADDR = "127.0.0.1:1234"
+	PARALLELSIZE = 3
 )
 func AssertEqual(t *testing.T, a, b interface{}) {
 	t.Helper()

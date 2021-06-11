@@ -154,7 +154,7 @@ func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMet
 	node,err := m.ns.GetNode(args.Path)
 	if err != nil {
 		logrus.Debugf("RPC getFileMeta failed : %s\n", err)
-		reply = &util.GetFileMetaRet{
+		*reply = util.GetFileMetaRet{
 			Exist: false,
 			IsDir: false,
 			Size: -1,
