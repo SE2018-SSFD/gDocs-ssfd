@@ -154,5 +154,6 @@ type ReadArg struct {
 }
 
 type ReadRet struct {
+	Len  int    `json:"len"`
 	Data []byte `json:"data"`
 }
