@@ -151,16 +151,88 @@ func (c *Client) Close(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (c *Client) _Read(path util.DFSPath, offset int, len int, fileSize int) (readBytes int, buf []byte, err error) {
+	var argR util.GetReplicasArg
+	var retR util.GetReplicasRet
+	var argRCK util.ReadChunkArgs
+	var retRCK util.ReadChunkReply
+	argR.Path = path
+	for readBytes < len {
+		roundOff := (offset + readBytes) % util.MAXCHUNKSIZE
+		roundReadBytes := int(math.Min(float64(util.MAXCHUNKSIZE-roundOff), float64(len-readBytes)))
+
+		argR.ChunkIndex = (offset + readBytes) / util.MAXCHUNKSIZE
+		err = util.Call(string(c.masterAddr), "Master.GetReplicasRPC", argR, &retR)
+		if err != nil {
+			return
+		}
+		logrus.Debugf(" ChunkHandle : %d Addresses : %s %s %s\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2])
+		//TODO : make it random
+		argRCK.Handle = retR.ChunkHandle
+		argRCK.Len = roundReadBytes
+		argRCK.Off = roundOff
+		err = util.Call(string(retR.ChunkServerAddrs[0]), "ChunkServer.ReadChunkRPC", argRCK, &retRCK)
+		if err != nil {
+			logrus.Panicln("Client read failed :", err)
+			return
+		}
+		if retRCK.Len != roundReadBytes {
+			logrus.Panicln("Client should read %v,buf only read %v", roundReadBytes, retRCK.Len)
+			return
+		}
+		buf = append(buf, retRCK.Buf...)
+		readBytes += roundReadBytes
+		logrus.Debugf(" Read %d bytes from chunkserver %s, bytes read %d\n", roundReadBytes, string(retR.ChunkServerAddrs[0]), readBytes)
+	}
+	return
+}
+
 // Read a file.
 // should contact the master first, then get the data directly from chunkserver
 func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
-	// var arg util.ReadArg
-	// var ret util.ReadRet
-	// err := json.NewDecoder(r.Body).Decode(&arg)
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusBadRequest)
-	// 	return
-	// }
+	var argR util.ReadArg
+	var retR util.ReadRet
+	var argF util.GetFileMetaArg
+	var retF util.GetFileMetaRet
+	// Decode the params
+	err := json.NewDecoder(r.Body).Decode(&argR)
+	if err != nil {
+		logrus.Fatalln("Client read failed :", err)
+		w.WriteHeader(400)
+		return
+	}
+
+	// Get the file metadata and check
+	path := c.fdTable[argR.Fd]
+	if path == "" {
+		err = fmt.Errorf("Client read failed : fd %d is not opened\n", argR.Fd)
+		return
+	}
+
+	argF.Path = path
+	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
+	if !retF.Exist {
+		logrus.Fatalln("Client read failed :", err)
+		return
+	}
+	fileSize := retF.Size
+	if argR.Offset+argR.Len > fileSize {
+		err = fmt.Errorf("Client read failed : read offset + read len exceed file size\n")
+		return
+	}
+
+	// Read to chunk
+	readBytes, buf, err := c._Read(path, argR.Offset, argR.Len, fileSize)
+	if err != nil {
+		logrus.Fatalln("Client read failed :", err)
+		w.WriteHeader(400)
+		return
+	}
+	retR.Data = buf
+	retR.Len = readBytes
+	msg, _ := json.Marshal(retR)
+	w.Write(msg)
+	return
 
 }
 
