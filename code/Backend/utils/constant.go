@@ -95,7 +95,6 @@ type NewSheetParams struct {
 type ModifySheetParams struct {					// overwrite only
 	Token		string		`json:"token"`
 	Fid			uint		`json:"fid"`
-	MaxCols		uint		`json:"maxcols"`	// max columns of sheet
 	Col			uint		`json:"col"`		// column index
 	Row			uint		`json:"row"`		// row index
 	Content		string		`json:"content"`	// overwrite
