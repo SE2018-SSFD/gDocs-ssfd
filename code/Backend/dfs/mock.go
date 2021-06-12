@@ -19,6 +19,10 @@ func mockOpen(path string) (int, error) {
 }
 
 func mockCreate(path string) (int, error) {
+	err := mockNameX(root + path, true)
+	if err != nil {
+		return 0, err
+	}
 	file, err := os.Create(root + path)
 	fdMap.Store(curFd, file)
 	curFd += 1
@@ -69,6 +73,16 @@ func mockStat(path string) (FileInfo, error) {
 
 	fileInfo := osFileInfo2DfsFileInfo(stat)
 	return fileInfo, nil
+}
+
+func mockNameX(path string, create bool) error {
+	if create == true {
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func osFileInfo2DfsFileInfo(before os.FileInfo) FileInfo {
