@@ -72,6 +72,12 @@ type CloneChunkReply struct {
 }
 
 type SyncChunkArgs struct {
+	Handle Handle
+	VerNum int64
+	Data   []byte
+}
+
+type SyncChunkReply struct {
 }
 
 // Master RPC structure
