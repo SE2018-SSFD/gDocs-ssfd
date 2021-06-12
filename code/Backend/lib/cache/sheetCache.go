@@ -126,6 +126,10 @@ func (sc *SheetCache) Get(key string) *MemSheet {
 	}
 }
 
+func (sc *SheetCache) Del(key string) {
+	sc.cache.Delete(key)
+}
+
 func (sc *SheetCache) doEvict(spareAtLeast int64) bool {
 	if sc.curSize < spareAtLeast {
 		return false
