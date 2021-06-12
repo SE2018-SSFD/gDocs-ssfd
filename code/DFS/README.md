@@ -48,3 +48,5 @@ IsDir: false,
 Size: -1,
 }//incorrect,doesn't change the value
 ```
+5. defer  
+defer语句需要执行到才有效果（执行前return了则无效果），执行时已经算好了该语句的值

@@ -4,11 +4,13 @@ import (
 	"DFS/util"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"sync"
 	"time"
 )
 /* The state of all chunks, maintained by the master */
 
 type ChunkStates struct {
+	sync.RWMutex
 	chunk map[util.Handle]*chunkState
 	file  map[util.DFSPath]*fileState
 	curHandle util.Handle
@@ -26,6 +28,7 @@ type fileState struct{
 
 // CreateChunkAndReplica create metadata of a chunk and its replicas
 // then it ask chunkservers to create chunks in Linux File System
+// TODO : handle concurrency
 func (s* ChunkStates) CreateChunkAndReplica(path util.DFSPath,addrs []util.Address) (newHandle util.Handle,err error) {
 	var arg util.CreateChunkArgs
 	var ret util.CreateChunkReply
@@ -62,6 +65,8 @@ func newChunkStates()*ChunkStates{
 
 // NewFile init the file metadata
 func (s* ChunkStates) NewFile(path util.DFSPath) error {
+	s.Lock()
+	defer s.Unlock()
 	_,exist := s.file[path]
 	if exist{
 		return fmt.Errorf("UnexpectedError : file meta exists in chunk states\n")
@@ -75,6 +80,8 @@ func (s* ChunkStates) NewFile(path util.DFSPath) error {
 
 // Delete a file and its chunks
 func (s* ChunkStates) Delete(path util.DFSPath) error {
+	s.Lock()
+	defer s.Unlock()
 	fs,exist := s.file[path]
 	if !exist{
 		return fmt.Errorf("DeleteError : path %s is not existed",path)

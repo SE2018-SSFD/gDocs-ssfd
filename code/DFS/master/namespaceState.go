@@ -70,7 +70,7 @@ func (ns *NamespaceState) Mknod(path util.DFSPath, isDir bool) error {
 		return err
 	}
 	parentNode.Lock()
-	parentNode.Unlock()
+	defer parentNode.Unlock()
 
 	// Create node
 	if _, exist := parentNode.treeNodes[filename]; exist {
@@ -123,7 +123,6 @@ func (ns *NamespaceState) Delete(path util.DFSPath) (err error) {
 	}
 
 	// Get parent node and WLock
-	// TODO: lock the parents for concurrency control
 	parentNode, err := ns.GetDir(parent,true)
 	defer ns.GetDir(parent,false)
 	if err != nil {
@@ -133,8 +132,13 @@ func (ns *NamespaceState) Delete(path util.DFSPath) (err error) {
 	defer parentNode.Unlock()
 
 	// Delete node (in namespace only)
-	if _, exist := parentNode.treeNodes[filename]; !exist {
+	node, exist := parentNode.treeNodes[filename]
+	if !exist {
 		err = fmt.Errorf("DeleteError : the requested DFS path %s is not exist\n", string(path))
+		return err
+	}
+	if node.isDir == true && len(node.treeNodes)!=0{
+		err = fmt.Errorf("DeleteError : the requested DFS dir %s is not empty\n", string(path))
 		return err
 	}
 	delete(parentNode.treeNodes,filename)
