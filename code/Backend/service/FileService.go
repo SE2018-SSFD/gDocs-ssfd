@@ -2,25 +2,33 @@ package service
 
 import (
 	"backend/dao"
+	"backend/lib/cache"
 	"backend/model"
 	"backend/utils"
+	"backend/utils/config"
 	"fmt"
 )
 
 // TODO: LOG is not Implemented
 
+var sheetCache = cache.NewSheetCache(config.MaxSheetCache)
+
 func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 	uid := CheckToken(params.Token)
 	if uid != 0 {
 		path := fmt.Sprintf("sheet_%s_uid_%d.txt", params.Name, uid)
-		if err := dao.FileCreate(path); err != nil {
-			panic(err)
-		}
+
 
 		fid := dao.CreateSheet(model.Sheet{
 			Name: params.Name,
 			Path: path,
 		})
+
+		memSheet := cache.NewMemSheet(int(params.InitRows), int(params.InitColumns))
+		//if err := dao.FileCreate(path, 0); err != nil {
+		//	panic(err)
+		//}
+		sheetCache.Add(fid, memSheet)
 
 		success, msg, data = true, utils.SheetNewSuccess, fid
 	} else {
@@ -41,29 +49,9 @@ func ModifySheet(params utils.ModifySheetParams) (success bool, msg int) {
 			if sheet.Fid == 0 {
 				success, msg = false, utils.SheetDoNotExist
 			} else {
-				switch params.Oper {
-				case utils.SheetInsert:
-					if err := dao.FileInsert(sheet.Path, int64(params.Offset), params.Content, utils.CELL_SIZE); err != nil {
-						panic(err)
-					}
-				case utils.SheetDelete:
-					if err := dao.FileDelete(sheet.Path, int64(params.Offset), params.Length, utils.CELL_SIZE); err != nil {
-						panic(err)
-					}
-				case utils.SheetOverwrite:
-					if err := dao.FileOverwrite(sheet.Path, int64(params.Offset), params.Content, utils.CELL_SIZE); err != nil {
-						panic(err)
-					}
-					break
-				case utils.SheetModMeta:
-					sheet.Name = params.Name
-					if params.Columns > sheet.Columns {
-						sheet.Columns = params.Columns
-					}
-					dao.SetSheet(sheet)
-					break
-				}
-
+				memSheet := sheetCache.Get(sheet.Fid)
+				memSheet.Set(int(params.Row), int(params.Col), params.Content)
+				// TODO: save log
 				success, msg = true, utils.SheetModifySuccess
 			}
 		}
@@ -87,7 +75,15 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 				dao.AddSheetToUser(uid, params.Fid)
 			}
 			// TODO: read in dfs
-			sheet.Content = []string{""}
+			memSheet := sheetCache.Get(sheet.Fid)
+			if memSheet == nil {
+				// TODO: load latest checkpoint from dfs
+				panic("not really a exception")
+			}
+
+			sheet.Content = memSheet.ToStringSlice()
+			_, sheet.Columns = memSheet.Shape()
+
 			success, msg, data = true, utils.SheetGetSuccess, sheet
 		}
 	} else {
@@ -108,9 +104,17 @@ func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int) {
 			if sheet.Fid == 0 {
 				success, msg = false, utils.SheetDoNotExist
 			} else {
-				dao.DeleteSheet(sheet.Fid)
+				if sheet.IsDeleted == false {
+					sheet.IsDeleted = true
+					dao.SetSheet(sheet)
+				} else {
+					dao.DeleteSheet(sheet.Fid)
 
-				// TODO: delete in dfs
+					sheetCache.Del(sheet.Fid)
+					// TODO: delete checkpoints and log in dfs
+
+				}
+
 
 				success, msg = true, utils.SheetDeleteSuccess
 			}
