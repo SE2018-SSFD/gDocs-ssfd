@@ -69,9 +69,9 @@ type MemSheet struct {
 	cells		*cellNet
 }
 
-func NewMemSheet() *MemSheet {
+func NewMemSheet(initRow int, initCol int) *MemSheet {
 	return &MemSheet{
-		cells: newCellNet(30, 30),	// TODO: to be determined
+		cells: newCellNet(initRow, initCol),
 	}
 }
 
