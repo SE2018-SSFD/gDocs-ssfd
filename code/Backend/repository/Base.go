@@ -9,7 +9,7 @@ import (
 
 var db *gorm.DB
 var err error
-var uri = "test:test@tcp(123.57.65.161:30087)/test?charset=utf8mb4&parseTime=True&loc=Local"
+var uri = "test:test@tcp(127.0.0.1:31087)/test?charset=utf8mb4&parseTime=True&loc=Local"
 
 
 func InitDBConn() {
@@ -19,9 +19,9 @@ func InitDBConn() {
 	}
 
 	_ = db.AutoMigrate(&model.UserAuth{})
+	_ = db.AutoMigrate(&model.CheckPoint{})
 	_ = db.AutoMigrate(&model.User{})
 	_ = db.AutoMigrate(&model.Sheet{})
-	_ = db.AutoMigrate(&model.CheckPoint{})
 
 	if utils.IsTest {
 		testPrepare()
@@ -29,4 +29,11 @@ func InitDBConn() {
 }
 
 func testPrepare() {
+	db.Create(&model.User{Uid: 1, Username: "test"})
+	db.Create(&model.User{Uid: 2, Username: "test1"})
+	db.Create(&model.User{Uid: 3, Username: "test2"})
+
+	db.Create(&model.UserAuth{Uid: 1, Username: "test", Password: "test"})
+	db.Create(&model.UserAuth{Uid: 2, Username: "test1", Password: "test1"})
+	db.Create(&model.UserAuth{Uid: 3, Username: "test2", Password: "test2"})
 }

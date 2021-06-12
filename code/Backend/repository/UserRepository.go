@@ -10,7 +10,7 @@ func GetUserByUsername(username string) (ret model.User) {
 }
 
 func GetUserByUid(uid uint) (ret model.User) {
-	db.Preload("Projects").First(&ret, "uid = ?", uid)
+	db.First(&ret, "uid = ?", uid)
 	return
 }
 
