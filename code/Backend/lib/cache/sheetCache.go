@@ -76,10 +76,16 @@ func NewMemSheet() *MemSheet {
 }
 
 func (ms *MemSheet) Set(row int, col int, content string) {
+	if row < 0 || col < 0 {
+		panic("row or column index is negative")
+	}
 	ms.cells.set(row, col, content)
 }
 
 func (ms *MemSheet) Get(row int, col int) string {
+	if row < 0 || col < 0 {
+		panic("row or column index is negative")
+	}
 	return ms.cells.get(row, col)
 }
 
