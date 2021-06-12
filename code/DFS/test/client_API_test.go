@@ -72,11 +72,23 @@ func TestReadWrite(t *testing.T) {
 	util.AssertNil(t,err)
 	fileState,err = HTTPGetFileInfo(util.CLIENTADDR,"/file2")
 	fmt.Println(fileState)
+
+	// Read 65 bytes near the chunk 3
+	result,err := HTTPRead(util.CLIENTADDR,fd2,util.MAXCHUNKSIZE*3-1,util.MAXCHUNKSIZE+1)
+	util.AssertNil(t,err)
+	util.AssertEqual(t,string(result.Data),"jkabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijk")
+
+	// Read 66 bytes near the chunk 2
+	result,err = HTTPRead(util.CLIENTADDR,fd2,util.MAXCHUNKSIZE*2-1,util.MAXCHUNKSIZE+2)
+	util.AssertNil(t,err)
+	util.AssertEqual(t,string(result.Data),"xyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijk")
+
 	m.Exit()
 	c.Exit()
 	for _,_cs := range cs{
 		_cs.Exit()
 	}
+
 }
 
 
@@ -175,6 +187,27 @@ func HTTPWrite(addr string,fd int,offset int,data []byte)(err error){
 	}
 	defer resp.Body.Close()
 	_, err = ioutil.ReadAll(resp.Body)
+	return
+}
+
+// HTTPRead : read a file according to fd
+func HTTPRead(addr string,fd int,offset int,len int)(result util.ReadRet,err error){
+	url := "http://"+addr+"/read"
+	postBody, _ := json.Marshal(map[string]interface{}{
+		"fd":  fd,
+		"offset" :offset,
+		"Len" : len,
+	})
+	responseBody := bytes.NewBuffer(postBody)
+	resp, err := http.Post(url, "application/json", responseBody)
+	if err != nil {
+		return
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	err = json.NewDecoder(bytes.NewReader(body)).Decode(&result)
 	return
 }
 

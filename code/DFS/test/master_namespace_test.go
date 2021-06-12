@@ -6,13 +6,32 @@ import (
 	"fmt"
 	"testing"
 )
+func initMasterTest()(m *master.Master) {
+	m = master.InitMaster("127.0.0.1:1234", ".")
+	return m
+}
 
+//func TestNamespaceParallel(t *testing.T){
+//	var wg sync.WaitGroup
+//	m := initMasterTest()
+//	wg.Add(util.PARALLELSIZE)
+//	for i:=0 ;i<util.PARALLELSIZE;i++{
+//		go _TestNamespaceParallel(t,m,&wg)
+//	}
+//	wg.Wait()
+//}
+//
+//func _TestNamespaceParallel(t *testing.T,m *master.Master,wg *sync.WaitGroup){
+//
+//	wg.Done()
+//}
 
-func TestNamespace(t *testing.T) {
-	m := master.InitMaster("127.0.0.1:1234", ".")
+func TestNamespaceSingle(t *testing.T) {
+	m := initMasterTest()
 	var createReply util.CreateRet
 	var mkdirReply util.MkdirRet
 	var listReply util.ListRet
+	var deleteReply util.DeleteRet
 	var getFileMetaReply util.GetFileMetaRet
 	err := m.CreateRPC(util.CreateArg{Path: "/file1"}, &createReply)
 	util.AssertNil(t,err)
@@ -44,6 +63,12 @@ func TestNamespace(t *testing.T) {
 	err = m.GetFileMetaRPC(util.GetFileMetaArg{Path: "/dir1/file1"}, &getFileMetaReply)
 	util.AssertNil(t,err)
 	fmt.Println(getFileMetaReply.Exist, " ", getFileMetaReply.IsDir, " ", getFileMetaReply.Size)
+	err = m.DeleteRPC(util.DeleteArg{Path: "/dir1/file1"},&deleteReply)
+	err = m.GetFileMetaRPC(util.GetFileMetaArg{Path: "/dir1/file1"}, &getFileMetaReply)
+	fmt.Println(getFileMetaReply.Exist, " ", getFileMetaReply.IsDir, " ", getFileMetaReply.Size)
+
+	util.AssertEqual(t,getFileMetaReply.Exist,false)
+	m.Exit()
 }
 
 
