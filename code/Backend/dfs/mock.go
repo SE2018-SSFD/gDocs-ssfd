@@ -49,3 +49,16 @@ func mockWrite(fd int, off int64, content string) (int64, error) {
 func mockList(path string) ([]string, error) {
 	return nil, nil
 }
+
+func mockStat(path string) (FileInfo, error) {
+	stat, err := os.Stat(root + path)
+	if err != nil {
+		return FileInfo{}, err
+	}
+
+	fileInfo := FileInfo{
+		IsDir: stat.IsDir(),
+		Size: stat.Size(),
+	}
+	return fileInfo, nil
+}

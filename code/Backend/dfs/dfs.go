@@ -23,3 +23,12 @@ func Write(fd int, off int64, content string) (int64, error) {
 func List(path string) ([]string, error) {
 	return mockList(path)
 }
+
+type FileInfo struct {
+	IsDir		bool
+	Size		int64
+}
+
+func Stat(path string) (FileInfo, error) {
+	return mockStat(path)
+}
