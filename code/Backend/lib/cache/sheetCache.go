@@ -99,6 +99,21 @@ func (ms *MemSheet) GetSize() (size int) {
 	return
 }
 
+func (ms *MemSheet) Shape() (int, int) {
+	return ms.cells.maxRow, ms.cells.maxCol
+}
+
+func (ms *MemSheet) ToStringSlice() (ss []string) {
+	cells := &ms.cells.cells
+
+	for i := 0; i < len(*cells); i += 1 {
+		ss = append(ss, (*cells)[i]...)
+	}
+
+	return
+}
+
+
 type SheetCache struct {
 	maxSize			int64
 	curSize			int64
