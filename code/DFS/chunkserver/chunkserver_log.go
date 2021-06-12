@@ -88,7 +88,7 @@ func (cs *ChunkServer) LoadCheckPoint() error {
 		cs.chunks[ckcp.handle].verNum = ckcp.verNum
 	}
 
-	cs.Printf("get check point success\n")
+	cs.Printf("load checkpoint success\n")
 	return nil
 }
 
@@ -111,7 +111,7 @@ func (cs *ChunkServer) LoadLog() error {
 		cs.chunks[ckcp.handle].verNum = ckcp.verNum
 	}
 
-	cs.Printf("get check point success\n")
+	cs.Printf("load log success\n")
 	return nil
 }
 

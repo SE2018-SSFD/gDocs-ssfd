@@ -8,8 +8,6 @@ import (
 	"os"
 	"path"
 	"sync"
-
-	"github.com/sirupsen/logrus"
 )
 
 type ChunkServer struct {
@@ -39,13 +37,6 @@ type ChunkInfoCP struct {
 type Mutation struct {
 }
 
-func (cs *ChunkServer) Printf(format string, v ...interface{}) {
-	var vv []interface{}
-	vv = append(vv, cs.addr)
-	vv = append(vv, v)
-	logrus.Printf("chunkserver %v: "+format, vv...)
-}
-
 func InitChunkServer(chunkAddr string, dataPath string, masterAddr string) *ChunkServer {
 	cs := &ChunkServer{
 		addr:       chunkAddr,
@@ -68,6 +59,15 @@ func InitChunkServer(chunkAddr string, dataPath string, masterAddr string) *Chun
 
 	log.Printf("chunkserver %v: init success\n", chunkAddr)
 	return cs
+}
+
+//TODO: should set checkpoint
+func (cs *ChunkServer) Exit() {
+	err := cs.l.Close()
+	close(cs.shutdown)
+	if err != nil {
+		return
+	}
 }
 
 func (cs *ChunkServer) GetAddr() string {

@@ -54,14 +54,6 @@ func (cs *ChunkServer) StartRPCServer() error {
 	return err
 }
 
-func (cs *ChunkServer) Exit() {
-	err := cs.l.Close()
-	close(cs.shutdown)
-	if err != nil {
-		return
-	}
-}
-
 func (cs *ChunkServer) GetChunkStatesRPC(args util.GetChunkStatesArgs, reply *util.GetChunkStatesReply) error {
 	var chunkStates []util.ChunkState
 	for handle, chunk := range cs.chunks {
@@ -189,6 +181,7 @@ func (cs *ChunkServer) StoreDataRPC(args util.StoreDataArgs, reply *util.StoreDa
 	ck, exist := cs.chunks[args.CID.Handle]
 	if !exist {
 		cs.RUnlock()
+
 		return fmt.Errorf("ChunkServer %v: chunk %v not exist", cs.addr, args.CID.Handle)
 	}
 	ck.Lock()
@@ -227,4 +220,6 @@ func (cs *ChunkServer) CloneChunkRPC(args util.CloneChunkArgs, reply *util.Clone
 	return nil
 }
 
-// func (cs *ChunkServer) SyncChunkRPC()
+func (cs *ChunkServer) SyncChunkRPC() {
+
+}

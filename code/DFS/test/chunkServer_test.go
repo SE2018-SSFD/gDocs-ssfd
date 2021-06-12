@@ -3,91 +3,158 @@ package main
 import (
 	"DFS/chunkserver"
 	"DFS/util"
-	"fmt"
 	"os"
+	"strconv"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
-func TestChunkServer(t *testing.T) {
+var isClear bool = true //whether clear all file after test
+
+func initChunkServerTest() (cs []*chunkserver.ChunkServer) {
 	logrus.SetLevel(logrus.DebugLevel)
-	// master.InitMaster("127.0.0.1:1234", ".")
-	// client.InitClient("127.0.0.1:2100")
-	cs := make([]*chunkserver.ChunkServer, 3)
-	cs[0] = chunkserver.InitChunkServer("127.0.0.1:2000", "ck2000", "127.0.0.1:1234")
-	cs[1] = chunkserver.InitChunkServer("127.0.0.1:2001", "ck2001", "127.0.0.1:1234")
-	cs[2] = chunkserver.InitChunkServer("127.0.0.1:2002", "ck2002", "127.0.0.1:1234")
-
-	var h = util.Handle(1)
-	var wg sync.WaitGroup
-	wg.Add(3)
-
-	createArgs := util.CreateChunkArgs{Handle: h}
-	for i := 0; i < 3; i++ {
-		go func(idx int) {
-			err := cs[idx].CreateChunkRPC(createArgs, nil)
-			if err != nil {
-				fmt.Printf("CreateChunk error\n")
-				fmt.Println(err)
-				t.Fail()
-			}
-			wg.Done()
-		}(i)
-	}
-	wg.Wait()
-	fmt.Printf("Create Chunk Done\n")
-
-	var str string = "test"
-
-	data := []byte(str)
-	csAddrs := make([]util.Address, 0)
-
-	//notic i begin with 1
-	for i := 1; i < 3; i++ {
-		csAddrs = append(csAddrs, util.Address(cs[i].GetAddr()))
-	}
-	cid := util.CacheID{Handle: h, ClientAddr: "127.0.0.1:2100"}
-	var loadArgs = util.LoadDataArgs{
-		Data:  data,
-		CID:   cid,
-		Addrs: csAddrs}
-	err := cs[0].LoadDataRPC(loadArgs, nil)
+	// Register some virtual chunkServers
+	_, err := os.Stat("cs")
 	if err != nil {
-		fmt.Printf("loadData error\n")
-		fmt.Println(err)
-		t.Fail()
+		err := os.Mkdir("cs", 0755)
+		if err != nil {
+			logrus.Fatalf("mkdir %v error\n", "cs")
+		}
+	}
+	cs = make([]*chunkserver.ChunkServer, 5)
+	for index, port := range []int{3000, 3001, 3002, 3003, 3004} {
+		addr := util.Address("127.0.0.1:" + strconv.Itoa(port))
+		cs[index] = chunkserver.InitChunkServer(string(addr), "cs/cs"+strconv.Itoa(port), util.MASTERADDR)
 	}
 
-	var syncArgs = util.SyncArgs{CID: cid, Off: 0, Addrs: csAddrs}
-	err = cs[0].SyncRPC(syncArgs, nil)
-	if err != nil {
-		fmt.Printf("Sync error\n")
-		fmt.Println(err)
-		t.Fail()
-	}
-	fmt.Printf("Write Done !!!\n")
-	var readArgs = util.ReadChunkArgs{Handle: h, Off: 0, Len: 4}
-	var readReply util.ReadChunkReply
-	err = cs[0].ReadChunkRPC(readArgs, &readReply)
-	if err != nil {
-		fmt.Printf("Read error\n")
-		fmt.Println(err)
-		t.Fail()
-	} else {
-		fmt.Printf("read success, data is %s\n", string(readReply.Buf[:]))
-	}
-	Clear(cs)
+	time.Sleep(time.Second)
+	return
 }
 
-func Clear(cs []*chunkserver.ChunkServer) {
-	for i := 0; i < 3; i++ {
-		cs[i].RemoveChunk(util.Handle(1))
+func Clear() {
+	if isClear {
+		os.RemoveAll("cs")
+		logrus.Printf("Clear all\n")
 	}
-	os.Remove("ck2000")
-	os.Remove("ck2001")
-	os.Remove("ck2002")
+}
 
-	fmt.Printf("Clear all\n")
+func TestChunkServer(t *testing.T) {
+	logrus.SetLevel(logrus.DebugLevel)
+	cs := initChunkServerTest()
+
+	var h []util.Handle = make([]util.Handle, 2)
+	var wg []sync.WaitGroup = make([]sync.WaitGroup, 2)
+	var createChunkArgs []util.CreateChunkArgs = make([]util.CreateChunkArgs, 2)
+	h[0] = util.Handle(1)
+	h[1] = util.Handle(2)
+	wg[0].Add(3)
+	wg[1].Add(3)
+	createChunkArgs[0] = util.CreateChunkArgs{Handle: h[0]}
+	createChunkArgs[1] = util.CreateChunkArgs{Handle: h[1]}
+	for i := 0; i < 3; i++ {
+		go func(idx int) {
+			err := cs[idx].CreateChunkRPC(createChunkArgs[0], nil)
+			if err != nil {
+				logrus.Printf("CreateChunk error\n")
+				logrus.Println(err)
+				t.Fail()
+			}
+			wg[0].Done()
+		}(i)
+	}
+	for i := 1; i < 4; i++ {
+		go func(idx int) {
+			err := cs[idx].CreateChunkRPC(createChunkArgs[1], nil)
+			if err != nil {
+				logrus.Printf("CreateChunk error\n")
+				logrus.Println(err)
+				t.Fail()
+			}
+			wg[1].Done()
+		}(i)
+	}
+	wg[0].Wait()
+	wg[1].Wait()
+	logrus.Printf("Create Chunk Done\n")
+
+	var str string = "abcdefg"
+
+	data := []byte(str)
+	var csAddrs [][]util.Address = make([][]util.Address, 2)
+	csAddrs[0] = make([]util.Address, 0)
+	csAddrs[1] = make([]util.Address, 0)
+
+	//notice i begin with 1
+	for i := 1; i < 3; i++ {
+		csAddrs[0] = append(csAddrs[0], util.Address(cs[i].GetAddr()))
+	}
+	for i := 2; i < 4; i++ {
+		csAddrs[1] = append(csAddrs[1], util.Address(cs[i].GetAddr()))
+	}
+	var cid []util.CacheID = make([]util.CacheID, 4)
+	cid[0] = util.CacheID{Handle: h[0], ClientAddr: "127.0.0.1:2100"}
+	cid[1] = util.CacheID{Handle: h[0], ClientAddr: "127.0.0.1:2101"}
+	cid[2] = util.CacheID{Handle: h[1], ClientAddr: "127.0.0.1:2102"}
+	cid[3] = util.CacheID{Handle: h[1], ClientAddr: "127.0.0.1:2103"}
+	wg[0].Add(4)
+	// load Data
+	var loadArgs []util.LoadDataArgs = make([]util.LoadDataArgs, 4)
+	for i := 0; i < 4; i++ {
+		go func(idx int) {
+			loadArgs[idx] = util.LoadDataArgs{
+				Data:  data,
+				CID:   cid[idx],
+				Addrs: csAddrs[idx/2]}
+			err := cs[idx/2].LoadDataRPC(loadArgs[idx], nil)
+			if err != nil {
+				logrus.Printf("loadData error\n")
+				logrus.Println(err)
+				t.Fail()
+			}
+			wg[0].Done()
+		}(i)
+	}
+	wg[0].Wait()
+	logrus.Println("Load Data Done!")
+
+	wg[0].Add(4)
+	var syncArgs []util.SyncArgs = make([]util.SyncArgs, 4)
+	for i := 0; i < 4; i++ {
+		go func(idx int) {
+			syncArgs[idx] = util.SyncArgs{CID: cid[idx], Off: (idx % 2) * 4, Addrs: csAddrs[idx/2]}
+			err := cs[idx/2].SyncRPC(syncArgs[idx], nil)
+			if err != nil {
+				logrus.Printf("Sync error\n")
+				logrus.Println(err)
+				t.Fail()
+			}
+			wg[0].Done()
+		}(i)
+	}
+	wg[0].Wait()
+	logrus.Printf("Write Done !!!\n")
+
+	var readArgs []util.ReadChunkArgs = make([]util.ReadChunkArgs, 4)
+	var readReply []util.ReadChunkReply = make([]util.ReadChunkReply, 4)
+	wg[0].Add(4)
+	for i := 0; i < 4; i++ {
+		go func(idx int) {
+			readArgs[idx] = util.ReadChunkArgs{Handle: h[idx/2], Off: idx % 2, Len: 6}
+			err := cs[idx/2+1].ReadChunkRPC(readArgs[idx], &readReply[idx])
+			if err != nil {
+				logrus.Printf("Read error\n")
+				logrus.Println(err)
+				t.Fail()
+			} else {
+				logrus.Printf("read success, idx is %v, data is %s\n", idx, string(readReply[idx].Buf[:]))
+			}
+			wg[0].Done()
+		}(i)
+	}
+	wg[0].Wait()
+	logrus.Printf("Read Done !!!\n")
+	Clear()
 }
