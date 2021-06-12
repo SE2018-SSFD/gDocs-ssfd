@@ -76,7 +76,6 @@ type DeleteUserParams struct {
 type NewSheetParams struct {
 	Token       string		`json:"token"`
 	Name        string		`json:"name"`
-	Content     string		`json:"content"`
 	InitRows    uint		`json:"initRows"`
 	InitColumns uint		`json:"initColumns"`
 }
