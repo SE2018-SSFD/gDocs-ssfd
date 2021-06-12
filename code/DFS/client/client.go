@@ -262,7 +262,7 @@ func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Delete the master metadata first
+	// Delete the master metadata last
 	err = util.Call(string(c.masterAddr), "Master.DeleteRPC", argD, &retD)
 	if err != nil {
 		logrus.Fatalln("Client delete failed :", err)

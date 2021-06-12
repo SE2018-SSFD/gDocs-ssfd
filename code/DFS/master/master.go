@@ -122,15 +122,16 @@ func (m *Master) MkdirRPC(args util.MkdirArg, reply *util.MkdirRet) error {
 	return nil
 }
 
-// DeleteRPC is called by client to deleet a dir or file
+// DeleteRPC is called by client to lazily delete a dir or file
 func (m *Master) DeleteRPC(args util.DeleteArg, reply *util.DeleteRet) error {
 	logrus.Debugf("RPC delete, Dir Path : %s\n", args.Path)
-	err := m.ns.Delete(args.Path)
+
+	err := m.cs.Delete(args.Path)
 	if err != nil {
 		logrus.Debugf("RPC delete failed : %s\n", err)
 		return err
 	}
-	err = m.cs.Delete(args.Path)
+	err = m.ns.Delete(args.Path)
 	if err != nil {
 		logrus.Debugf("RPC delete failed : %s\n", err)
 		return err
@@ -184,11 +185,15 @@ func (m *Master) SetFileMetaRPC(args util.SetFileMetaArg, reply *util.SetFileMet
 func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplicasRet) (err error) {
 	// Check if file exist
 	logrus.Debugf("RPC getReplica, file path : %s, chunk index : %d\n", args.Path, args.ChunkIndex)
+	m.cs.RLock()
 	fs, exist := m.cs.file[args.Path]
 	if !exist {
+		m.cs.RUnlock()
 		err = fmt.Errorf("FileNotExistsError : the requested DFS path %s is non-existing!\n", string(args.Path))
 		return err
 	}
+	fs.Lock()
+	m.cs.RUnlock()
 
 	// Find the target chunk, if not exists, create one
 	// Note that ChunkIndex <= len(fs.chunks) should be checked by client
@@ -200,19 +205,21 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		if err!= nil{
 			return err
 		}
-		targetChunk,err = m.cs.CreateChunkAndReplica(args.Path,addrs)
+		// enter the function with write lock of fs
+		targetChunk,err = m.cs.CreateChunkAndReplica(fs,addrs)
 		if err!=nil{
 			return err
 		}
 		//TODO : Update ChunkServerState
 		//m.css.xxx
 	} else {
-		targetChunk = fs.chunks[args.ChunkIndex]
+		fs.Unlock()
+		targetChunk = fs.chunks[args.ChunkIndex].handle
 	}
 	logrus.Infoln("targetchunk : ",targetChunk)
 	 // Get target servers which store the replicate
 	 reply.ChunkServerAddrs = make([]util.Address, 0)
-	for _, addr := range m.cs.chunk[targetChunk].locations {
+	for _, addr := range fs.chunks[targetChunk].locations {
 		reply.ChunkServerAddrs = append(reply.ChunkServerAddrs, addr)
 	}
 	reply.ChunkHandle = targetChunk

@@ -80,6 +80,7 @@ func TestNamespaceParallel(t *testing.T){
 	}
 	implicitWait(util.MAXWAITINGTIME * time.Second,&wg)
 	util.AssertEqual(t,count,0)
+	logrus.Infof("Score %d\n",score)
 	score += 20
 
 	// Test concurrent create and delete on deep different file
@@ -101,6 +102,7 @@ func TestNamespaceParallel(t *testing.T){
 	implicitWait(util.MAXWAITINGTIME * time.Second,&wg)
 	util.AssertEqual(t,count,0)
 	score += 20
+	logrus.Infof("Score %d\n",score)
 
 	// Test concurrent create and delete on deep same file
 	wg.Add(util.PARALLELSIZE)
@@ -123,6 +125,7 @@ func TestNamespaceParallel(t *testing.T){
 	implicitWait(util.MAXWAITINGTIME * time.Second,&wg)
 	util.AssertEqual(t,count,2*(util.PARALLELSIZE-1))
 	score += 20
+	logrus.Infof("Score %d\n",score)
 
 	// Test concurrent create and delete on random different files
 	count = 0
@@ -146,7 +149,7 @@ func TestNamespaceParallel(t *testing.T){
 	implicitWait(util.MAXWAITINGTIME * time.Second,&wg)
 	util.AssertEqual(t,count,0)
 	score += 40
-	logrus.Infof("Parallel score : %d/100",score)
+	logrus.Infof("Score %d\n",score)
 }
 
 func implicitWait(t time.Duration,wg *sync.WaitGroup){

@@ -33,31 +33,11 @@ func newNamespaceState() *NamespaceState {
 	return ns
 }
 
-// checkValidPath check if a DFS path is valid
-func checkValidPath(path util.DFSPath) bool {
-	if len(path) == 0 || path[0] != '/' || path[len(path)-1] == '/' {
-		return false
-	} else {
-		return true
-	}
-}
 
-// parsePath is a helper method to parse a path string into parent and file
-func parsePath(path util.DFSPath) (parent util.DFSPath, filename string, err error) {
-	// Check invalid path
-	if !checkValidPath(path) {
-		err = fmt.Errorf("InvalidPathError : the requested DFS path %s is invalid!\n", string(path))
-		return
-	}
-	pos := strings.LastIndexByte(string(path), '/')
-	parent = path[:pos]
-	filename = string(path[pos+1:])
-	return
-}
 
 // Mknod create a directory if isDir is true, else a file
 func (ns *NamespaceState) Mknod(path util.DFSPath, isDir bool) error {
-	parent, filename, err := parsePath(path)
+	parent, filename, err := util.ParsePath(path)
 	if err != nil {
 		return err
 	}
@@ -87,7 +67,7 @@ func (ns *NamespaceState) Mknod(path util.DFSPath, isDir bool) error {
 // List list all files in a given dir
 func (ns *NamespaceState) List(path util.DFSPath) (files []string, err error) {
 	// Check invalid path
-	if !checkValidPath(path) {
+	if !util.CheckValidPath(path) {
 		err = fmt.Errorf("InvalidPathError : the requested DFS path %s is invalid\n", string(path))
 		return
 	}
@@ -113,7 +93,7 @@ func (ns *NamespaceState) List(path util.DFSPath) (files []string, err error) {
 // Delete delete a file or empty directory from DFS namespace
 func (ns *NamespaceState) Delete(path util.DFSPath) (err error) {
 	// Check path
-	parent, filename, err := parsePath(path)
+	parent, filename, err := util.ParsePath(path)
 	if err != nil {
 		return err
 	}
@@ -142,6 +122,7 @@ func (ns *NamespaceState) Delete(path util.DFSPath) (err error) {
 		return err
 	}
 	delete(parentNode.treeNodes,filename)
+	parentNode.treeNodes[util.DELETEPREFIX+filename]  = node
 	return nil
 }
 

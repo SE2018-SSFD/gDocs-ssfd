@@ -23,4 +23,5 @@ const (
 	REPLICATIONTIMES  = 3
 	MAXFD             = 128
 	HEARTBEATDURATION = 200 * time.Millisecond
+	DELETEPREFIX = "_delete_"
 )
