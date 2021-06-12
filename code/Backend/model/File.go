@@ -8,7 +8,7 @@ type Sheet struct {
 	Name		string			`gorm:"type:VARCHAR(100)" json:"name"`
 	CheckPoints	[]CheckPoint	`json:"checkpoints"`
 	Path		string			`gorm:"type:VARCHAR(200)" json:"-"`
-	Columns		uint			`json:"columns"`
+	Columns		int				`json:"columns"`
 
 	Content		[]string		`gorm:"-" json:"content"`
 }
