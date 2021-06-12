@@ -30,26 +30,26 @@ func newCellNet(initRow int, initCol int) *cellNet {
 }
 
 func (net *cellNet) set(row int, col int, content string) {
-	if col > net.maxCol {
-		for i := 0; i < net.maxCol; i += 1 {
+	if col + 1 > net.maxCol {
+		for i := 0; i < net.maxRow; i += 1 {
 			curRow := &net.cells[i]
-			toExtendN := col - len(*curRow)
+			toExtendN := col + 1 - len(*curRow)
 			*curRow = append(*curRow, make([]string, toExtendN)...)
 		}
 
-		net.maxCol = col
+		net.maxCol = col + 1
 	}
 
-	if row > net.maxRow {
-		toExtendN := row - net.maxRow
+	if row + 1 > net.maxRow {
+		toExtendN := row + 1 - net.maxRow
 		toExtend := make([][]string, toExtendN)
 		for i := 0; i < toExtendN; i += 1 {
 			toExtend[i] = make([]string, net.maxCol)
 		}
 
 		net.cells = append(net.cells, toExtend...)
+		net.maxRow = row + 1
 	}
-
 
 	net.RuneNum += len(content) - len(net.cells[row][col])
 	net.cells[row][col] = content
