@@ -1,6 +1,7 @@
 package dfs
 
 import (
+	"io/ioutil"
 	"os"
 	"sync"
 )
@@ -46,8 +47,18 @@ func mockWrite(fd int, off int64, content string) (int64, error) {
 	return int64(n), err
 }
 
-func mockList(path string) ([]string, error) {
-	return nil, nil
+func mockScan(path string) ([]FileInfo, error) {
+	osFileInfos, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var dfsFileInfos []FileInfo
+	for _, info := range osFileInfos {
+		dfsFileInfos = append(dfsFileInfos, osFileInfo2DfsFileInfo(info))
+	}
+
+	return dfsFileInfos, nil
 }
 
 func mockStat(path string) (FileInfo, error) {
@@ -56,9 +67,13 @@ func mockStat(path string) (FileInfo, error) {
 		return FileInfo{}, err
 	}
 
-	fileInfo := FileInfo{
-		IsDir: stat.IsDir(),
-		Size: stat.Size(),
-	}
+	fileInfo := osFileInfo2DfsFileInfo(stat)
 	return fileInfo, nil
+}
+
+func osFileInfo2DfsFileInfo(before os.FileInfo) FileInfo {
+	return FileInfo{
+		IsDir: before.IsDir(),
+		Size: before.Size(),
+	}
 }

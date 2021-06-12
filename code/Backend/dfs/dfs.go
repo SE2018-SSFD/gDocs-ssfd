@@ -20,8 +20,8 @@ func Write(fd int, off int64, content string) (int64, error) {
 	return mockWrite(fd, off, content)
 }
 
-func List(path string) ([]string, error) {
-	return mockList(path)
+func Scan(path string) ([]FileInfo, error) {
+	return mockScan(path)
 }
 
 type FileInfo struct {
