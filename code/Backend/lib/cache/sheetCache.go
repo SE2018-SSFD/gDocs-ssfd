@@ -107,7 +107,7 @@ func NewSheetCache(maxSize int64) *SheetCache {
 }
 
 // If excess memory constraint, do eviction and return true
-func (sc *SheetCache) Add(key string, ms *MemSheet) (evicted bool) {
+func (sc *SheetCache) Add(key interface{}, ms *MemSheet) (evicted bool) {
 	evicted = false
 	if sc.curSize + int64(ms.GetSize()) > sc.maxSize {
 		// TODO: evict
@@ -118,7 +118,7 @@ func (sc *SheetCache) Add(key string, ms *MemSheet) (evicted bool) {
 	return
 }
 
-func (sc *SheetCache) Get(key string) *MemSheet {
+func (sc *SheetCache) Get(key interface{}) *MemSheet {
 	if v, ok := sc.cache.Load(key); !ok {
 		return nil
 	} else {
@@ -126,7 +126,7 @@ func (sc *SheetCache) Get(key string) *MemSheet {
 	}
 }
 
-func (sc *SheetCache) Del(key string) {
+func (sc *SheetCache) Del(key interface{}) {
 	sc.cache.Delete(key)
 }
 
