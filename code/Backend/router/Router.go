@@ -2,6 +2,7 @@ package router
 
 import (
 	"backend/controller"
+	"backend/lib/websocket/sheetWS"
 	"backend/middleware"
 	"github.com/kataras/iris/v12"
 )
@@ -20,6 +21,8 @@ func SetRouter(app *iris.Application) {
 	root.Handle("POST", "/deletesheet", controller.DeleteSheet)
 	root.Handle("POST", "/commitsheet", controller.CommitSheet)
 	root.Handle("POST", "/getchunk", controller.GetChunk)
+
+	root.Handle("GET", "/sheetws", sheetWS.BeforeUpgradeHandler(), sheetWS.UpgradeHandler())
 
 	return
 }

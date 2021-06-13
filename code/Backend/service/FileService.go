@@ -62,6 +62,11 @@ func ModifySheet(params utils.ModifySheetParams) (success bool, msg int) {
 	return
 }
 
+func ModifySheetCache(fid uint, row int, col int, content string) {
+	memSheet := sheetCache.Get(fid)
+	memSheet.Set(row, col, content)
+}
+
 func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sheet) {
 	uid := CheckToken(params.Token)
 	if uid != 0 {
