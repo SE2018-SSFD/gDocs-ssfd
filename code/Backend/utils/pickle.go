@@ -15,5 +15,7 @@ type SheetLogPickle struct {
 type CheckPointPickle struct {
 	Cid			uint				`json:"cid"`
 	Timestamp	time.Time			`json:"timestamp"`
+	Rows		int					`json:"rows"`
+	Columns		int					`json:"columns"`
 	Content		[]string			`json:"content"`
 }
