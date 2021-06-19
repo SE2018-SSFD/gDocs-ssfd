@@ -14,6 +14,7 @@ require (
 	github.com/kataras/iris/v12 v12.2.0-alpha2
 	github.com/kataras/neffos v0.0.18
 	github.com/mattn/go-colorable v0.1.8 // indirect
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/yudai/pp v2.0.1+incompatible // indirect

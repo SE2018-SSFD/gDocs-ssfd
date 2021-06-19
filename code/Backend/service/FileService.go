@@ -6,7 +6,8 @@ import (
 	"backend/model"
 	"backend/utils"
 	"backend/utils/config"
-	"fmt"
+	"encoding/json"
+	"time"
 )
 
 // TODO: LOG is not Implemented
@@ -16,19 +17,42 @@ var sheetCache = cache.NewSheetCache(config.MaxSheetCache)
 func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 	uid := CheckToken(params.Token)
 	if uid != 0 {
-		path := fmt.Sprintf("sheet_%s_uid_%d.txt", params.Name, uid)
-
-
 		fid := dao.CreateSheet(model.Sheet{
 			Name: params.Name,
-			Path: path,
 		})
+		var path string
+		if config.WriteThrough {
+			path = utils.GetCheckPointPath("sheet", fid, 0)
+		} else {
+			// TODO
+			path = ""
+		}
+		sheet := dao.GetSheetByFid(fid)
+		sheet.Path = path
+		dao.SetSheet(sheet)
+		dao.AddSheetToUser(uid, fid)
 
-		memSheet := cache.NewMemSheet(int(params.InitRows), int(params.InitColumns))
-		//if err := dao.FileCreate(path, 0); err != nil {
-		//	panic(err)
-		//}
-		sheetCache.Add(fid, memSheet)
+		if config.WriteThrough {
+			if err := dao.FileCreate(path, 0); err != nil {
+				panic(err)
+			}
+
+			initFile := utils.CheckPointPickle{
+				Cid: 0,
+				Timestamp: time.Now(),
+				Rows: int(params.InitRows),
+				Columns: int(params.InitColumns),
+				Content: make([]string, params.InitRows * params.InitColumns),
+			}
+
+			initFileRaw, _ := json.Marshal(initFile)
+			if err := dao.FileOverwriteAll(path, string(initFileRaw)); err != nil {
+				panic(err)
+			}
+		} else {
+			memSheet := cache.NewMemSheet(int(params.InitRows), int(params.InitColumns))
+			sheetCache.Add(fid, memSheet)
+		}
 
 		success, msg, data = true, utils.SheetNewSuccess, fid
 	} else {
@@ -79,15 +103,29 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 			if !utils.UintListContains(ownedFids, params.Fid) {
 				dao.AddSheetToUser(uid, params.Fid)
 			}
-			// TODO: read in dfs
-			memSheet := sheetCache.Get(sheet.Fid)
-			if memSheet == nil {
-				// TODO: load latest checkpoint from dfs
-				panic("not really a exception")
+
+			if config.WriteThrough {
+				path := utils.GetCheckPointPath("sheet", params.Fid, 0)
+				fileRaw, err := dao.FileGetAll(path)
+				if err != nil {
+					panic(err)
+				}
+				filePickled := utils.CheckPointPickle{}
+				if err := json.Unmarshal([]byte(fileRaw), &filePickled); err != nil {
+					panic("cannot pickle checkpoint from file")
+				}
+				sheet.Columns = filePickled.Columns
+				sheet.Content = filePickled.Content
+			} else {
+				memSheet := sheetCache.Get(sheet.Fid)
+				if memSheet == nil {
+					// TODO
+					panic("not really a exception")
+				}
+				sheet.Content = memSheet.ToStringSlice()
+				_, sheet.Columns = memSheet.Shape()
 			}
 
-			sheet.Content = memSheet.ToStringSlice()
-			_, sheet.Columns = memSheet.Shape()
 
 			success, msg, data = true, utils.SheetGetSuccess, sheet
 		}
@@ -113,10 +151,14 @@ func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int) {
 					sheet.IsDeleted = true
 					dao.SetSheet(sheet)
 				} else {
-					dao.DeleteSheet(sheet.Fid)
+					if config.WriteThrough {
 
-					sheetCache.Del(sheet.Fid)
-					// TODO: delete checkpoints and log in dfs
+					} else {
+						dao.DeleteSheet(sheet.Fid)
+
+						sheetCache.Del(sheet.Fid)
+						// TODO: delete checkpoints and log in dfs
+					}
 
 				}
 

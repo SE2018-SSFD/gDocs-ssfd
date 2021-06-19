@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"github.com/kataras/iris/v12"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 func GetContextParams(ctx iris.Context, params interface{}) bool {
@@ -59,4 +61,23 @@ func RoundUp(toRound int64, align int64) int64 {
 
 func Zeros(size int64) []byte {
 	return make([]byte, size)
+}
+
+func ParseID(id string) (string, uint, string, uint) {
+	split := strings.SplitN(id, "#", 4)
+	ns := split[0]
+	uid, _ := strconv.ParseUint(split[1], 10, 64)
+	username := split[2]
+	fid, _ := strconv.ParseUint(split[3], 10, 64)
+	return ns, uint(uid), username, uint(fid)
+}
+
+func GenID(ns string, uid uint, username string, fid uint) (id string) {
+	return ns + "#" + strconv.FormatUint(uint64(uid), 10) + "#" +
+		username + "#" + strconv.FormatUint(uint64(fid), 10)
+}
+
+func GetCheckPointPath(fileType string, fid uint, cid uint) string {
+	return "/" + fileType + "/" + strconv.FormatUint(uint64(fid), 10) + "/checkpoint/" +
+		strconv.FormatUint(uint64(cid), 10) + ".txt"
 }
