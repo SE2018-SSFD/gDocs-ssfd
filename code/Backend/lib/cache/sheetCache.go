@@ -1,12 +1,13 @@
 package cache
 
 import (
+	"backend/utils/logger"
 	"sync"
 	"unsafe"
 )
 
-// A 2d string slice with auto-scalability when set is called on unbounded row and col
-type cellNet struct {
+// A 2d string slice with auto-scalability when Set is called on unbounded row and col
+type CellNet struct {
 	cells		[][]string
 	maxRow		int
 	maxCol		int
@@ -14,13 +15,13 @@ type cellNet struct {
 	RuneNum		int
 }
 
-func newCellNet(initRow int, initCol int) *cellNet {
+func NewCellNet(initRow int, initCol int) *CellNet {
 	cells := make([][]string, initRow)
 	for i := 0; i < initRow; i += 1 {
 		cells[i] = make([]string, initCol)
 	}
 
-	return &cellNet{
+	return &CellNet{
 		cells: cells,
 		maxRow: initRow,
 		maxCol: initCol,
@@ -29,7 +30,37 @@ func newCellNet(initRow int, initCol int) *cellNet {
 	}
 }
 
-func (net *cellNet) set(row int, col int, content string) {
+func NewCellNetFromStringSlice(ss []string, columns int) *CellNet {
+	initRow := len(ss) / columns
+	initCol := columns
+	if initRow * columns < len(ss) {
+		initRow += 1
+		toExtend := make([]string, initRow * columns - len(ss))
+		ss = append(ss, toExtend...)
+	}
+	cells := make([][]string, initRow)
+
+	logger.Debug(initRow, initCol)
+
+	runeNum := 0
+	for i := 0; i < initRow; i += 1 {
+		cells[i] = make([]string, initCol)
+		for j := 0; j < initCol; j += 1 {
+			cells[i][j] = ss[i * initCol + j]
+			runeNum += len(cells[i][j])
+		}
+	}
+
+	return &CellNet{
+		cells: cells,
+		maxRow: initRow,
+		maxCol: initCol,
+
+		RuneNum: runeNum,
+	}
+}
+
+func (net *CellNet) Set(row int, col int, content string) {
 	if col + 1 > net.maxCol {
 		for i := 0; i < net.maxRow; i += 1 {
 			curRow := &net.cells[i]
@@ -55,7 +86,7 @@ func (net *cellNet) set(row int, col int, content string) {
 	net.cells[row][col] = content
 }
 
-func (net *cellNet) get(row int, col int) string {
+func (net *CellNet) Get(row int, col int) string {
 	if row > net.maxRow || col > net.maxCol {
 		return ""
 	}
@@ -63,15 +94,29 @@ func (net *cellNet) get(row int, col int) string {
 	return net.cells[row][col]
 }
 
+func (net *CellNet) Shape() (rows int, cols int) {
+	return net.maxRow, net.maxCol
+}
+
+func (net *CellNet) ToStringSlice() (ss []string) {
+	cells := &net.cells
+
+	for i := 0; i < len(*cells); i += 1 {
+		ss = append(ss, (*cells)[i]...)
+	}
+
+	return ss
+}
+
 
 // In-memory sheet
 type MemSheet struct {
-	cells		*cellNet
+	cells		*CellNet
 }
 
 func NewMemSheet(initRow int, initCol int) *MemSheet {
 	return &MemSheet{
-		cells: newCellNet(initRow, initCol),
+		cells: NewCellNet(initRow, initCol),
 	}
 }
 
@@ -79,14 +124,14 @@ func (ms *MemSheet) Set(row int, col int, content string) {
 	if row < 0 || col < 0 {
 		panic("row or column index is negative")
 	}
-	ms.cells.set(row, col, content)
+	ms.cells.Set(row, col, content)
 }
 
 func (ms *MemSheet) Get(row int, col int) string {
 	if row < 0 || col < 0 {
 		panic("row or column index is negative")
 	}
-	return ms.cells.get(row, col)
+	return ms.cells.Get(row, col)
 }
 
 func (ms *MemSheet) GetSize() (size int) {
@@ -99,18 +144,12 @@ func (ms *MemSheet) GetSize() (size int) {
 	return
 }
 
-func (ms *MemSheet) Shape() (int, int) {
-	return ms.cells.maxRow, ms.cells.maxCol
+func (ms *MemSheet) Shape() (rows int, cols int) {
+	return ms.cells.Shape()
 }
 
 func (ms *MemSheet) ToStringSlice() (ss []string) {
-	cells := &ms.cells.cells
-
-	for i := 0; i < len(*cells); i += 1 {
-		ss = append(ss, (*cells)[i]...)
-	}
-
-	return
+	return ms.cells.ToStringSlice()
 }
 
 
