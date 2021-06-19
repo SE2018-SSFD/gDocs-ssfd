@@ -1,23 +1,31 @@
 package dfs
 
-func Open(path string) (int, error) {
+func Open(path string) (fd int, err error) {
 	return mockOpen(path)
 }
 
-func Create(path string) (int, error) {
+func Close(fd int) (err error) {
+	return mockClose(fd)
+}
+
+func Create(path string) (fd int, err error) {
 	return mockCreate(path)
 }
 
-func Delete(path string) error {
+func Delete(path string) (err error) {
 	return mockDelete(path)
 }
 
-func Read(fd int, off int64, length int64) (string, error) {
+func Read(fd int, off int64, length int64) (content string, err error) {
 	return mockRead(fd, off, length)
 }
 
-func Write(fd int, off int64, content string) (int64, error) {
+func Write(fd int, off int64, content string) (n int64, err error) {
 	return mockWrite(fd, off, content)
+}
+
+func Truncate(fd int, length int64) (err error) {
+	return mockTruncate(fd, length)
 }
 
 func Scan(path string) ([]FileInfo, error) {
