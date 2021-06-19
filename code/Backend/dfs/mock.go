@@ -3,6 +3,7 @@ package dfs
 import (
 	"io/ioutil"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -11,11 +12,24 @@ const root = "../../../mockdfs"
 var fdMap sync.Map
 var curFd = 0
 
-func mockOpen(path string) (int, error) {
-	file, err := os.Open(root + path)
+func mockOpen(path string) (fd int, err error) {
+	file, err := os.OpenFile(root + path, os.O_RDWR, os.ModePerm)
 	fdMap.Store(curFd, file)
+	fd = curFd
 	curFd += 1
-	return curFd - 1, err
+	return fd, err
+}
+
+func mockClose(fd int) (err error) {
+	f, _ := fdMap.Load(fd)
+	file := f.(*os.File)
+
+	if err = file.Close(); err != nil {
+		return err
+	}
+
+	fdMap.Delete(fd)
+	return nil
 }
 
 func mockCreate(path string) (int, error) {
@@ -36,7 +50,7 @@ func mockDelete(path string) error {
 
 func mockRead(fd int, off int64, len int64) (string, error) {
 	f, _ := fdMap.Load(fd)
-	file := f.(os.File)
+	file := f.(*os.File)
 	raw := make([]byte, len)
 	n, err := file.ReadAt(raw, off)
 
@@ -45,10 +59,16 @@ func mockRead(fd int, off int64, len int64) (string, error) {
 
 func mockWrite(fd int, off int64, content string) (int64, error) {
 	f, _ := fdMap.Load(fd)
-	file := f.(os.File)
+	file := f.(*os.File)
 	n, err := file.WriteAt([]byte(content), off)
 
 	return int64(n), err
+}
+
+func mockTruncate(fd int, length int64) error {
+	f, _ := fdMap.Load(fd)
+	file := f.(*os.File)
+	return file.Truncate(length)
 }
 
 func mockScan(path string) ([]FileInfo, error) {
@@ -77,7 +97,8 @@ func mockStat(path string) (FileInfo, error) {
 
 func mockNameX(path string, create bool) error {
 	if create == true {
-		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+		dirPath := path[:strings.LastIndex(path, "/")]
+		if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
 			return err
 		}
 	}
