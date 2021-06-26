@@ -30,7 +30,6 @@ func Chroot(path string) error {
 		return err
 	}
 
-	println(path)
 	if rootExists, _, err := conn.Exists(path); err != nil {
 		return err
 	} else if !rootExists {
