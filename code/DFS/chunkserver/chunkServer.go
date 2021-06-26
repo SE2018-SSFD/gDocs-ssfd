@@ -11,29 +11,41 @@ import (
 )
 
 type ChunkServer struct {
-	addr       string
-	masterAddr string
-	dir        string
-	l          net.Listener
-	sync.RWMutex
-
-	chunks   map[util.Handle]*ChunkInfo
-	cache    *Cache
-	shutdown chan struct{}
+	addr         string
+	masterAddr   string
+	dir          string
+	l            net.Listener
+	sync.RWMutex            // protect chunks
+	logLock      sync.Mutex // protect log
+	chunks       map[util.Handle]*ChunkInfo
+	cache        *Cache
+	shutdown     chan struct{}
 }
 
 type ChunkInfo struct {
 	sync.RWMutex
 	verNum    int64 //version number
 	mutations map[int64]*Mutation
-	isGarbage bool
+	isStale   bool
 	// checksum  int64
 }
 
+type OperationType int32
+
+const (
+	Operation_Delete OperationType = 0
+	Operation_Update OperationType = 1
+)
+
 type ChunkInfoCP struct {
-	handle    util.Handle
-	verNum    int64
-	isGarbage bool
+	Handle util.Handle
+	VerNum int64
+}
+
+type ChunkInfoLog struct {
+	Handle    util.Handle
+	VerNum    int64
+	Operation OperationType
 }
 
 type Mutation struct {
@@ -57,6 +69,7 @@ func InitChunkServer(chunkAddr string, dataPath string, masterAddr string) *Chun
 		}
 	}
 
+	cs.RecoverChunkInfo()
 	cs.StartRPCServer()
 
 	log.Printf("chunkserver %v: init success\n", chunkAddr)
@@ -67,6 +80,7 @@ func InitChunkServer(chunkAddr string, dataPath string, masterAddr string) *Chun
 func (cs *ChunkServer) Exit() {
 	err := cs.l.Close()
 	close(cs.shutdown)
+	cs.StoreCheckPoint()
 	if err != nil {
 		return
 	}

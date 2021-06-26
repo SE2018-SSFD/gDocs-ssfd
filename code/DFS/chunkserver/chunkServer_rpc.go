@@ -13,7 +13,7 @@ func (cs *ChunkServer) StartRPCServer() error {
 	rpcs.Register(cs)
 	listener, err := net.Listen("tcp", string(cs.addr))
 	if err != nil {
-		log.Fatalf("ChunKserver listen %v error\n", string(cs.addr))
+		log.Fatalf("Chunkserver listen %v error\n", string(cs.addr))
 	}
 
 	cs.l = listener
@@ -63,12 +63,14 @@ func (cs *ChunkServer) GetChunkStatesRPC(args util.GetChunkStatesArgs, reply *ut
 	return nil
 }
 
-// func (cs *ChunkServer) SetGarbageRPC(args util.SetGarbageArgs, reply *util.SetGarbageReply) error {
-// 	cs.Lock()
-// 	for _, h := range args.Handles {
-
-// 	}
-// }
+func (cs *ChunkServer) SetStaleRPC(args util.SetGarbageArgs, reply *util.SetGarbageReply) error {
+	cs.Lock()
+	for _, h := range args.Handles {
+		cs.chunks[h].isStale = true
+	}
+	cs.Unlock()
+	return nil
+}
 
 func (cs *ChunkServer) LoadDataRPC(args util.LoadDataArgs, reply *util.LoadDataReply) error {
 	log.Printf("ChunkServer %v: load data \n", cs.addr)
@@ -127,6 +129,7 @@ func (cs *ChunkServer) CreateChunkRPC(args util.CreateChunkArgs, reply *util.Cre
 		log.Panicf("ChunkServer %v: chunk %v has been already created", cs.addr, args.Handle)
 		return nil
 	}
+	cs.AppendLog(ChunkInfoLog{Handle: args.Handle, VerNum: 0, Operation: Operation_Update})
 	cs.chunks[args.Handle] = &ChunkInfo{verNum: 0}
 	return cs.CreateChunk(args.Handle)
 }

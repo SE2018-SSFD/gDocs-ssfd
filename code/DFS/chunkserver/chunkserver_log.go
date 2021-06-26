@@ -8,7 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (cs *ChunkServer) AppendLog(ckcp ChunkInfoCP) error {
+func (cs *ChunkServer) AppendLog(ckl ChunkInfoLog) error {
+	cs.logLock.Lock()
+	defer cs.logLock.Unlock()
 	filename := cs.GetLogName()
 	fd, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0660)
 	if err != nil {
@@ -18,7 +20,7 @@ func (cs *ChunkServer) AppendLog(ckcp ChunkInfoCP) error {
 	defer fd.Close()
 
 	enc := gob.NewEncoder(fd)
-	err = enc.Encode(ckcp)
+	err = enc.Encode(ckl)
 	if err != nil {
 		cs.Printf("Append log error\n")
 		return err
@@ -37,13 +39,14 @@ func (cs *ChunkServer) StoreCheckPoint() error {
 	}
 	defer fd.Close()
 
-	var ckcp []ChunkInfoCP = make([]ChunkInfoCP, 0)
+	var ckcp []ChunkInfoCP
 	for h, ck := range cs.chunks {
-		ckcp = append(ckcp, ChunkInfoCP{handle: h, verNum: ck.verNum})
+		ckcp = append(ckcp, ChunkInfoCP{Handle: h, VerNum: ck.verNum})
 	}
 	enc := gob.NewEncoder(fd)
 	err = enc.Encode(ckcp)
 	if err != nil {
+		logrus.Print(err)
 		logrus.Panic("set checkpoint error\n")
 		return err
 	}
@@ -61,14 +64,12 @@ func (cs *ChunkServer) StoreCheckPoint() error {
 		log.Panic(err)
 		return err
 	}
-
+	cs.Printf("store checkpoint success\n")
 	return nil
 }
 
-// call by RecoverChunkInfo ,need to get cs.Lock()
+// call by RecoverChunkInfo
 func (cs *ChunkServer) LoadCheckPoint() error {
-	// cs.Lock()
-	// defer cs.Unlock()
 
 	filename := cs.GetCPName()
 	fd, err := os.Open(filename)
@@ -76,7 +77,7 @@ func (cs *ChunkServer) LoadCheckPoint() error {
 		logrus.Printf("chunkserver %v: open file error\n")
 		return err
 	}
-
+	defer fd.Close()
 	var ckcps []ChunkInfoCP
 	dec := gob.NewDecoder(fd)
 	err = dec.Decode(&ckcps)
@@ -85,7 +86,10 @@ func (cs *ChunkServer) LoadCheckPoint() error {
 		return err
 	}
 	for _, ckcp := range ckcps {
-		cs.chunks[ckcp.handle].verNum = ckcp.verNum
+		cs.chunks[ckcp.Handle] = &ChunkInfo{
+			verNum:  ckcp.VerNum,
+			isStale: false,
+		}
 	}
 
 	cs.Printf("load checkpoint success\n")
@@ -99,25 +103,34 @@ func (cs *ChunkServer) LoadLog() error {
 		logrus.Printf("chunkserver %v: open file error\n")
 		return err
 	}
-
-	var ckcps []ChunkInfoCP
+	defer fd.Close()
+	var ckls []ChunkInfoLog
 	dec := gob.NewDecoder(fd)
-	err = dec.Decode(&ckcps)
+	err = dec.Decode(&ckls)
 	if err != nil {
 		cs.Printf(err.Error())
 		return err
 	}
-	for _, ckcp := range ckcps {
-		cs.chunks[ckcp.handle].verNum = ckcp.verNum
+	for _, ckl := range ckls {
+		if ckl.Operation == Operation_Delete {
+			delete(cs.chunks, ckl.Handle)
+		} else {
+			cs.chunks[ckl.Handle] = &ChunkInfo{
+				verNum:  ckl.VerNum,
+				isStale: false,
+			}
+		}
+
 	}
 
 	cs.Printf("load log success\n")
 	return nil
 }
 
+// no need to get lock
 func (cs *ChunkServer) RecoverChunkInfo() error {
-	cs.Lock()
-	defer cs.Unlock()
+	// cs.Lock()
+	// defer cs.Unlock()
 
 	err := cs.LoadCheckPoint()
 	if err != nil {
