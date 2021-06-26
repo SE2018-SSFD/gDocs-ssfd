@@ -14,6 +14,7 @@ type Heartbeat struct {
 	path			string
 	closeChan		chan int
 	mates			*[]string
+	originMates		*[]string
 
 	ServiceName		string
 }
@@ -42,13 +43,14 @@ func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string
 		}
 	}
 
-	var mates []string
+	var mates, originMates []string
 	var oldChildren, newChildren []string
 	var evenChan <-chan zk.Event
 	closeChan := make(chan int)
 	if oldChildren, _, evenChan, err = conn.ChildrenW(path); err != nil {
 		return nil, err
 	} else {
+		originMates = make([]string, len(oldChildren)); copy(originMates, oldChildren)
 		mates = oldChildren
 		go func() {
 			for {
@@ -89,6 +91,7 @@ func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string
 		path: newPath,
 		closeChan: closeChan,
 		mates: &mates,
+		originMates: &originMates,
 
 		ServiceName: serviceName,
 	}, nil
@@ -101,4 +104,8 @@ func (hb *Heartbeat) Disconnect() {
 
 func (hb *Heartbeat) GetMates() []string {
 	return *hb.mates
+}
+
+func (hb *Heartbeat) GetOriginMates() []string {
+	return *hb.originMates
 }
