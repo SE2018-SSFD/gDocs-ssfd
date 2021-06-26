@@ -14,17 +14,16 @@ type ChunkStates struct {
 	file  map[util.DFSPath]*fileState
 	handle *handleState
 }
-
-type chunkState struct {
-	sync.RWMutex
-	handle util.Handle
-	locations []util.Address // set of replica locations
-	expire   time.Time           // lease expire time
-}
 type fileState struct{
 	sync.RWMutex
 	chunks []*chunkState
 	size int
+}
+type chunkState struct {
+	sync.RWMutex
+	Handle util.Handle
+	Locations []util.Address // set of replica locations
+	expire   time.Time           // lease expire time
 }
 type handleState struct {
 	sync.RWMutex
@@ -35,21 +34,21 @@ type handleState struct {
 // CreateChunkAndReplica create metadata of a chunk and its replicas
 // then it ask chunkservers to create chunks in Linux File System
 // Note : s.file[path] is locked now
-func (s* ChunkStates) CreateChunkAndReplica(fs *fileState,addrs []util.Address) (newHandle util.Handle,err error) {
+func (s* ChunkStates) CreateChunkAndReplica(fs *fileState,addrs []util.Address) (newChunk *chunkState,err error) {
 	var arg util.CreateChunkArgs
 	var ret util.CreateChunkReply
 
 	// increment handle
 	s.handle.Lock()
-	newHandle = s.handle.curHandle+1
+	newHandle := s.handle.curHandle+1
 	logrus.Infof(" CreateChunkAndReplica : new Handle %d\n",newHandle)
 	s.handle.curHandle+=1
 	s.handle.Unlock()
 
 	// add chunk to file
-	newChunk := &chunkState{
-		locations: make([]util.Address,0),
-		handle: newHandle,
+	newChunk = &chunkState{
+		Locations: make([]util.Address,0),
+		Handle: newHandle,
 		expire: time.Now(),
 	}
 	fs.chunks = append(fs.chunks,newChunk)
@@ -60,9 +59,9 @@ func (s* ChunkStates) CreateChunkAndReplica(fs *fileState,addrs []util.Address) 
 		arg.Handle = newHandle
 		err = util.Call(string(addr), "ChunkServer.CreateChunkRPC", arg, &ret)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
-		fs.chunks[newHandle].locations = append(fs.chunks[newHandle].locations,addr)
+		newChunk.Locations = append(newChunk.Locations,addr)
 	}
 	return
 }

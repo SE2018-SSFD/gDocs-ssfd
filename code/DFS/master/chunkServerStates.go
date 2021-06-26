@@ -4,6 +4,7 @@ import (
 	"DFS/util"
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -11,6 +12,7 @@ import (
 
 
 type ChunkServerStates struct {
+	sync.RWMutex
 	servers map[util.Address]*ChunkServerState
 }
 
@@ -34,13 +36,26 @@ func (s *ChunkServerStates) randomServers(times int) (addrs []util.Address,err e
 }
 
 func (s *ChunkServerStates) RegisterServer(addr util.Address) error {
+	s.Lock()
+	defer s.Unlock()
 	_,exist := s.servers[addr]
 	if exist{
-		return fmt.Errorf("ServerReRegisterError : Server %s is registered\n",addr)
+		return fmt.Errorf("ServerRegisterError : Server %s is registered\n",addr)
 	}
 	s.servers[addr] = &ChunkServerState{
 		lastHeartbeat: time.Now(),
 	}
+	return nil
+}
+
+func (s *ChunkServerStates) UnRegisterServer(addr util.Address) error {
+	s.Lock()
+	defer s.Unlock()
+	_,exist := s.servers[addr]
+	if !exist{
+		return fmt.Errorf("ServerUnRegisterError : Server %s is not registered\n",addr)
+	}
+	delete(s.servers,addr)
 	return nil
 }
 
