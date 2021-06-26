@@ -30,6 +30,11 @@ func SendResponse(ctx iris.Context, success bool, msg int, data interface{}) {
 	})
 }
 
+func RequestRedirectTo(ctx iris.Context, addr string, api string) {
+	ctx.Header("Location", addr + api)
+	ctx.StopWithStatus(iris.StatusTemporaryRedirect)
+}
+
 func SendStreamResponse(ctx iris.Context, flusher http.Flusher, success bool, msg int, data interface{}) {
 	str, _ := json.Marshal(ResponseBean{
 		Success: success,
