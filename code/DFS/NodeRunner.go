@@ -6,12 +6,13 @@ import (
 	"DFS/master"
 	"DFS/util"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
-func main(){
-	if len(os.Args)<3 {
+func main() {
+	if len(os.Args) < 3 {
 		printUsage()
 		return
 	}
@@ -38,7 +39,7 @@ func clientRun() {
 	}
 	addr := os.Args[2]
 	masterAddr := os.Args[3]
-	c:=client.InitClient(util.Address(addr),util.Address(masterAddr))
+	c := client.InitClient(util.Address(addr), util.Address(masterAddr))
 	c.Serve()
 }
 
@@ -50,8 +51,8 @@ func chunkServerRun() {
 	addr := os.Args[2]
 	dataPath := os.Args[3]
 	masterAddr := os.Args[4]
-	c := chunkserver.InitChunkServer(addr,dataPath,masterAddr)
-	logrus.Info(c.GetStatusString())
+	c := chunkserver.InitChunkServer(addr, dataPath, masterAddr)
+	// logrus.Info(c.GetStatusString())
 	// block on ch; make it a daemon
 	ch := make(chan bool)
 	<-ch
@@ -64,14 +65,13 @@ func masterRun() {
 	}
 	addr := util.Address(os.Args[2])
 	metaPath := util.LinuxPath(os.Args[3])
-	m := master.InitMaster(addr,metaPath)
+	m := master.InitMaster(addr, metaPath)
 	logrus.Info(m.GetStatusString())
 	m.Serve()
 }
 
-
 // set the default logging strategy of DFS
-func setLoggingStrategy(){
+func setLoggingStrategy() {
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 }

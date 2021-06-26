@@ -64,6 +64,5 @@ func (cs *ChunkServer) CreateChunk(handle util.Handle) error {
 		logrus.Panic(err)
 		return err
 	}
-
 	return nil
 }
