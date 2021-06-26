@@ -1,15 +1,13 @@
 package zkWrap
 
 import (
+	"backend/utils/config"
 	"github.com/go-zookeeper/zk"
+	"strings"
 	"time"
 )
 
-var hosts = []string{
-	"127.0.0.1:30086",
-	"127.0.0.1:30087",
-	"127.0.0.1:30088",
-}
+var hosts []string
 
 var root = "/"
 
@@ -21,6 +19,8 @@ const (
 )
 
 func Chroot(path string) error {
+	hosts = strings.Split(config.Get().ZKAddr, ";")
+
 	if path[len(path) - 1:] == "/" {
 		path = path[0:len(path)-1]
 	}

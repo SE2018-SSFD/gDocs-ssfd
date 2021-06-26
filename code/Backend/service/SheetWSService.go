@@ -111,9 +111,7 @@ func SheetOnMessage(wss *wsWrap.WSServer, uid uint, username string, fid uint, b
 		}
 
 		logger.Debugf("[msgType:%s fid:%d uid:%d] onMessage", sheetMsg.MsgType, fid, uid)
-		// TODO: lock
-		// TODO: not in cache
-		if config.WriteThrough {
+		if config.Get().WriteThrough {
 			handleSheetMessageWriteThrough(wss, fid, uid, username, sheetMsg, group)
 		} else {
 			handleSheetMessageWithCache(wss, fid, uid, username, sheetMsg, group)

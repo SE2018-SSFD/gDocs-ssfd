@@ -1,6 +1,8 @@
 package server
 
 import (
+	"backend/lib/cluster"
+	"backend/lib/zkWrap"
 	"backend/repository"
 	"backend/router"
 	"backend/utils/config"
@@ -17,12 +19,20 @@ func NewApp() *iris.Application {
 	app.Use(recover.New())
 	app.Use(logger.New())
 
-	router.SetRouter(app)
-	repository.InitDBConn()
-
 	loggerWrap.SetLogger(app.Logger())
 
-	config.LoadConfig("")
+	config.LoadConfig()
+
+	router.SetRouter(app)
+
+	repository.InitDBConn()
+
+	if !config.Get().WriteThrough {
+		if err := zkWrap.Chroot(config.Get().ZKRoot); err != nil {
+			panic(err)
+		}
+		cluster.RegisterNodes(config.Get().Addr, int(config.Get().MaxSheetCache/config.Get().UnitCache))
+	}
 
 	return app
 }

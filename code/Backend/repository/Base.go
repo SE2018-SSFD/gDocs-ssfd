@@ -3,16 +3,16 @@ package repository
 import (
 	"backend/model"
 	"backend/utils"
+	"backend/utils/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 var db *gorm.DB
 var err error
-var uri = "test:test@tcp(127.0.0.1:31087)/test?charset=utf8mb4&parseTime=True&loc=Local"
-
 
 func InitDBConn() {
+	uri := config.Get().MySqlAddr
 	db, err = gorm.Open(mysql.Open(uri), &gorm.Config{})
 	if err != nil {
 		panic("Failed when connecting to DB " + uri)
