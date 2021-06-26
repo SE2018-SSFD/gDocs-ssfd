@@ -4,7 +4,10 @@ import "testing"
 
 const (
 	CLIENTADDR     = "127.0.0.1:1233"
-	MASTERADDR     = "127.0.0.1:1234"
+	MASTER1ADDR     = "127.0.0.1:1234"
+	MASTER2ADDR     = "127.0.0.1:1235"
+	MASTER3ADDR     = "127.0.0.1:1236"
+
 	PARALLELSIZE   = 3
 	MAXWAITINGTIME = 5 // the time to wait for parallel tests finished
 )

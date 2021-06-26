@@ -8,6 +8,11 @@ type DFSPath string
 type LinuxPath string
 type Address string
 
+const(
+	MASTERCOUNT = 3
+	MASTERZKPATH = "/master"
+)
+
 // ChunkServer
 
 type ChunkState struct {
@@ -24,4 +29,5 @@ const (
 	MAXFD             = 128
 	HEARTBEATDURATION = 200 * time.Millisecond
 	DELETEPREFIX = "_delete_"
+
 )
