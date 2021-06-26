@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var isClear bool = false //whether clear all file after test
+var isClear bool = true //whether clear all file after test
 
 func initChunkServer() (cs []*chunkserver.ChunkServer) {
 	logrus.SetLevel(logrus.DebugLevel)
