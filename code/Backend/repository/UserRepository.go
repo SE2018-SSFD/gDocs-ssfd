@@ -5,12 +5,12 @@ import (
 )
 
 func GetUserByUsername(username string) (ret model.User) {
-	db.First(&ret, "username = ?", username)
+	db.Preload("Sheets").First(&ret, "username = ?", username)
 	return
 }
 
 func GetUserByUid(uid uint) (ret model.User) {
-	db.First(&ret, "uid = ?", uid)
+	db.Preload("Sheets").First(&ret, "uid = ?", uid)
 	return
 }
 
