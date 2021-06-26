@@ -2,6 +2,7 @@ package chunkserver
 
 import (
 	"DFS/util"
+	"DFS/util/zkWrap"
 	"fmt"
 	"log"
 	"net"
@@ -11,15 +12,16 @@ import (
 )
 
 type ChunkServer struct {
-	addr         string
-	masterAddr   string
-	dir          string
-	l            net.Listener
-	sync.RWMutex            // protect chunks
-	logLock      sync.Mutex // protect log
-	chunks       map[util.Handle]*ChunkInfo
-	cache        *Cache
-	shutdown     chan struct{}
+	addr             string
+	masterAddr       string
+	dir              string
+	l                net.Listener
+	sync.RWMutex                // protect chunks
+	logLock          sync.Mutex // protect log
+	chunks           map[util.Handle]*ChunkInfo
+	cache            *Cache
+	shutdown         chan struct{}
+	clusterHeartbeat *zkWrap.Heartbeat
 }
 
 type ChunkInfo struct {

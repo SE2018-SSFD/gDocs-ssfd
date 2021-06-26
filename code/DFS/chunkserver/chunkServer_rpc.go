@@ -38,6 +38,8 @@ func (cs *ChunkServer) StartRPCServer() error {
 		log.Print("ChunkServer: done\n")
 	}()
 
+	cs.RegisterNodes()
+	cs.Printf("Register zookeeper node\n")
 	//
 	// go func() {
 	// 	hbTicker := time.Tick(util.HEARTBEATDURATION)
@@ -226,10 +228,29 @@ func (cs *ChunkServer) CloneChunkRPC(args util.CloneChunkArgs, reply *util.Clone
 		return fmt.Errorf("ChunkServer %v: clone chunk len %v,but actual len %v", cs.addr, args.Len, len)
 	}
 
-	// util.CallAll(args.Addrs, "")
+	err = util.CallAll(args.Addrs, "ChunkServer.SyncChunkRPC", util.SyncChunkArgs{Handle: args.Handle, VerNum: cs.chunks[args.Handle].verNum, Data: buf})
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
 	return nil
 }
 
-func (cs *ChunkServer) SyncChunkRPC() {
-
+func (cs *ChunkServer) SyncChunkRPC(args util.SyncChunkArgs, reply *util.SyncChunkReply) error {
+	cs.RLock()
+	_, exist := cs.chunks[args.Handle]
+	if !exist {
+		cs.chunks[args.Handle] = &ChunkInfo{verNum: args.VerNum, isStale: false}
+	}
+	cs.chunks[args.Handle].Lock()
+	cs.RUnlock()
+	defer cs.chunks[args.Handle].Unlock()
+	_, err := cs.SetChunk(args.Handle, 0, args.Data)
+	if err != nil {
+		return err
+	}
+	return nil
+	// if l != len(args.Data) {
+	// 	return fmt.Errorf("ChunkServer %v: clone chunk len %v,but actual len %v", cs.addr, args.Len, len)
+	// }
 }
