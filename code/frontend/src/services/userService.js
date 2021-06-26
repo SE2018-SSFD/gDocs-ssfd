@@ -5,7 +5,7 @@ import {apiUrl} from "../utils/config";
 
 const login_register_callback = (data) => {
     if (data.status >= 0) {
-        localStorage.setItem('user', JSON.stringify(data.data));
+        localStorage.setItem('token', JSON.stringify(data.data));
         history.push("/");
         message.success(data.msg).then(r => {
         });

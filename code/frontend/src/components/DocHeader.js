@@ -1,5 +1,5 @@
 import React from "react";
-import {Button, Col, Divider, Image, Layout, Row} from "antd";
+import {Button, Row,Col, Divider, Image, Layout } from "antd";
 import {
     FolderOutlined,
     LeftOutlined,
@@ -18,7 +18,7 @@ export class DocHeader extends React.Component {
     render() {
         return (
             <Header className="site-layout-sub-header-background" style={{padding: 0}}>
-                <Row align={"middle"}>
+                <Row>
                     <Col span={2} offset={1}>
                     <Link to={{
                         pathname: '/',

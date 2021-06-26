@@ -27,6 +27,12 @@
     box-shadow: inset 0 1px 0 rgba(225, 228, 232, 0.2);
 }
 
+.login-password {
+    border-radius: 6px;
+    outline: none;
+    box-shadow: inset 0 1px 0 rgba(225, 228, 232, 0.2);
+}
+
 .login-button {
     margin-top: 20px;
     display: block;

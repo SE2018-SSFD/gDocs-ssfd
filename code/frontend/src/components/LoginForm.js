@@ -58,8 +58,8 @@ class LoginForm extends React.Component {
                             <p className="login-hint">密码</p>
                         </div>
                         <div>
-                            <Input placeholder="请输入密码" value={this.state.password} onChange={this.passwordOnChange}
-                                   className="login-input"/>
+                            <Input.Password placeholder="请输入密码" value={this.state.password} onChange={this.passwordOnChange}
+                                   className='login-password'/>
                         </div>
                         <div style={{textAlign: 'center'}}>
                             <Button onClick={this.onSubmit} className="login-button">

@@ -1,17 +1,20 @@
 import React from 'react';
 import {Button} from "antd";
+import {websocketUrl} from "../utils/config";
 
-// const socket = new WebSocket('ws://localhost:8080');
-//
-// // Connection opened
-// socket.addEventListener('open', function (event) {
-//     socket.send('Hello Server!');
-// });
-//
-// // Listen for messages
-// socket.addEventListener('message', function (event) {
-//     console.log('Message from server ', event.data);
-// });
+let socket = new WebSocket(websocketUrl);
+
+socket.addEventListener('open', function (event) {
+    console.log('WebSocket open: ', event);
+});
+
+socket.addEventListener('message', function (event) {
+    console.log('WebSocket message: ', event);
+});
+
+socket.addEventListener('error', function (event) {
+    console.log('WebSocket error: ', event);
+});
 
 const options = {
     container: "luckysheet",
@@ -21,15 +24,30 @@ const options = {
     userInfo: 'User',
     myFolderUrl: '/',
     showinfobar: false,
+    allowUpdate:true,
+    updateUrl:'localhost:8080',
+    // loadUrl:'localhost:8080',
     hook: {
         // 进入单元格编辑模式之前触发。
         cellEditBefore:function(range ){
-            console.info(range);
+            console.info('cellEditBefore',range);
+            socket.send("cellEditBefore"+JSON.stringify(range))
         },
+
+        // cellEdit:function(range ){
+        //     console.info('cellEdit',range);
+        //     socket.send("cellEdit" +JSON.stringify(range))
+        // },
+
+        // cellUpdateBefore:function(r,c,value,isRefresh){
+        //     console.info('cellUpdateBefore',r,c,value,isRefresh)
+        //     socket.send("cellUpdateBefore"+ r+ c+ value+ isRefresh)
+        // },
 
         //更新这个单元格后触发
         cellUpdated:function(r,c,oldValue, newValue, isRefresh){
             console.info('cellUpdated',r,c,oldValue, newValue, isRefresh);
+            socket.send("cellUpdate" + r + c + oldValue + newValue + isRefresh)
         },
     }
 }
@@ -39,11 +57,8 @@ const luckysheet = window.luckysheet;
 export class LuckySheet extends React.Component {
 
     componentDidMount() {
-        luckysheet.create(options)
-    }
+        luckysheet.create(options);
 
-    HandleOutput(){
-        console.log(luckysheet.getluckysheetfile())
     }
 
     render() {
