@@ -1,0 +1,82 @@
+version: '3.1'
+
+services:
+  mysql:
+    container_name: mysql5.7
+    image: mysql:5.7
+    restart: always
+    hostname: mysql
+    ports:
+      - 31086:3306
+    environment:
+      MYSQL_DATABASE: gdoc
+      MYSQL_USER: gdoc
+      MYSQL_PASSWORD: gdoc
+      MYSQL_RANDOM_ROOT_PASSWORD: 1
+
+  zoo1:
+    container_name: zoo1
+    image: zookeeper
+    restart: always
+    hostname: zoo1
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
+
+  zoo2:
+    container_name: zoo2
+    image: zookeeper
+    restart: always
+    hostname: zoo2
+    environment:
+      ZOO_MY_ID: 2
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
+
+  zoo3:
+    container_name: zoo3
+    image: zookeeper
+    restart: always
+    hostname: zoo3
+    environment:
+      ZOO_MY_ID: 3
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
+
+
+  backend1:
+    container_name: backend1
+    image: gdoc_backend
+    restart: always
+    hostname: backend1
+    ports:
+      - 30086:8080
+    environment:
+      GDOC_ADDR: "backend1:8080"
+      GDOC_MYSQLADDR: "gdoc:gdoc@tcp(mysql:3306)/gdoc?charset=utf8mb4&parseTime=True&loc=Local"
+      GDOC_ZKADDR: "zoo1:2181;zoo2:2181;zoo3:2181"
+
+  backend2:
+    container_name: backend2
+    image: gdoc_backend
+    restart: always
+    hostname: backend2
+    ports:
+      - 30087:8080
+    environment:
+      GDOC_ADDR: "backend2:8080"
+      GDOC_MYSQLADDR: "gdoc:gdoc@tcp(mysql:3306)/gdoc?charset=utf8mb4&parseTime=True&loc=Local"
+      GDOC_ZKADDR: "zoo1:2181;zoo2:2181;zoo3:2181"
+
+  backend3:
+    container_name: backend3
+    image: gdoc_backend
+    restart: always
+    hostname: backend3
+    ports:
+      - 30088:8080
+    environment:
+      GDOC_ADDR: "backend3:8080"
+      GDOC_MYSQLADDR: "gdoc:gdoc@tcp(mysql:3306)/gdoc?charset=utf8mb4&parseTime=True&loc=Local"
+      GDOC_ZKADDR: "zoo1:2181;zoo2:2181;zoo3:2181"
+
+#networks:
+#  gdoc_backend:
