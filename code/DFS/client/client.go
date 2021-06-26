@@ -357,8 +357,8 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte, fileSize int
 		}
 		argL.CID = cid
 		argL.Data = data[writtenBytes:(writtenBytes + roundWrittenBytes)]
+		// TODO: make it random , now is fixed order
 		argL.Addrs = retR.ChunkServerAddrs
-		//TODO: make it random
 		//argL.Addrs = make([]util.Address,0)
 		//for _,index := range rand.Perm(len(retR.ChunkServerAddrs)){
 		//	argL.Addrs = append(argL.Addrs,retR.ChunkServerAddrs[index])
