@@ -157,7 +157,7 @@ func TestChunkServer(t *testing.T) {
 	wg[0].Wait()
 	logrus.Printf("Read Done !!!\n")
 	Clear()
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		cs[i].Exit()
 	}
 }
