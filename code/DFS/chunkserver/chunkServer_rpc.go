@@ -63,6 +63,13 @@ func (cs *ChunkServer) GetChunkStatesRPC(args util.GetChunkStatesArgs, reply *ut
 	return nil
 }
 
+// func (cs *ChunkServer) SetGarbageRPC(args util.SetGarbageArgs, reply *util.SetGarbageReply) error {
+// 	cs.Lock()
+// 	for _, h := range args.Handles {
+
+// 	}
+// }
+
 func (cs *ChunkServer) LoadDataRPC(args util.LoadDataArgs, reply *util.LoadDataReply) error {
 	log.Printf("ChunkServer %v: load data \n", cs.addr)
 	cs.cache.Set(args.CID, args.Data)
