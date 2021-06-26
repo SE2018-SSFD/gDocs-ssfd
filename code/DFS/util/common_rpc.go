@@ -80,6 +80,13 @@ type SyncChunkArgs struct {
 type SyncChunkReply struct {
 }
 
+type SetGarbageArgs struct {
+	Handles []Handle
+}
+
+type SetGarbageReply struct {
+}
+
 // Master RPC structure
 type OpenArg struct {
 	Path DFSPath `json:"path"`
@@ -153,9 +160,9 @@ type SetFileMetaRet struct {
 }
 
 type ReadArg struct {
-	Fd     int    `json:"fd"`
-	Offset int    `json:"offset"`
-	Len    int    `json:"len"`
+	Fd     int `json:"fd"`
+	Offset int `json:"offset"`
+	Len    int `json:"len"`
 }
 
 type ReadRet struct {

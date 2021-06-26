@@ -26,12 +26,14 @@ type ChunkInfo struct {
 	sync.RWMutex
 	verNum    int64 //version number
 	mutations map[int64]*Mutation
+	isGarbage bool
 	// checksum  int64
 }
 
 type ChunkInfoCP struct {
-	handle util.Handle
-	verNum int64
+	handle    util.Handle
+	verNum    int64
+	isGarbage bool
 }
 
 type Mutation struct {
