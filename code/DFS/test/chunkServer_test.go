@@ -14,7 +14,7 @@ import (
 
 var isClear bool = true //whether clear all file after test
 
-func initChunkServerTest() (cs []*chunkserver.ChunkServer) {
+func initChunkServer() (cs []*chunkserver.ChunkServer) {
 	logrus.SetLevel(logrus.DebugLevel)
 	// Register some virtual chunkServers
 	_, err := os.Stat("cs")
@@ -34,16 +34,36 @@ func initChunkServerTest() (cs []*chunkserver.ChunkServer) {
 	return
 }
 
+func chunkServerExit(cs []*chunkserver.ChunkServer) {
+	for _, c := range cs {
+		c.Exit()
+	}
+}
+func chunkServerCrash(cs []*chunkserver.ChunkServer) {
+	for _, c := range cs {
+		c.Crash()
+	}
+}
+
 func Clear() {
+
 	if isClear {
-		os.RemoveAll("cs")
-		logrus.Printf("Clear all\n")
+		for {
+			err := os.RemoveAll("cs")
+			if err != nil {
+				logrus.Print(err)
+			} else {
+				logrus.Printf("Clear all\n")
+				break
+			}
+			time.Sleep(time.Second)
+		}
 	}
 }
 
 func TestChunkServer(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
-	cs := initChunkServerTest()
+	cs := initChunkServer()
 
 	var h []util.Handle = make([]util.Handle, 2)
 	var wg []sync.WaitGroup = make([]sync.WaitGroup, 2)
@@ -156,8 +176,49 @@ func TestChunkServer(t *testing.T) {
 	}
 	wg[0].Wait()
 	logrus.Printf("Read Done !!!\n")
-	Clear()
-	for i := 0; i < 5; i++ {
-		cs[i].Exit()
+
+	// test log and read
+	chunkServerCrash(cs)
+	cs = initChunkServer()
+	wg[0].Add(4)
+	for i := 0; i < 4; i++ {
+		go func(idx int) {
+			readArgs[idx] = util.ReadChunkArgs{Handle: h[idx/2], Off: idx % 2, Len: 6}
+			err := cs[idx/2+1].ReadChunkRPC(readArgs[idx], &readReply[idx])
+			if err != nil {
+				logrus.Printf("Read error\n")
+				logrus.Println(err)
+				t.Fail()
+			} else {
+				logrus.Printf("read success, idx is %v, data is %s\n", idx, string(readReply[idx].Buf[:]))
+			}
+			wg[0].Done()
+		}(i)
 	}
+	wg[0].Wait()
+	logrus.Printf("Recover and Read Done !!!\n")
+
+	// test checkpoint and read
+	chunkServerExit(cs)
+	cs = initChunkServer()
+	wg[0].Add(4)
+	for i := 0; i < 4; i++ {
+		go func(idx int) {
+			readArgs[idx] = util.ReadChunkArgs{Handle: h[idx/2], Off: idx % 2, Len: 6}
+			err := cs[idx/2+1].ReadChunkRPC(readArgs[idx], &readReply[idx])
+			if err != nil {
+				logrus.Printf("Read error\n")
+				logrus.Println(err)
+				t.Fail()
+			} else {
+				logrus.Printf("read success, idx is %v, data is %s\n", idx, string(readReply[idx].Buf[:]))
+			}
+			wg[0].Done()
+		}(i)
+	}
+	wg[0].Wait()
+	logrus.Printf("Recover and Read Done !!!\n")
+
+	chunkServerExit(cs)
+	Clear()
 }
