@@ -8,7 +8,7 @@ import (
 	"time"
 )
 /* The state of all chunks, maintained by the master */
-
+/* Lock order : chunkstates > fileState > chunkState > handleState*/
 type ChunkStates struct {
 	sync.RWMutex
 	file  map[util.DFSPath]*fileState
@@ -28,6 +28,69 @@ type chunkState struct {
 type handleState struct {
 	sync.RWMutex
 	curHandle util.Handle
+}
+type serialfileState struct{
+	size int
+	chunks []SerialChunkState
+}
+type SerialChunkStates struct{
+	curHandle util.Handle
+	file  map[util.DFSPath]serialfileState
+}
+type SerialChunkState struct{
+	Handle util.Handle
+	Locations []util.Address // set of replica locations
+	expire   time.Time           // lease expire time
+}
+
+// Serialize a chunkstates
+func (s* ChunkStates) Serialize() SerialChunkStates {
+	s.RLock()
+	defer s.RUnlock()
+	var scss SerialChunkStates
+
+	for path,state := range s.file{
+		s.file[path].RLock()
+		chunks := make([]SerialChunkState,0)
+		for index,chunk := range state.chunks{
+			state.chunks[index].RLock()
+			chunks = append(chunks,SerialChunkState{
+				Locations: chunk.Locations,
+				Handle: chunk.Handle,
+				expire: chunk.expire,
+			} )
+			state.chunks[index].RUnlock()
+		}
+		scss.file[path]=serialfileState{
+			size : state.size,
+			chunks : chunks,
+		}
+		s.file[path].RUnlock()
+	}
+	s.handle.RLock()
+	defer s.handle.RUnlock()
+	scss.curHandle = s.handle.curHandle
+	return scss
+}
+
+// Deserialize into chunkstates
+// Master need not take any lock because it is single-threaded
+func (s* ChunkStates) Deserialize(scss SerialChunkStates) error {
+	for path,state := range scss.file{
+		err := s.NewFile(path)
+		if err!=nil{
+			return err
+		}
+		for _,chunk := range state.chunks{
+			s.file[path].chunks = append(s.file[path].chunks,&chunkState{
+				Locations: chunk.Locations,
+				Handle: chunk.Handle,
+				expire: chunk.expire,
+			} )
+		}
+	}
+	s.handle.curHandle = scss.curHandle
+	return nil
 }
 
 

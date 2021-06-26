@@ -2,15 +2,19 @@ package master
 
 import (
 	"DFS/util"
+	"DFS/util/zkWrap"
 	"fmt"
 	"net"
 	"net/rpc"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
 type Master struct {
+	sync.RWMutex
 	addr     util.Address
 	metaPath util.LinuxPath
 	L        net.Listener
@@ -23,7 +27,7 @@ type Master struct {
 	shutdown chan interface{}
 }
 
-func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master {
+func InitMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error) {
 	// Init RPC server
 	m := &Master{
 		addr:     addr,
@@ -40,7 +44,23 @@ func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master {
 	if err != nil {
 		logrus.Fatal("listen error:", err)
 	}
-	logrus.Infoln("master "+addr+": init success")
+	// Zookeeper connection
+	var wg sync.WaitGroup // To sync all the goroutines
+	wg.Add(util.MASTERCOUNT)
+	onConn := func (me string, who string) {
+		wg.Done()
+	}
+	onDisConn := func (me string, who string) {
+	}
+
+	hb,err := zkWrap.RegisterHeartbeat("master",util.MAXWAITINGTIME * time.Second,string(addr),onConn,onDisConn)
+	if err!=nil{
+		return m,err
+	}
+	mate := len(hb.GetOriginMates())
+	for i:=0;i<mate;i++{
+		wg.Done()
+	}
 	m.L = l
 	// Init zookeeper
 	//c, _, err := zk.Connect([]string{"127.0.0.1"}, time.Second) //*10)
@@ -49,8 +69,28 @@ func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master {
 	m.ns = newNamespaceState()
 	m.cs = newChunkStates()
 	m.css = newChunkServerState()
-	return m
+	err = implicitWait(util.MAXWAITINGTIME * time.Second,&wg)
+	if err==nil{
+		logrus.Infoln("master "+addr+": init success")
+	}
+	return m,err
 }
+
+func implicitWait(t time.Duration,wg *sync.WaitGroup)error{
+	c := make(chan int)
+	go func(){
+		wg.Wait()
+		c <- 0
+	}()
+	select {
+	case  <-c:
+	case <-time.After(t):
+		return fmt.Errorf("Parallel test failed\n")
+	}
+	return nil
+}
+
+
 
 func (m *Master) Serve() {
 	// listening thread

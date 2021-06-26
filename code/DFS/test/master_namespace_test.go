@@ -6,13 +6,17 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"math/rand"
+	"os"
 	"strconv"
 	"sync"
 	"testing"
 	"time"
 )
 func initMasterTest()(m *master.Master) {
-	m = master.InitMaster("127.0.0.1:1234", ".")
+	m,err := master.InitMaster("127.0.0.1:1234", ".")
+	if err!=nil{
+		os.Exit(1)
+	}
 	return m
 }
 

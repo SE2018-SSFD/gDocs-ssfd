@@ -10,17 +10,18 @@ import (
 /* The state of the file system namespace, maintained by the master */
 
 type NamespaceState struct {
-	root *treeNode
+	root     *treeNode
+	childCount int
 }
-
+type SerialTreeNode struct {
+	IsDir    bool
+	Children map[string]int
+}
 type treeNode struct {
 	sync.RWMutex
 	isDir bool
 	// dir
 	treeNodes map[string]*treeNode
-	//file
-	length int64
-	chunks int64
 }
 
 func newNamespaceState() *NamespaceState {
@@ -160,4 +161,52 @@ func (ns *NamespaceState) GetNode(path util.DFSPath) (*treeNode, error) {
 		}
 	}
 	return curNode, nil
+}
+// Serialize a namespace
+func (ns *NamespaceState) Serialize()[]SerialTreeNode{
+	// only need to lock the root here since any operation on child node must get the root lock beforehand
+	ns.root.RLock()
+	defer ns.root.RUnlock()
+	nodes := make([]SerialTreeNode,0)
+	ns.tree2array(&nodes,ns.root)
+	return nodes
+}
+
+// tree2array transforms the namespace tree into an array for serialization
+func (ns *NamespaceState) tree2array(array *[]SerialTreeNode, node *treeNode) int {
+	n := SerialTreeNode{IsDir: node.isDir}
+	if node.isDir {
+		n.Children = make(map[string]int)
+		for k, v := range node.treeNodes {
+			n.Children[k] = ns.tree2array(array, v)
+		}
+	}
+
+	*array = append(*array, n)
+	ret := ns.childCount
+	ns.childCount++
+	return ret
+}
+// array2tree transforms the an serialized array to namespace tree
+func (ns *NamespaceState) array2tree(array []SerialTreeNode, id int) *treeNode {
+	n := &treeNode{
+		isDir:  array[id].IsDir,
+	}
+
+	if array[id].IsDir {
+		n.treeNodes = make(map[string]*treeNode)
+		for k, v := range array[id].Children {
+			n.treeNodes[k] = ns.array2tree(array, v)
+		}
+	}
+
+	return n
+}
+
+// Deserializa the metadata from disk
+func (ns *NamespaceState) Deserialize(array []SerialTreeNode) error {
+	ns.root.Lock()
+	defer ns.root.Unlock()
+	ns.root = ns.array2tree(array, len(array)-1)
+	return nil
 }

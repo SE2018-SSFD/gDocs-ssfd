@@ -58,15 +58,23 @@ func chunkServerRun() {
 }
 
 func masterRun() {
-	if len(os.Args) < 4 {
+	if len(os.Args) < 8 {
 		printUsage()
 		return
 	}
-	addr := util.Address(os.Args[2])
-	metaPath := util.LinuxPath(os.Args[3])
-	m := master.InitMaster(addr, metaPath)
-	logrus.Info(m.GetStatusString())
-	m.Serve()
+	//arg 2,3,4 are addresses of master;arg 5,6,7 are metadata paths of master
+	for i:=0;i<3;i++{
+		go func(order int) {
+			m,err := master.InitMaster(util.Address(os.Args[2+order]), util.LinuxPath(os.Args[5+order]))
+			if err!=nil{
+				fmt.Println("Master Init Error :",err)
+				os.Exit(1)
+			}
+			m.Serve()
+		}(i)
+	}
+	ch := make(chan bool)
+	<-ch
 }
 
 // set the default logging strategy of DFS
@@ -77,7 +85,7 @@ func setLoggingStrategy() {
 
 func printUsage() {
 	fmt.Println("Usage:")
-	fmt.Println(" NodeRunner master <addr> <root path>")
+	fmt.Println(" NodeRunner master <addr1> <addr2> <addr3> <metapath1> <metapath2> <metapath3>")
 	fmt.Println(" NodeRunner chunkServer <addr> <root path> <master addr>")
 	fmt.Println(" NodeRunner client <addr> <master addr>")
 	fmt.Println()

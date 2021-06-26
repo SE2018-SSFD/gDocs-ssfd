@@ -22,16 +22,16 @@ func initTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer
 	logrus.SetLevel(logrus.DebugLevel)
 
 	// Init master and client
-	m = master.InitMaster(util.MASTERADDR, ".")
+	m = master.InitMaster(util.MASTER1ADDR, ".")
 	go func(){m.Serve()}()
-	c = client.InitClient(util.CLIENTADDR, util.MASTERADDR)
+	c = client.InitClient(util.CLIENTADDR, util.MASTER1ADDR)
 	go func(){c.Serve()}()
 
 	// Register some virtual chunkServers
 	cs = make([]*chunkserver.ChunkServer, 5)
 	for index,port := range []int{3000,3001,3002,3003,3004}{
 		addr := util.Address("127.0.0.1:" + strconv.Itoa(port))
-		cs[index] = chunkserver.InitChunkServer(string(addr), "ck"+strconv.Itoa(port),  util.MASTERADDR)
+		cs[index] = chunkserver.InitChunkServer(string(addr), "ck"+strconv.Itoa(port),  util.MASTER1ADDR)
 		_ = m.RegisterServer(addr)
 		//util.AssertNil(t,err)
 	}
@@ -116,6 +116,7 @@ func TestOpenClose(t *testing.T) {
 	util.AssertEqual(t,code,400)
 	m.Exit()
 	c.Exit()
+	Clear()
 	for _,_cs := range cs{
 		_cs.Exit()
 	}
