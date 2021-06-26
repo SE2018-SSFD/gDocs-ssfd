@@ -32,7 +32,7 @@ func TestHeartbeat(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 
-		assert.ElementsMatch(t, hb.GetMates(), hosts[:idx])
+		assert.ElementsMatch(t, hb.GetOriginMates(), hosts[:idx])
 
 		hbs = append(hbs, hb)
 	}
