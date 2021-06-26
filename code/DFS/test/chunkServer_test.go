@@ -27,7 +27,7 @@ func initChunkServer() (cs []*chunkserver.ChunkServer) {
 	cs = make([]*chunkserver.ChunkServer, 5)
 	for index, port := range []int{3000, 3001, 3002, 3003, 3004} {
 		addr := util.Address("127.0.0.1:" + strconv.Itoa(port))
-		cs[index] = chunkserver.InitChunkServer(string(addr), "cs/cs"+strconv.Itoa(port), util.MASTERADDR)
+		cs[index] = chunkserver.InitChunkServer(string(addr), "cs/cs"+strconv.Itoa(port), util.MASTER1ADDR)
 	}
 
 	time.Sleep(time.Second)
