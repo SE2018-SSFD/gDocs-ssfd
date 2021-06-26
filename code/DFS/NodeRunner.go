@@ -51,8 +51,7 @@ func chunkServerRun() {
 	addr := os.Args[2]
 	dataPath := os.Args[3]
 	masterAddr := os.Args[4]
-	c := chunkserver.InitChunkServer(addr, dataPath, masterAddr)
-	// logrus.Info(c.GetStatusString())
+	_ = chunkserver.InitChunkServer(addr, dataPath, masterAddr)
 	// block on ch; make it a daemon
 	ch := make(chan bool)
 	<-ch

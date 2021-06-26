@@ -20,11 +20,13 @@ import (
 // initTest init and return the handle of client,master and chunkservers
 func initTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer){
 	logrus.SetLevel(logrus.DebugLevel)
+
 	// Init master and client
 	m = master.InitMaster(util.MASTERADDR, ".")
 	go func(){m.Serve()}()
 	c = client.InitClient(util.CLIENTADDR, util.MASTERADDR)
 	go func(){c.Serve()}()
+
 	// Register some virtual chunkServers
 	cs = make([]*chunkserver.ChunkServer, 5)
 	for index,port := range []int{3000,3001,3002,3003,3004}{
@@ -33,6 +35,7 @@ func initTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer
 		_ = m.RegisterServer(addr)
 		//util.AssertNil(t,err)
 	}
+
 	time.Sleep(time.Second)
 	return
 }

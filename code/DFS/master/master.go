@@ -3,7 +3,6 @@ package master
 import (
 	"DFS/util"
 	"fmt"
-	"log"
 	"net"
 	"net/rpc"
 	"os"
@@ -39,8 +38,9 @@ func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master {
 	}
 	l, err := net.Listen("tcp", string(m.addr))
 	if err != nil {
-		log.Fatal("listen error:", err)
+		logrus.Fatal("listen error:", err)
 	}
+	logrus.Infoln("master "+addr+": init success")
 	m.L = l
 	// Init zookeeper
 	//c, _, err := zk.Connect([]string{"127.0.0.1"}, time.Second) //*10)
@@ -197,7 +197,7 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 
 	// Find the target chunk, if not exists, create one
 	// Note that ChunkIndex <= len(fs.chunks) should be checked by client
-	var targetChunk util.Handle
+	var targetChunk *chunkState
 	if args.ChunkIndex == len(fs.chunks) {
 		// randomly choose servers to store chunk replica
 		var addrs []util.Address
@@ -214,14 +214,14 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		//m.css.xxx
 	} else {
 		fs.Unlock()
-		targetChunk = fs.chunks[args.ChunkIndex].handle
+		targetChunk = fs.chunks[args.ChunkIndex]
 	}
 	logrus.Infoln("targetchunk : ",targetChunk)
 	 // Get target servers which store the replicate
 	 reply.ChunkServerAddrs = make([]util.Address, 0)
-	for _, addr := range fs.chunks[targetChunk].locations {
+	for _, addr := range targetChunk.Locations {
 		reply.ChunkServerAddrs = append(reply.ChunkServerAddrs, addr)
 	}
-	reply.ChunkHandle = targetChunk
+	reply.ChunkHandle = targetChunk.Handle
 	return nil
 }
