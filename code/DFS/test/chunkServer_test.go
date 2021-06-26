@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var isClear bool = true //whether clear all file after test
+var isClear bool = false //whether clear all file after test
 
 func initChunkServer() (cs []*chunkserver.ChunkServer) {
 	logrus.SetLevel(logrus.DebugLevel)
@@ -178,25 +178,25 @@ func TestChunkServer(t *testing.T) {
 	logrus.Printf("Read Done !!!\n")
 
 	// test log and read
-	// chunkServerCrash(cs)
-	// cs = initChunkServer()
-	// wg[0].Add(4)
-	// for i := 0; i < 4; i++ {
-	// 	go func(idx int) {
-	// 		readArgs[idx] = util.ReadChunkArgs{Handle: h[idx/2], Off: idx % 2, Len: 6}
-	// 		err := cs[idx/2+1].ReadChunkRPC(readArgs[idx], &readReply[idx])
-	// 		if err != nil {
-	// 			logrus.Printf("Read error\n")
-	// 			logrus.Println(err)
-	// 			t.Fail()
-	// 		} else {
-	// 			logrus.Printf("read success, idx is %v, data is %s\n", idx, string(readReply[idx].Buf[:]))
-	// 		}
-	// 		wg[0].Done()
-	// 	}(i)
-	// }
-	// wg[0].Wait()
-	// logrus.Printf("Recover and Read Done !!!\n")
+	chunkServerCrash(cs)
+	cs = initChunkServer()
+	wg[0].Add(4)
+	for i := 0; i < 4; i++ {
+		go func(idx int) {
+			readArgs[idx] = util.ReadChunkArgs{Handle: h[idx/2], Off: idx % 2, Len: 6}
+			err := cs[idx/2+1].ReadChunkRPC(readArgs[idx], &readReply[idx])
+			if err != nil {
+				logrus.Printf("Read error\n")
+				logrus.Println(err)
+				t.Fail()
+			} else {
+				logrus.Printf("read success, idx is %v, data is %s\n", idx, string(readReply[idx].Buf[:]))
+			}
+			wg[0].Done()
+		}(i)
+	}
+	wg[0].Wait()
+	logrus.Printf("Recover and Read Done !!!\n")
 
 	// test checkpoint and read
 	chunkServerExit(cs)
