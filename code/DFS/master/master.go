@@ -184,12 +184,12 @@ func (m *Master) GetStatusString() string {
 
 // CreateRPC is called by client to create a new file
 func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
-	logrus.Debugf("RPC create, File Path : %s\n", args.Path)
+	logrus.Debugf("RPC create, File Path : %s", args.Path)
 
 	// Write ahead log
 	err := m.AppendLog(MasterLog{OpType: util.CREATEOPS,Path: args.Path})
 	if err != nil {
-		logrus.Warnf("RPC delete failed : %s\n", err)
+		logrus.Warnf("RPC delete failed : %s", err)
 		return err
 	}
 
@@ -201,7 +201,7 @@ func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
 	}
 	err = m.cs.NewFile(args.Path)
 	if err != nil {
-		logrus.Warnf("RPC create failed : %s\n", err)
+		logrus.Warnf("RPC create failed : %s", err)
 		return err
 	}
 	return nil
@@ -209,19 +209,19 @@ func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
 
 // MkdirRPC is called by client to create a new dir
 func (m *Master) MkdirRPC(args util.MkdirArg, reply *util.MkdirRet) error {
-	logrus.Debugf("RPC mkdir, Dir Path : %s\n", args.Path)
+	logrus.Debugf("RPC mkdir, Dir Path : %s", args.Path)
 
 	// Write ahead log
 	err := m.AppendLog(MasterLog{OpType: util.MKDIROPS,Path: args.Path})
 	if err != nil {
-		logrus.Warnf("RPC mkdir failed : %s\n", err)
+		logrus.Warnf("RPC mkdir failed : %s", err)
 		return err
 	}
 
 	// Modified metadata
 	err = m.ns.Mknod(args.Path, true)
 	if err != nil {
-		logrus.Warnf("RPC mkdir failed : %s\n", err)
+		logrus.Warnf("RPC mkdir failed : %s", err)
 		return err
 	}
 	return nil
@@ -229,24 +229,24 @@ func (m *Master) MkdirRPC(args util.MkdirArg, reply *util.MkdirRet) error {
 
 // DeleteRPC is called by client to lazily delete a dir or file
 func (m *Master) DeleteRPC(args util.DeleteArg, reply *util.DeleteRet) error {
-	logrus.Debugf("RPC delete, Dir Path : %s\n", args.Path)
+	logrus.Debugf("RPC delete, Dir Path : %s", args.Path)
 
 	// Write ahead log
 	err := m.AppendLog(MasterLog{OpType: util.DELETEOPS,Path: args.Path})
 	if err != nil {
-		logrus.Warnf("RPC delete failed : %s\n", err)
+		logrus.Warnf("RPC delete failed : %s", err)
 		return err
 	}
 
 	// Modified metadata
 	err = m.cs.Delete(args.Path)
 	if err != nil {
-		logrus.Warnf("RPC delete failed : %s\n", err)
+		logrus.Warnf("RPC delete failed : %s", err)
 		return err
 	}
 	err = m.ns.Delete(args.Path)
 	if err != nil {
-		logrus.Warnf("RPC delete failed : %s\n", err)
+		logrus.Warnf("RPC delete failed : %s", err)
 		return err
 	}
 	return nil
@@ -254,20 +254,20 @@ func (m *Master) DeleteRPC(args util.DeleteArg, reply *util.DeleteRet) error {
 
 // ListRPC is called by client to list content of a dir
 func (m *Master) ListRPC(args util.ListArg, reply *util.ListRet) (err error) {
-	logrus.Debugf("RPC list, Dir Path : %s\n", args.Path)
+	logrus.Debugf("RPC list, Dir Path : %s", args.Path)
 	reply.Files, err = m.ns.List(args.Path)
 	if err != nil {
-		logrus.Warnf("RPC list failed : %s\n", err)
+		logrus.Warnf("RPC list failed : %s", err)
 	}
 	return err
 }
 
 // GetFileMetaRPC retrieve the file metadata by path
 func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMetaRet) error {
-	logrus.Debugf("RPC getFileMeta, File Path : %s\n", args.Path)
+	logrus.Debugf("RPC getFileMeta, File Path : %s", args.Path)
 	node,err := m.ns.GetNode(args.Path)
 	if err != nil {
-		logrus.Warnf("RPC getFileMeta failed : %s\n", err)
+		logrus.Warnf("RPC getFileMeta failed : %s", err)
 		*reply = util.GetFileMetaRet{
 			Exist: false,
 			IsDir: false,
@@ -287,16 +287,18 @@ func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMet
 
 // SetFileMetaRPC set the file metadata by path
 func (m *Master) SetFileMetaRPC(args util.SetFileMetaArg, reply *util.SetFileMetaRet) error {
-	logrus.Debugf("RPC setFileMeta, File Path : %s\n", args.Path)
+	logrus.Debugf("RPC setFileMeta, File Path : %s", args.Path)
 
 	// Write ahead log
 	err := m.AppendLog(MasterLog{OpType: util.SETFILEMETAOPS,Path: args.Path,Size: args.Size})
 	if err != nil {
-		logrus.Warnf("RPC SetFileMeta failed : %s\n", err)
+		logrus.Warnf("RPC SetFileMeta failed : %s", err)
 		return err
 	}
 
 	// Modified metadata
+	m.cs.file[args.Path].Lock()
+	defer m.cs.file[args.Path].Unlock()
 	m.cs.file[args.Path].size = args.Size
 	return nil
 }
@@ -306,12 +308,12 @@ func (m *Master) SetFileMetaRPC(args util.SetFileMetaArg, reply *util.SetFileMet
 // TODO : add lease
 func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplicasRet) (err error) {
 	// Check if file exist
-	logrus.Debugf("RPC getReplica, file path : %s, chunk index : %d\n", args.Path, args.ChunkIndex)
+	logrus.Debugf("RPC getReplica, file path : %s, chunk index : %d", args.Path, args.ChunkIndex)
 	m.cs.RLock()
 	fs, exist := m.cs.file[args.Path]
 	if !exist {
 		m.cs.RUnlock()
-		err = fmt.Errorf("FileNotExistsError : the requested DFS path %s is non-existing!\n", string(args.Path))
+		err = fmt.Errorf("FileNotExistsError : the requested DFS path %s is non-existing", string(args.Path))
 		return err
 	}
 	fs.Lock()

@@ -30,25 +30,27 @@ type handleState struct {
 	curHandle util.Handle
 }
 type serialfileState struct{
-	size int
-	chunks []SerialChunkState
+	Size int
+	Chunks []SerialChunkState
 }
 type SerialChunkStates struct{
-	curHandle util.Handle
-	file  map[util.DFSPath]serialfileState
+	CurHandle util.Handle
+	File  map[util.DFSPath]serialfileState
 }
 type SerialChunkState struct{
 	Handle util.Handle
 	Locations []util.Address // set of replica locations
-	expire   time.Time           // lease expire time
+	Expire   time.Time           // lease expire time
 }
 
 // Serialize a chunkstates
 func (s* ChunkStates) Serialize() SerialChunkStates {
 	s.RLock()
 	defer s.RUnlock()
-	var scss SerialChunkStates
-
+	scss := SerialChunkStates{
+		CurHandle: -1,
+		File: make(map[util.DFSPath]serialfileState),
+	}
 	for path,state := range s.file{
 		s.file[path].RLock()
 		chunks := make([]SerialChunkState,0)
@@ -57,39 +59,39 @@ func (s* ChunkStates) Serialize() SerialChunkStates {
 			chunks = append(chunks,SerialChunkState{
 				Locations: chunk.Locations,
 				Handle: chunk.Handle,
-				expire: chunk.expire,
+				Expire: chunk.expire,
 			} )
 			state.chunks[index].RUnlock()
 		}
-		scss.file[path]=serialfileState{
-			size : state.size,
-			chunks : chunks,
+		scss.File[path]=serialfileState{
+			Size : state.size,
+			Chunks : chunks,
 		}
 		s.file[path].RUnlock()
 	}
 	s.handle.RLock()
 	defer s.handle.RUnlock()
-	scss.curHandle = s.handle.curHandle
+	scss.CurHandle = s.handle.curHandle
 	return scss
 }
 
 // Deserialize into chunkstates
 // Master need not take any lock because it is single-threaded
 func (s* ChunkStates) Deserialize(scss SerialChunkStates) error {
-	for path,state := range scss.file{
+	for path,state := range scss.File{
 		err := s.NewFile(path)
 		if err!=nil{
 			return err
 		}
-		for _,chunk := range state.chunks{
+		for _,chunk := range state.Chunks{
 			s.file[path].chunks = append(s.file[path].chunks,&chunkState{
 				Locations: chunk.Locations,
 				Handle: chunk.Handle,
-				expire: chunk.expire,
+				expire: chunk.Expire,
 			} )
 		}
 	}
-	s.handle.curHandle = scss.curHandle
+	s.handle.curHandle = scss.CurHandle
 	return nil
 }
 

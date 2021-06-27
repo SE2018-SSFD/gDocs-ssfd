@@ -72,7 +72,7 @@ func (ns *NamespaceState) Mknod(path util.DFSPath, isDir bool) error {
 // List list all files in a given dir
 func (ns *NamespaceState) List(path util.DFSPath) (files []string, err error) {
 	// Check invalid path
-	if !util.CheckValidPath(path) {
+	if string(path)!="/" && !util.CheckValidPath(path) {
 		err = fmt.Errorf("InvalidPathError : the requested DFS path %s is invalid\n", string(path))
 		return
 	}

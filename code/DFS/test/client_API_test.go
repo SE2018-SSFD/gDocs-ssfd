@@ -1,27 +1,25 @@
-package main
+package test
 
 import (
 	"DFS/chunkserver"
 	"DFS/client"
 	"DFS/master"
 	"DFS/util"
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"strconv"
 	"testing"
 	"time"
 )
 
-
 // initTest init and return the handle of client,master and chunkservers
-func initTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer){
+func InitTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer){
 	logrus.SetLevel(logrus.DebugLevel)
-
+	//delete old ckp
+	util.DeleteFile("../log/checkpoint.dat")
+	//delete old log
+	util.DeleteFile("../log/log.dat")
 	// Init master and client
 	m,_ = master.InitMaster(util.MASTER1ADDR, "../log")
 	go func(){m.Serve()}()
@@ -43,54 +41,52 @@ func initTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer
 		_ = m.RegisterServer(addr)
 		//util.AssertNil(t,err)
 	}
-
-	time.Sleep(time.Second)
+	time.Sleep(500*time.Millisecond)
 	return
 }
 
-
 func TestReadWrite(t *testing.T) {
-	c,m,cs := initTest()
-	err := HTTPCreate(util.CLIENTADDR,"/file1")
+	c,m,cs := InitTest()
+	err := util.HTTPCreate(util.CLIENTADDR,"/file1")
 	util.AssertNil(t,err)
-	err = HTTPCreate(util.CLIENTADDR,"/file2")
+	err = util.HTTPCreate(util.CLIENTADDR,"/file2")
 	util.AssertNil(t,err)
-	fd1,err := HTTPOpen(util.CLIENTADDR,"/file1")
+	fd1,err := util.HTTPOpen(util.CLIENTADDR,"/file1")
 	util.AssertNil(t,err)
-	fd2,err := HTTPOpen(util.CLIENTADDR,"/file2")
+	fd2,err := util.HTTPOpen(util.CLIENTADDR,"/file2")
 	util.AssertNil(t,err)
 
 	// Write 4 chunks to file1
 	offset := 0
 	data := make([]byte,util.MAXCHUNKSIZE*4)
-	err = HTTPWrite(util.CLIENTADDR,fd1,offset,data)
+	err = util.HTTPWrite(util.CLIENTADDR,fd1,offset,data)
 	util.AssertNil(t,err)
-	fileState,err := HTTPGetFileInfo(util.CLIENTADDR,"/file1")
+	fileState,err := util.HTTPGetFileInfo(util.CLIENTADDR,"/file1")
 	fmt.Println(fileState)
 
 	// Write 3.5 chunks to file2
 	offset = 0
 	data = []byte(util.MakeString(util.MAXCHUNKSIZE*3.5))
-	err = HTTPWrite(util.CLIENTADDR,fd2,offset,data)
+	err = util.HTTPWrite(util.CLIENTADDR,fd2,offset,data)
 	util.AssertNil(t,err)
-	fileState,err = HTTPGetFileInfo(util.CLIENTADDR,"/file2")
+	fileState,err = util.HTTPGetFileInfo(util.CLIENTADDR,"/file2")
 	fmt.Println(fileState)
 
 	// Write 1 chunk at offset 3*size+1 in file2
 	offset = util.MAXCHUNKSIZE*3+1
 	data = []byte(util.MakeString(util.MAXCHUNKSIZE-1))
-	err = HTTPWrite(util.CLIENTADDR,fd2,offset,data)
+	err = util.HTTPWrite(util.CLIENTADDR,fd2,offset,data)
 	util.AssertNil(t,err)
-	fileState,err = HTTPGetFileInfo(util.CLIENTADDR,"/file2")
+	fileState,err = util.HTTPGetFileInfo(util.CLIENTADDR,"/file2")
 	fmt.Println(fileState)
 
 	// Read 65 bytes near the chunk 3
-	result,err := HTTPRead(util.CLIENTADDR,fd2,util.MAXCHUNKSIZE*3-1,util.MAXCHUNKSIZE+1)
+	result,err := util.HTTPRead(util.CLIENTADDR,fd2,util.MAXCHUNKSIZE*3-1,util.MAXCHUNKSIZE+1)
 	util.AssertNil(t,err)
 	util.AssertEqual(t,string(result.Data),"jkabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijk")
 
 	// Read 66 bytes near the chunk 2
-	result,err = HTTPRead(util.CLIENTADDR,fd2,util.MAXCHUNKSIZE*2-1,util.MAXCHUNKSIZE+2)
+	result,err = util.HTTPRead(util.CLIENTADDR,fd2,util.MAXCHUNKSIZE*2-1,util.MAXCHUNKSIZE+2)
 	util.AssertNil(t,err)
 	util.AssertEqual(t,string(result.Data),"xyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijk")
 
@@ -117,23 +113,23 @@ func CClear() {
 	}
 }
 func TestOpenClose(t *testing.T) {
-	c,m,cs := initTest()
-	err := HTTPCreate(util.CLIENTADDR,"/file1")
+	c,m,cs := InitTest()
+	err := util.HTTPCreate(util.CLIENTADDR,"/file1")
 	util.AssertNil(t,err)
-	err = HTTPCreate(util.CLIENTADDR,"/file2")
+	err = util.HTTPCreate(util.CLIENTADDR,"/file2")
 	util.AssertNil(t,err)
-	fd,err := HTTPOpen(util.CLIENTADDR,"/file1")
-	util.AssertNil(t,err)
-	logrus.Infoln("fd :",fd)
-	code,err := HTTPClose(util.CLIENTADDR,fd)
-	util.AssertEqual(t,code,200)
-	fd,err = HTTPOpen(util.CLIENTADDR,"/file2")
+	fd,err := util.HTTPOpen(util.CLIENTADDR,"/file1")
 	util.AssertNil(t,err)
 	logrus.Infoln("fd :",fd)
-	code,err = HTTPClose(util.CLIENTADDR,fd)
+	code,err := util.HTTPClose(util.CLIENTADDR,fd)
+	util.AssertEqual(t,code,200)
+	fd,err = util.HTTPOpen(util.CLIENTADDR,"/file2")
+	util.AssertNil(t,err)
+	logrus.Infoln("fd :",fd)
+	code,err = util.HTTPClose(util.CLIENTADDR,fd)
 	util.AssertEqual(t,code,200)
 	util.AssertNil(t,err)
-	code,err = HTTPClose(util.CLIENTADDR,fd)
+	code,err = util.HTTPClose(util.CLIENTADDR,fd)
 	util.AssertEqual(t,code,400)
 	m.Exit()
 	c.Exit()
@@ -143,131 +139,4 @@ func TestOpenClose(t *testing.T) {
 	}
 }
 
-// HTTPOpen : open a file
-// return file's fd on success
-func HTTPOpen(addr string,path string)(fd int,err error){
-	url := "http://"+addr+"/open"
-	postBody, _ := json.Marshal(map[string]string{
-		"path":  path,
-	})
-	responseBody := bytes.NewBuffer(postBody)
-	resp, err := http.Post(url, "application/json", responseBody)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-	fd,err = strconv.Atoi(string(body))
-	return
-}
 
-// HTTPClose : close a file according to fd
-func HTTPClose(addr string,fd int)(statusCode int,err error){
-	url := "http://"+addr+"/close"
-	postBody, _ := json.Marshal(map[string]interface{}{
-		"fd":  fd,
-	})
-	responseBody := bytes.NewBuffer(postBody)
-	resp, err := http.Post(url, "application/json", responseBody)
-	if err != nil {
-		return
-	}
-	_, err = ioutil.ReadAll(resp.Body)
-	statusCode = resp.StatusCode
-	defer resp.Body.Close()
-	return
-}
-
-// HTTPCreate : crate a file
-func HTTPCreate(addr string,path string)(err error){
-	url := "http://"+addr+"/create"
-	postBody, _ := json.Marshal(map[string]string{
-		"path":  path,
-	})
-	responseBody := bytes.NewBuffer(postBody)
-	resp, err := http.Post(url, "application/json", responseBody)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	_, err = ioutil.ReadAll(resp.Body)
-	return
-}
-
-// HTTPDelete : delete a file
-func HTTPDelete(addr string,path string)(err error){
-	url := "http://"+addr+"/delete"
-	postBody, _ := json.Marshal(map[string]string{
-		"path":  path,
-	})
-	responseBody := bytes.NewBuffer(postBody)
-	resp, err := http.Post(url, "application/json", responseBody)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	_, err = ioutil.ReadAll(resp.Body)
-	return
-}
-// HTTPWrite : write a file according to fd
-func HTTPWrite(addr string,fd int,offset int,data []byte)(err error){
-	url := "http://"+addr+"/write"
-	postBody, _ := json.Marshal(map[string]interface{}{
-		"fd":  fd,
-		"offset" :offset,
-		"data" : data,
-	})
-	responseBody := bytes.NewBuffer(postBody)
-	resp, err := http.Post(url, "application/json", responseBody)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	_, err = ioutil.ReadAll(resp.Body)
-	return
-}
-
-
-
-// HTTPRead : read a file according to fd
-func HTTPRead(addr string,fd int,offset int,len int)(result util.ReadRet,err error){
-	url := "http://"+addr+"/read"
-	postBody, _ := json.Marshal(map[string]interface{}{
-		"fd":  fd,
-		"offset" :offset,
-		"Len" : len,
-	})
-	responseBody := bytes.NewBuffer(postBody)
-	resp, err := http.Post(url, "application/json", responseBody)
-	if err != nil {
-		return
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-	err = json.NewDecoder(bytes.NewReader(body)).Decode(&result)
-	return
-}
-
-// HTTPGetFileInfo : get file info according to path
-func HTTPGetFileInfo(addr string, path string) (fileState util.GetFileMetaRet, err error) {
-	url := "http://"+addr+"/fileInfo"
-	postBody, _ := json.Marshal(map[string]interface{}{
-		"path":  path,
-	})
-	responseBody := bytes.NewBuffer(postBody)
-	resp, err := http.Post(url, "application/json", responseBody)
-	if err != nil {
-		return
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-	err = json.NewDecoder(bytes.NewReader(body)).Decode(&fileState)
-	return
-}

@@ -17,16 +17,19 @@ type ChunkServerStates struct {
 }
 
 type serialChunkServerStates struct{
-	addr util.Address
-	state ChunkServerState
+	Addr util.Address
+	State ChunkServerState
 }
 
+type ChunkServerState struct{
+	LastHeartbeat time.Time
+}
 func (s *ChunkServerStates) Serialize() []serialChunkServerStates {
 	s.RLock()
 	defer s.RUnlock()
 	var scss = make([]serialChunkServerStates,0)
 	for key,value:= range s.servers{
-		scss = append(scss,serialChunkServerStates{addr: key,state: *value} )
+		scss = append(scss,serialChunkServerStates{Addr: key,State: *value} )
 	}
 	return scss
 }
@@ -34,7 +37,7 @@ func (s *ChunkServerStates) Deserialize(scss []serialChunkServerStates)error{
 	s.Lock()
 	defer s.Unlock()
 	for _,_scss:= range scss{
-		s.servers[_scss.addr] = &_scss.state
+		s.servers[_scss.Addr] = &_scss.State
 	}
 	return nil
 }
@@ -67,7 +70,7 @@ func (s *ChunkServerStates) RegisterServer(addr util.Address) error {
 		return fmt.Errorf("ServerRegisterError : Server %s is registered\n",addr)
 	}
 	s.servers[addr] = &ChunkServerState{
-		lastHeartbeat: time.Now(),
+		LastHeartbeat: time.Now(),
 	}
 	return nil
 }
@@ -83,9 +86,7 @@ func (s *ChunkServerStates) UnRegisterServer(addr util.Address) error {
 	return nil
 }
 
-type ChunkServerState struct{
-	lastHeartbeat time.Time
-}
+
 
 func newChunkServerState()*ChunkServerStates{
 	ns := &ChunkServerStates{

@@ -1,4 +1,4 @@
-package main
+package test
 //import (
 //	"DFS/util/zkWrap"
 //	"github.com/stretchr/testify/assert"

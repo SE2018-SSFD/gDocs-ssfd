@@ -13,9 +13,9 @@ import (
 
 type MasterCKP struct {
 	// manage the state of chunkserver node
-	servers []serialChunkServerStates
-	cs SerialChunkStates
-	namespace []SerialTreeNode
+	Servers []serialChunkServerStates
+	Cs SerialChunkStates
+	Namespace []SerialTreeNode
 }
 // Warning : must be uppercase to be identified by JSON package
 type MasterLog struct{
@@ -29,7 +29,7 @@ type MasterLog struct{
 func (m *Master) AppendLog(ml MasterLog)error{
 	m.logLock.Lock()
 	defer m.logLock.Unlock()
-	logrus.Debugf("AppendLog : %d\n", ml.OpType)
+	logrus.Debugf("AppendLog : %d", ml.OpType)
 	filename := path.Join(string(m.metaPath),"log.dat")
 	fd, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
 	if err != nil {
@@ -41,7 +41,7 @@ func (m *Master) AppendLog(ml MasterLog)error{
 	logrus.Infoln(ml)
 	err = enc.Encode(ml)
 	if err != nil {
-		logrus.Warnf("AppendLogError :%s\n",err)
+		logrus.Warnf("AppendLogError :%s",err)
 		return err
 	}
 	return nil
@@ -51,10 +51,6 @@ func (m *Master) AppendLog(ml MasterLog)error{
 func (m *Master) RecoverLog() error {
 	m.logLock.Lock()
 	defer m.logLock.Unlock()
-	var cret *util.CreateRet
-	var mret *util.MkdirRet
-	var dret *util.DeleteRet
-	var sret *util.SetFileMetaRet
 
 	filename := path.Join(string(m.metaPath),"log.dat")
 	fd, err := os.Open(filename)
@@ -73,32 +69,38 @@ func (m *Master) RecoverLog() error {
 			return err
 		}
 
-		logrus.Debugf("RecoverLog : %d\n", log.OpType)
+		logrus.Debugf("RecoverLog : %d", log.OpType)
 		switch log.OpType {
 		case util.CREATEOPS:
-			err := m.CreateRPC(util.CreateArg{Path: log.Path},cret)
+			err = m.ns.Mknod(log.Path, false)
 			if err != nil {
-				logrus.Warnf("RecoverLog Failed : Create failed : %s\n", err)
+				logrus.Warnf("RPC create failed : %s\n", err)
+				return err
+			}
+			err = m.cs.NewFile(log.Path)
+			if err != nil {
+				logrus.Warnf("RPC create failed : %s", err)
 				return err
 			}
 		case util.MKDIROPS:
-			err := m.MkdirRPC(util.MkdirArg{Path: log.Path},mret)
+			err = m.ns.Mknod(log.Path, true)
 			if err != nil {
-				logrus.Warnf("RecoverLog Failed : Mkdir failed : %s\n", err)
+				logrus.Warnf("RPC mkdir failed : %s", err)
 				return err
 			}
 		case util.DELETEOPS:
-			err := m.DeleteRPC(util.DeleteArg{Path: log.Path},dret)
+			err = m.cs.Delete(log.Path)
 			if err != nil {
-				logrus.Warnf("RecoverLog Failed : Delete failed : %s\n", err)
+				logrus.Warnf("RPC delete failed : %s", err)
+				return err
+			}
+			err = m.ns.Delete(log.Path)
+			if err != nil {
+				logrus.Warnf("RPC delete failed : %s", err)
 				return err
 			}
 		case util.SETFILEMETAOPS:
-			err := m.SetFileMetaRPC(util.SetFileMetaArg{Path: log.Path,Size:log.Size},sret)
-			if err != nil {
-				logrus.Warnf("RecoverLog Failed : Delete failed : %s\n", err)
-				return err
-			}
+			m.cs.file[log.Path].size = log.Size
 		case util.GETREPLICASOPS:
 			// when this operation is in the log, there must be new chunk created
 			// increment handle
@@ -112,7 +114,7 @@ func (m *Master) RecoverLog() error {
 			}
 			fs, exist := m.cs.file[log.Path]
 			if !exist {
-				err := fmt.Errorf("FileNotExistsError : the requested DFS path %s is non-existing!\n", string(log.Path))
+				err := fmt.Errorf("FileNotExistsError : the requested DFS path %s is non-existing", string(log.Path))
 				return err
 			}
 			fs.chunks = append(fs.chunks,newChunk)
@@ -137,22 +139,22 @@ func (m *Master) LoadCheckPoint() error{
 	dec := gob.NewDecoder(fd)
 	err = dec.Decode(&ckcp)
 	if err != nil {
-		logrus.Printf("LoadCheckPoint failed : decode error\n")
+		logrus.Printf("LoadCheckPoint failed : decode error")
 		return err
 	}
-	err = m.cs.Deserialize(ckcp.cs)
+	err = m.cs.Deserialize(ckcp.Cs)
 	if err != nil {
-		logrus.Printf("LoadCheckPoint failed : deserialize chunkStates error\n")
+		logrus.Printf("LoadCheckPoint failed : deserialize chunkStates error")
 		return err
 	}
-	err = m.css.Deserialize(ckcp.servers)
+	err = m.css.Deserialize(ckcp.Servers)
 	if err != nil {
-		logrus.Printf("LoadCheckPoint failed : deserialize chunkserverStates error\n")
+		logrus.Printf("LoadCheckPoint failed : deserialize chunkserverStates error")
 		return err
 	}
-	err = m.ns.Deserialize(ckcp.namespace)
+	err = m.ns.Deserialize(ckcp.Namespace)
 	if err != nil {
-		logrus.Printf("LoadCheckPoint failed : deserialize namespace error\n")
+		logrus.Printf("LoadCheckPoint failed : deserialize namespace error")
 		return err
 	}
 	logrus.Infoln("Master LoadCheckPoint success")
@@ -172,9 +174,9 @@ func (m *Master) StoreCheckPoint() error {
 	defer fd.Close()
 	ckcp := MasterCKP{
 		// manage the state of chunkserver node
-		servers:m.css.Serialize(),
-		cs:m.cs.Serialize() ,
-		namespace:m.ns.Serialize(),
+		Servers:m.css.Serialize(),
+		Cs:m.cs.Serialize() ,
+		Namespace:m.ns.Serialize(),
 	}
 	enc := gob.NewEncoder(fd)
 	err = enc.Encode(ckcp)
@@ -192,7 +194,7 @@ func (m *Master) StoreCheckPoint() error {
 	defer f.Close()
 	err = f.Truncate(0) //clear log
 	if err != nil {
-		logrus.Warnf("StoreCheckPointError : %s\n",err)
+		logrus.Warnf("StoreCheckPointError : %s",err)
 		return err
 	}
 	return nil
@@ -202,10 +204,10 @@ func (m *Master) TryRecover() error{
 	// Check if a checkpoint exists
 	_,err := os.Stat(path.Join(string(m.metaPath),"checkpoint.dat"))
 	if os.IsNotExist(err){
-		logrus.Infof("No checkpoint, start master directly\n")
+		logrus.Infof("No checkpoint, start master directly")
 		return nil
 	}
-	logrus.Infof("Checkpoint found, start recover\n")
+	logrus.Infof("Checkpoint found, start recover")
 
 	err = m.LoadCheckPoint()
 	if err!=nil{

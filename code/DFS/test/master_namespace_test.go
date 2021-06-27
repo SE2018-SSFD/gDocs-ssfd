@@ -1,4 +1,4 @@
-package main
+package test
 
 import (
 	"DFS/master"
@@ -13,6 +13,10 @@ import (
 	"time"
 )
 func initMasterTest()(m *master.Master) {
+	//delete old ckp
+	util.DeleteFile("../log/checkpoint.dat")
+	//delete old log
+	util.DeleteFile("../log/log.dat")
 	logrus.SetLevel(logrus.DebugLevel)
 	m,err := master.InitMaster("127.0.0.1:1234", "../log")
 	if err!=nil{
