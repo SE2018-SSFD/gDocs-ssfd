@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"backend/lib/zkWrap"
-	"backend/utils/logger"
 	"stathat.com/c/consistent"
 	"strconv"
 	"strings"
@@ -37,8 +36,6 @@ func onHeartbeatConn(_ string, who string) {
 	for i := 0; i < num; i += 1 {
 		consistentHash.Add(marshalHashName(addr, i))
 	}
-	logger.Debug(who)
-	logger.Debug(consistentHash.Members())
 }
 
 func onHeartbeatDisConn(_ string, who string) {
@@ -47,8 +44,6 @@ func onHeartbeatDisConn(_ string, who string) {
 	for i := 0; i < num; i += 1 {
 		consistentHash.Remove(marshalHashName(addr, i))
 	}
-	logger.Debug(who)
-	logger.Debug(consistentHash.Members())
 }
 
 func RegisterNodes(addr string, num int) {
@@ -83,7 +78,7 @@ func FileBelongsTo(filename string, fid uint) (addr string, isMine bool) {
 		panic(err)
 	}
 
-	addr = strings.SplitN(addrRaw, "#", 2)[0]
+	addr, _ = unMarshalHashName(addrRaw)
 	isMine = addr == myAddr
 
 	return addr, isMine
