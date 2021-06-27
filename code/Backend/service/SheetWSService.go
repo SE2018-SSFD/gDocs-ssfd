@@ -131,6 +131,11 @@ func SheetOnConnEstablished(token string, fid uint) (bool, int, *model.User) {
 		if !utils.UintListContains(ownedFids, fid) {
 			return false, utils.SheetNoPermission, nil
 		} else {
+			sheet := dao.GetSheetByFid(fid)
+			if sheet.IsDeleted {
+				return false, utils.SheetIsInTrashBin, nil
+			}
+
 			user := dao.GetUserByUid(uid)
 
 			if _, loaded := sheetGroup.LoadOrStore(fid, &sheetGroupEntry{
