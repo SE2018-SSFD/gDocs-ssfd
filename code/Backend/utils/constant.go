@@ -48,9 +48,6 @@ type RegisterParams struct {
 type ModifyUserParams struct {
 	Token		string		`json:"token"`
 	Username	string		`json:"username"`
-	Email		string		`json:"email"`
-	Turtle		uint		`json:"turtle"`
-	Task		uint		`json:"task"`
 }
 
 type ModifyUserAuthParams struct {
