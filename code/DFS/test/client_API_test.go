@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -22,16 +23,23 @@ func initTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer
 	logrus.SetLevel(logrus.DebugLevel)
 
 	// Init master and client
-	m,_ = master.InitMaster(util.MASTER1ADDR, ".")
+	m,_ = master.InitMaster(util.MASTER1ADDR, "../log")
 	go func(){m.Serve()}()
 	c = client.InitClient(util.CLIENTADDR, util.MASTER1ADDR)
 	go func(){c.Serve()}()
 
 	// Register some virtual chunkServers
+	_, err := os.Stat("ck")
+	if err != nil {
+		err := os.Mkdir("ck", 0755)
+		if err != nil {
+			logrus.Fatalf("mkdir %v error\n", "ck")
+		}
+	}
 	cs = make([]*chunkserver.ChunkServer, 5)
 	for index,port := range []int{3000,3001,3002,3003,3004}{
 		addr := util.Address("127.0.0.1:" + strconv.Itoa(port))
-		cs[index] = chunkserver.InitChunkServer(string(addr), "ck"+strconv.Itoa(port),  util.MASTER1ADDR)
+		cs[index] = chunkserver.InitChunkServer(string(addr), "ck/ck"+strconv.Itoa(port),  util.MASTER1ADDR)
 		_ = m.RegisterServer(addr)
 		//util.AssertNil(t,err)
 	}
@@ -94,7 +102,20 @@ func TestReadWrite(t *testing.T) {
 
 }
 
-
+func CClear() {
+	if true {
+		for {
+			err := os.RemoveAll("ck")
+			if err != nil {
+				logrus.Print(err)
+			} else {
+				logrus.Printf("Clear all\n")
+				break
+			}
+			time.Sleep(time.Second)
+		}
+	}
+}
 func TestOpenClose(t *testing.T) {
 	c,m,cs := initTest()
 	err := HTTPCreate(util.CLIENTADDR,"/file1")
@@ -116,7 +137,7 @@ func TestOpenClose(t *testing.T) {
 	util.AssertEqual(t,code,400)
 	m.Exit()
 	c.Exit()
-	Clear()
+	CClear()
 	for _,_cs := range cs{
 		_cs.Exit()
 	}
@@ -176,6 +197,21 @@ func HTTPCreate(addr string,path string)(err error){
 	return
 }
 
+// HTTPDelete : delete a file
+func HTTPDelete(addr string,path string)(err error){
+	url := "http://"+addr+"/delete"
+	postBody, _ := json.Marshal(map[string]string{
+		"path":  path,
+	})
+	responseBody := bytes.NewBuffer(postBody)
+	resp, err := http.Post(url, "application/json", responseBody)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	_, err = ioutil.ReadAll(resp.Body)
+	return
+}
 // HTTPWrite : write a file according to fd
 func HTTPWrite(addr string,fd int,offset int,data []byte)(err error){
 	url := "http://"+addr+"/write"
@@ -193,6 +229,8 @@ func HTTPWrite(addr string,fd int,offset int,data []byte)(err error){
 	_, err = ioutil.ReadAll(resp.Body)
 	return
 }
+
+
 
 // HTTPRead : read a file according to fd
 func HTTPRead(addr string,fd int,offset int,len int)(result util.ReadRet,err error){

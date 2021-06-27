@@ -187,7 +187,7 @@ func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
 	logrus.Debugf("RPC create, File Path : %s\n", args.Path)
 
 	// Write ahead log
-	err := m.AppendLog(MasterLog{opType: util.CREATEOPS,path: args.Path})
+	err := m.AppendLog(MasterLog{OpType: util.CREATEOPS,Path: args.Path})
 	if err != nil {
 		logrus.Warnf("RPC delete failed : %s\n", err)
 		return err
@@ -212,7 +212,7 @@ func (m *Master) MkdirRPC(args util.MkdirArg, reply *util.MkdirRet) error {
 	logrus.Debugf("RPC mkdir, Dir Path : %s\n", args.Path)
 
 	// Write ahead log
-	err := m.AppendLog(MasterLog{opType: util.MKDIROPS,path: args.Path})
+	err := m.AppendLog(MasterLog{OpType: util.MKDIROPS,Path: args.Path})
 	if err != nil {
 		logrus.Warnf("RPC mkdir failed : %s\n", err)
 		return err
@@ -232,7 +232,7 @@ func (m *Master) DeleteRPC(args util.DeleteArg, reply *util.DeleteRet) error {
 	logrus.Debugf("RPC delete, Dir Path : %s\n", args.Path)
 
 	// Write ahead log
-	err := m.AppendLog(MasterLog{opType: util.DELETEOPS,path: args.Path})
+	err := m.AppendLog(MasterLog{OpType: util.DELETEOPS,Path: args.Path})
 	if err != nil {
 		logrus.Warnf("RPC delete failed : %s\n", err)
 		return err
@@ -290,7 +290,7 @@ func (m *Master) SetFileMetaRPC(args util.SetFileMetaArg, reply *util.SetFileMet
 	logrus.Debugf("RPC setFileMeta, File Path : %s\n", args.Path)
 
 	// Write ahead log
-	err := m.AppendLog(MasterLog{opType: util.SETFILEMETAOPS,path: args.Path,size: args.Size})
+	err := m.AppendLog(MasterLog{OpType: util.SETFILEMETAOPS,Path: args.Path,Size: args.Size})
 	if err != nil {
 		logrus.Warnf("RPC SetFileMeta failed : %s\n", err)
 		return err
@@ -329,7 +329,7 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		}
 
 		// Write ahead log
-		err := m.AppendLog(MasterLog{opType: util.GETREPLICASOPS,path: args.Path,addrs: addrs})
+		err := m.AppendLog(MasterLog{OpType: util.GETREPLICASOPS,Path: args.Path,Addrs: addrs})
 		if err != nil {
 			logrus.Warnf("RPC SetFileMeta failed : %s\n", err)
 			return err

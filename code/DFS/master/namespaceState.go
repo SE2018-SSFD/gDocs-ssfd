@@ -54,6 +54,10 @@ func (ns *NamespaceState) Mknod(path util.DFSPath, isDir bool) error {
 	defer parentNode.Unlock()
 
 	// Create node
+	if strings.HasPrefix(filename,util.DELETEPREFIX){
+		err = fmt.Errorf("UnlawwedPrefixError : the requested DFS path %s has deleted prefix!\n", string(path))
+		return err
+	}
 	if _, exist := parentNode.treeNodes[filename]; exist {
 		err = fmt.Errorf("FileExistsError : the requested DFS path %s has been created before!\n", string(path))
 		return err
@@ -86,7 +90,9 @@ func (ns *NamespaceState) List(path util.DFSPath) (files []string, err error) {
 	// List files
 	files = make([]string, 0)
 	for file, _ := range dir.treeNodes {
-		files = append(files, file)
+		if !strings.HasPrefix(file,util.DELETEPREFIX){ // ignore deleted bindings
+			files = append(files, file)
+		}
 	}
 	return files, nil
 }

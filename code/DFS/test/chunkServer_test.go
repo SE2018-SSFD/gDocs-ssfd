@@ -46,7 +46,6 @@ func chunkServerCrash(cs []*chunkserver.ChunkServer) {
 }
 
 func Clear() {
-
 	if isClear {
 		for {
 			err := os.RemoveAll("cs")

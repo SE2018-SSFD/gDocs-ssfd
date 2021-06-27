@@ -17,18 +17,19 @@ type MasterCKP struct {
 	cs SerialChunkStates
 	namespace []SerialTreeNode
 }
+// Warning : must be uppercase to be identified by JSON package
 type MasterLog struct{
-	opType OperationType
-	path util.DFSPath
-	size int // for setFileMetaRPC
-	addrs []util.Address // for GetReplicasRPC
+	OpType OperationType
+	Path util.DFSPath
+	Size int // for setFileMetaRPC
+	Addrs []util.Address // for GetReplicasRPC
 }
 
 // AppendLog appends a log structure to persistent file
 func (m *Master) AppendLog(ml MasterLog)error{
 	m.logLock.Lock()
 	defer m.logLock.Unlock()
-	logrus.Debugf("AppendLog : %d\n", ml.opType)
+	logrus.Debugf("AppendLog : %d\n", ml.OpType)
 	filename := path.Join(string(m.metaPath),"log.dat")
 	fd, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
 	if err != nil {
@@ -37,6 +38,7 @@ func (m *Master) AppendLog(ml MasterLog)error{
 	}
 	defer fd.Close()
 	enc := json.NewEncoder(fd)
+	logrus.Infoln(ml)
 	err = enc.Encode(ml)
 	if err != nil {
 		logrus.Warnf("AppendLogError :%s\n",err)
@@ -71,28 +73,28 @@ func (m *Master) RecoverLog() error {
 			return err
 		}
 
-		logrus.Debugf("RecoverLog : %d\n", log.opType)
-		switch log.opType {
+		logrus.Debugf("RecoverLog : %d\n", log.OpType)
+		switch log.OpType {
 		case util.CREATEOPS:
-			err := m.CreateRPC(util.CreateArg{Path: log.path},cret)
+			err := m.CreateRPC(util.CreateArg{Path: log.Path},cret)
 			if err != nil {
 				logrus.Warnf("RecoverLog Failed : Create failed : %s\n", err)
 				return err
 			}
 		case util.MKDIROPS:
-			err := m.MkdirRPC(util.MkdirArg{Path: log.path},mret)
+			err := m.MkdirRPC(util.MkdirArg{Path: log.Path},mret)
 			if err != nil {
 				logrus.Warnf("RecoverLog Failed : Mkdir failed : %s\n", err)
 				return err
 			}
 		case util.DELETEOPS:
-			err := m.DeleteRPC(util.DeleteArg{Path: log.path},dret)
+			err := m.DeleteRPC(util.DeleteArg{Path: log.Path},dret)
 			if err != nil {
 				logrus.Warnf("RecoverLog Failed : Delete failed : %s\n", err)
 				return err
 			}
 		case util.SETFILEMETAOPS:
-			err := m.SetFileMetaRPC(util.SetFileMetaArg{Path: log.path,Size:log.size},sret)
+			err := m.SetFileMetaRPC(util.SetFileMetaArg{Path: log.Path,Size:log.Size},sret)
 			if err != nil {
 				logrus.Warnf("RecoverLog Failed : Delete failed : %s\n", err)
 				return err
@@ -108,13 +110,13 @@ func (m *Master) RecoverLog() error {
 				Handle: newHandle,
 				expire: time.Now(),
 			}
-			fs, exist := m.cs.file[log.path]
+			fs, exist := m.cs.file[log.Path]
 			if !exist {
-				err := fmt.Errorf("FileNotExistsError : the requested DFS path %s is non-existing!\n", string(log.path))
+				err := fmt.Errorf("FileNotExistsError : the requested DFS path %s is non-existing!\n", string(log.Path))
 				return err
 			}
 			fs.chunks = append(fs.chunks,newChunk)
-			for _ , addr := range log.addrs{
+			for _ , addr := range log.Addrs{
 				newChunk.Locations = append(newChunk.Locations,addr)
 			}
 		}
