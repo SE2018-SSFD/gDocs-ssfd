@@ -80,7 +80,23 @@ func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string
 		}()
 	}
 
-	newPath, err := conn.Create(path+"/"+regData, nil, zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
+	hbPath := path + "/" + regData
+	for {
+		if pExists, stat, err := conn.Exists(hbPath); err != nil {
+			return nil, err
+		} else if pExists {
+			if err := conn.Delete(hbPath, stat.Version); err != nil {
+				if err == zk.ErrBadVersion {
+					continue
+				} else {
+					return nil, err
+				}
+			}
+			break
+		}
+	}
+
+	newPath, err := conn.Create(hbPath, nil, zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
 	if err != nil {
 		return nil, err
 	}
