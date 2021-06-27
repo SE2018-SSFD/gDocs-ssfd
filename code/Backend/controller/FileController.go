@@ -17,17 +17,6 @@ func NewSheet(ctx iris.Context) {
 	utils.SendResponse(ctx, success, msg, data)
 }
 
-func ModifySheet(ctx iris.Context) {
-	var params utils.ModifySheetParams
-	if !utils.GetContextParams(ctx, &params) {
-		return
-	}
-
-	success, msg := service.ModifySheet(params)
-
-	utils.SendResponse(ctx, success, msg, nil)
-}
-
 func GetSheet(ctx iris.Context) {
 	var params utils.GetSheetParams
 	if !utils.GetContextParams(ctx, &params) {
@@ -51,20 +40,6 @@ func DeleteSheet(ctx iris.Context) {
 	success, msg, addr := service.DeleteSheet(params)
 	if addr != "" {
 		utils.RequestRedirectTo(ctx, addr, "/deletesheet")
-	} else {
-		utils.SendResponse(ctx, success, msg, nil)
-	}
-}
-
-func CommitSheet(ctx iris.Context) {
-	var params utils.CommitSheetParams
-	if !utils.GetContextParams(ctx, &params) {
-		return
-	}
-
-	success, msg, addr := service.CommitSheet(params)
-	if addr != "" {
-		utils.RequestRedirectTo(ctx, addr, "/commitsheet")
 	} else {
 		utils.SendResponse(ctx, success, msg, nil)
 	}

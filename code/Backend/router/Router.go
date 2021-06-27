@@ -16,9 +16,7 @@ func SetRouter(app *iris.Application) {
 	root.Handle("POST", "/modifyuserauth", controller.ModifyUserAuth)
 	root.Handle("POST", "/newsheet", controller.NewSheet)
 	root.Handle("POST", "/getsheet", controller.GetSheet)
-	root.Handle("POST", "/modifysheet", controller.ModifySheet)
 	root.Handle("POST", "/deletesheet", controller.DeleteSheet)
-	root.Handle("POST", "/commitsheet", controller.CommitSheet)
 	root.Handle("POST", "/getchunk", controller.GetChunk)
 
 	root.Handle("GET", "/sheetws",

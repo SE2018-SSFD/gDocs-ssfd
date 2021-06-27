@@ -66,30 +66,6 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 	return success, msg, data
 }
 
-func ModifySheet(params utils.ModifySheetParams) (success bool, msg int) {
-	uid := CheckToken(params.Token)
-	if uid != 0 {
-		ownedFids := dao.GetSheetFidsByUid(uid)
-		if !utils.UintListContains(ownedFids, params.Fid) {
-			success, msg = false, utils.SheetNoPermission
-		} else {
-			sheet := dao.GetSheetByFid(params.Fid)
-			if sheet.Fid == 0 {
-				success, msg = false, utils.SheetDoNotExist
-			} else {
-				memSheet := getSheetCache().Get(sheet.Fid)
-				memSheet.Set(int(params.Row), int(params.Col), params.Content)
-				// TODO: save log
-				success, msg = true, utils.SheetModifySuccess
-			}
-		}
-	} else {
-		success, msg = false, utils.InvalidToken
-	}
-
-	return
-}
-
 func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sheet, redirect string) {
 	redirect = ""
 
@@ -179,30 +155,6 @@ func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int, redirec
 				}
 
 				success, msg = true, utils.SheetDeleteSuccess
-			}
-		}
-	} else {
-		success, msg = false, utils.InvalidToken
-	}
-
-	return
-}
-
-func CommitSheet(params utils.CommitSheetParams) (success bool, msg int, redirect string) {
-	// TODO: to be deleted
-	redirect = ""
-
-	uid := CheckToken(params.Token)
-	if uid != 0 {
-		ownedFids := dao.GetSheetFidsByUid(uid)
-		if !utils.UintListContains(ownedFids, params.Fid) {
-			success, msg = false, utils.SheetNoPermission
-		} else {
-			sheet := dao.GetSheetByFid(params.Fid)
-			if sheet.Fid == 0 {
-				success, msg = false, utils.SheetDoNotExist
-			} else {
-				//success, msg = true, utils.SheetDeleteSuccess
 			}
 		}
 	} else {

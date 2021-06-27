@@ -18,15 +18,10 @@ const (
 	SheetGetSuccess			=	12
 	SheetNoPermission		=	13
 	SheetDoNotExist			=	14
-	SheetModifySuccess		=	15
+	SheetModifySuccess		=	15	// TODO: delete
 	SheetDeleteSuccess		=	16
-)
-
-const (
-	SheetInsert		= 0
-	SheetDelete		= 1
-	SheetOverwrite	= 2
-	SheetModMeta	= 3		// not modify sheet block, but sheet metadata, e.g. sheet name
+	SheetDupConnection		=	17
+	SheetIsInTrashBin		=	18
 )
 
 const CELL_SIZE int64 = 1 << 8
@@ -80,26 +75,6 @@ type NewSheetParams struct {
 	InitColumns uint		`json:"initColumns"`
 }
 
-//type ModifySheetParams struct {
-//	Token		string		`json:"token"`
-//	Fid			uint		`json:"fid"`
-//	Name		string		`json:"name"`
-//	Oper		uint		`json:"oper"`		// Operations on the block: 0-insert; 1-delete; 2-overwrite; 3-meta
-//	Columns		uint		`json:"columns"`	// max columns of sheet
-//	Block		uint		`json:"block"`		// index of the block
-//	Offset		uint		`json:"offset"`
-//	Length		int64		`json:"length"`		// for delete only
-//	Content		string		`json:"content"`	// for insert and overwrite
-//}
-
-type ModifySheetParams struct {					// overwrite only
-	Token		string		`json:"token"`
-	Fid			uint		`json:"fid"`
-	Col			uint		`json:"col"`		// column index
-	Row			uint		`json:"row"`		// row index
-	Content		string		`json:"content"`	// overwrite
-}
-
 type GetSheetParams struct {
 	Token		string		`json:"token"`
 	Fid			uint		`json:"fid"`
@@ -112,11 +87,6 @@ type GetSheetCheckpoint struct {
 }
 
 type DeleteSheetParams struct {
-	Token		string		`json:"token"`
-	Fid			uint		`json:"fid"`
-}
-
-type CommitSheetParams struct {
 	Token		string		`json:"token"`
 	Fid			uint		`json:"fid"`
 }
