@@ -2,11 +2,9 @@ package master
 
 import (
 	"DFS/util"
-	"DFS/util/zkWrap"
 	"fmt"
 	"net"
 	"net/rpc"
-	"os"
 	"sync"
 	"time"
 
@@ -30,55 +28,7 @@ type Master struct {
 
 type OperationType int32
 
-func InitMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error) {
-	// Init RPC server
-	m := &Master{
-		addr:     addr,
-		metaPath: metaPath,
-		rpcs:     rpc.NewServer(),
-		shutdown: make(chan interface{}),
-	}
-	err := m.rpcs.Register(m)
-	if err != nil {
-		logrus.Fatal("Register error:", err)
-		os.Exit(1)
-	}
-	l, err := net.Listen("tcp", string(m.addr))
-	if err != nil {
-		logrus.Fatal("listen error:", err)
-	}
-	// Zookeeper connection
-	var wg sync.WaitGroup // To sync all the goroutines
-	wg.Add(util.MASTERCOUNT)
-	onConn := func (me string, who string) {
-		wg.Done()
-	}
-	onDisConn := func (me string, who string) {
-	}
-
-	hb,err := zkWrap.RegisterHeartbeat("master",util.MAXWAITINGTIME * time.Second,string(addr),onConn,onDisConn)
-	if err!=nil{
-		return m,err
-	}
-	mate := len(hb.GetOriginMates())
-	for i:=0;i<mate;i++{
-		wg.Done()
-	}
-	m.L = l
-	// Init zookeeper
-	//c, _, err := zk.Connect([]string{"127.0.0.1"}, time.Second) //*10)
-
-	// Init metadata manager
-	m.ns = newNamespaceState()
-	m.cs = newChunkStates()
-	m.css = newChunkServerState()
-	err = implicitWait(util.MAXWAITINGTIME * time.Second,&wg)
-	if err==nil{
-		logrus.Infoln("master "+addr+": init success")
-	}
-	return m,err
-}
-//func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master {
+//func InitMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error) {
 //	// Init RPC server
 //	m := &Master{
 //		addr:     addr,
@@ -95,7 +45,23 @@ func InitMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error) {
 //	if err != nil {
 //		logrus.Fatal("listen error:", err)
 //	}
-//	logrus.Infoln("master "+addr+": init success")
+//	// Zookeeper connection
+//	var wg sync.WaitGroup // To sync all the goroutines
+//	wg.Add(util.MASTERCOUNT)
+//	onConn := func (me string, who string) {
+//		wg.Done()
+//	}
+//	onDisConn := func (me string, who string) {
+//	}
+//
+//	hb,err := zkWrap.RegisterHeartbeat("master",util.MAXWAITINGTIME * time.Second,string(addr),onConn,onDisConn)
+//	if err!=nil{
+//		return m,err
+//	}
+//	mate := len(hb.GetOriginMates())
+//	for i:=0;i<mate;i++{
+//		wg.Done()
+//	}
 //	m.L = l
 //	// Init zookeeper
 //	//c, _, err := zk.Connect([]string{"127.0.0.1"}, time.Second) //*10)
@@ -104,8 +70,56 @@ func InitMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error) {
 //	m.ns = newNamespaceState()
 //	m.cs = newChunkStates()
 //	m.css = newChunkServerState()
-//	return m
+//
+//	// Create log file if not exist
+//	_,err = os.Stat(path.Join(string(m.metaPath),"log.dat"))
+//	if os.IsNotExist(err){
+//		_,err = os.Create(path.Join(string(m.metaPath),"log.dat"))
+//		if err!=nil{
+//			return m,err
+//		}
+//	}
+//
+//	// Wait until other masters are ready
+//	err = implicitWait(util.MAXWAITINGTIME * time.Second,&wg)
+//	if err==nil{
+//		logrus.Infoln("master "+addr+": init success")
+//	}
+//	return m,err
 //}
+func InitMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error) {
+	// Init RPC server
+	m := &Master{
+		addr:     addr,
+		metaPath: metaPath,
+		rpcs:     rpc.NewServer(),
+		shutdown: make(chan interface{}),
+	}
+	err := m.rpcs.Register(m)
+	if err != nil {
+		logrus.Fatal("Register error:", err)
+		return m,err
+	}
+	l, err := net.Listen("tcp", string(m.addr))
+	if err != nil {
+		logrus.Fatal("listen error:", err)
+		return m,err
+	}
+	logrus.Infoln("master "+addr+": init success")
+	m.L = l
+	// Init zookeeper
+	//c, _, err := zk.Connect([]string{"127.0.0.1"}, time.Second) //*10)
+
+	// Init metadata manager
+	m.ns = newNamespaceState()
+	m.cs = newChunkStates()
+	m.css = newChunkServerState()
+	err = m.TryRecover()
+	if err!=nil{
+		logrus.Fatal("recover error:", err)
+	}
+	return m,err
+}
 func implicitWait(t time.Duration,wg *sync.WaitGroup)error{
 	c := make(chan int)
 	go func(){

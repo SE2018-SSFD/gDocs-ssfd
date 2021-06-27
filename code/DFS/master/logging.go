@@ -46,16 +46,31 @@ func (m *Master) AppendLog(ml MasterLog)error{
 }
 
 // RecoverLog recovers a set of logs into master metadata
-func (m *Master) RecoverLog(logs []MasterLog) error {
+func (m *Master) RecoverLog() error {
 	m.logLock.Lock()
 	defer m.logLock.Unlock()
-
 	var cret *util.CreateRet
 	var mret *util.MkdirRet
 	var dret *util.DeleteRet
 	var sret *util.SetFileMetaRet
 
-	for _,log := range logs{
+	filename := path.Join(string(m.metaPath),"log.dat")
+	fd, err := os.Open(filename)
+	if err != nil {
+		// logrus.Printf("chunkserver %v: open file error\n")
+		return err
+	}
+	defer fd.Close()
+	dec := json.NewDecoder(fd)
+
+	for dec.More(){
+		var log MasterLog
+		err = dec.Decode(&log)
+		if err != nil {
+			logrus.Warnf("RecoverLog Failed : Decode failed : %s",err)
+			return err
+		}
+
 		logrus.Debugf("RecoverLog : %d\n", log.opType)
 		switch log.opType {
 		case util.CREATEOPS:
@@ -162,10 +177,38 @@ func (m *Master) StoreCheckPoint() error {
 	enc := gob.NewEncoder(fd)
 	err = enc.Encode(ckcp)
 	if err != nil {
-		logrus.Panic("set checkpoint error\n")
+		logrus.Warnf("StoreCheckPointError : %s\n",err)
 		return err
 	}
 	//TODO : truncate the log
-
+	filename = path.Join(string(m.metaPath),"log.dat")
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		logrus.Panic(err)
+		return err
+	}
+	defer f.Close()
+	err = f.Truncate(0) //clear log
+	if err != nil {
+		logrus.Warnf("StoreCheckPointError : %s\n",err)
+		return err
+	}
 	return nil
+}
+
+func (m *Master) TryRecover() error{
+	// Check if a checkpoint exists
+	_,err := os.Stat(path.Join(string(m.metaPath),"log.dat"))
+	if os.IsNotExist(err){
+		logrus.Infof("No checkpoint, start master directly\n")
+		return nil
+	}
+	logrus.Infof("Checkpoint found, start recover\n")
+
+	err = m.LoadCheckPoint()
+	if err!=nil{
+		return err
+	}
+	err = m.RecoverLog()
+	return err
 }

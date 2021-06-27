@@ -22,7 +22,7 @@ func initTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer
 	logrus.SetLevel(logrus.DebugLevel)
 
 	// Init master and client
-	m = master.InitMaster(util.MASTER1ADDR, ".")
+	m,_ = master.InitMaster(util.MASTER1ADDR, ".")
 	go func(){m.Serve()}()
 	c = client.InitClient(util.CLIENTADDR, util.MASTER1ADDR)
 	go func(){c.Serve()}()
