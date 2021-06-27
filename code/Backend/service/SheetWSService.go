@@ -133,10 +133,12 @@ func SheetOnConnEstablished(token string, fid uint) (bool, int, *model.User) {
 		} else {
 			user := dao.GetUserByUid(uid)
 
-			sheetGroup.LoadOrStore(fid, &sheetGroupEntry{
+			if _, loaded := sheetGroup.LoadOrStore(fid, &sheetGroupEntry{
 				fid: fid,
 				userN: 0,
-			})
+			}); loaded {
+				return false, utils.SheetDupConnection, nil
+			}
 
 			return true, 0, &user
 		}
