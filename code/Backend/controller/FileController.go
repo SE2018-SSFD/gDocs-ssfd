@@ -12,7 +12,7 @@ func NewSheet(ctx iris.Context) {
 		return
 	}
 
-	success, msg, data := service.NewSheet(params)
+	success, msg, data:= service.NewSheet(params)
 
 	utils.SendResponse(ctx, success, msg, data)
 }
@@ -34,9 +34,12 @@ func GetSheet(ctx iris.Context) {
 		return
 	}
 
-	success, msg, data := service.GetSheet(params)
-
-	utils.SendResponse(ctx, success, msg, data)
+	success, msg, data, addr := service.GetSheet(params)
+	if addr != "" {
+		utils.RequestRedirectTo(ctx, addr, "/getsheet")
+	} else {
+		utils.SendResponse(ctx, success, msg, data)
+	}
 }
 
 func DeleteSheet(ctx iris.Context) {
@@ -45,9 +48,12 @@ func DeleteSheet(ctx iris.Context) {
 		return
 	}
 
-	success, msg := service.DeleteSheet(params)
-
-	utils.SendResponse(ctx, success, msg, nil)
+	success, msg, addr := service.DeleteSheet(params)
+	if addr != "" {
+		utils.RequestRedirectTo(ctx, addr, "/deletesheet")
+	} else {
+		utils.SendResponse(ctx, success, msg, nil)
+	}
 }
 
 func CommitSheet(ctx iris.Context) {
@@ -56,9 +62,12 @@ func CommitSheet(ctx iris.Context) {
 		return
 	}
 
-	success, msg := service.CommitSheet(params)
-
-	utils.SendResponse(ctx, success, msg, nil)
+	success, msg, addr := service.CommitSheet(params)
+	if addr != "" {
+		utils.RequestRedirectTo(ctx, addr, "/commitsheet")
+	} else {
+		utils.SendResponse(ctx, success, msg, nil)
+	}
 }
 
 func GetChunk(ctx iris.Context) {
@@ -67,7 +76,7 @@ func GetChunk(ctx iris.Context) {
 		return
 	}
 
-	success, msg := service.GetChunk(params)
+	success, msg:= service.GetChunk(params)
 
 	utils.SendResponse(ctx, success, msg, nil)
 }

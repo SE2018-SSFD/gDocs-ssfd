@@ -13,7 +13,14 @@ import (
 
 // TODO: LOG is not Implemented
 
-var sheetCache = cache.NewSheetCache(config.Get().MaxSheetCache)
+var sheetCache *cache.SheetCache = nil
+
+func getSheetCache() *cache.SheetCache {
+	if sheetCache == nil {
+		sheetCache = cache.NewSheetCache(config.Get().MaxSheetCache)
+	}
+	return sheetCache
+}
 
 func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 	uid := CheckToken(params.Token)
@@ -21,14 +28,8 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 		fid := dao.CreateSheet(model.Sheet{
 			Name: params.Name,
 		})
-		var path string
-		if config.Get().WriteThrough {
-			path = utils.GetCheckPointPath("sheet", fid, 0)
-		} else {
-			// TODO
-			path = ""
-		}
 		sheet := dao.GetSheetByFid(fid)
+		path := utils.GetCheckPointPath("sheet", fid, 0)
 		sheet.Path = path
 		dao.SetSheet(sheet)
 		dao.AddSheetToUser(uid, fid)
@@ -51,8 +52,10 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 				panic(err)
 			}
 		} else {
+			// TODO: record log
+
 			memSheet := cache.NewMemSheet(int(params.InitRows), int(params.InitColumns))
-			sheetCache.Add(fid, memSheet)
+			getSheetCache().Add(fid, memSheet)
 		}
 
 		success, msg, data = true, utils.SheetNewSuccess, fid
@@ -60,7 +63,7 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 		success, msg, data = false, utils.InvalidToken, 0
 	}
 
-	return
+	return success, msg, data
 }
 
 func ModifySheet(params utils.ModifySheetParams) (success bool, msg int) {
@@ -74,7 +77,7 @@ func ModifySheet(params utils.ModifySheetParams) (success bool, msg int) {
 			if sheet.Fid == 0 {
 				success, msg = false, utils.SheetDoNotExist
 			} else {
-				memSheet := sheetCache.Get(sheet.Fid)
+				memSheet := getSheetCache().Get(sheet.Fid)
 				memSheet.Set(int(params.Row), int(params.Col), params.Content)
 				// TODO: save log
 				success, msg = true, utils.SheetModifySuccess
@@ -87,14 +90,10 @@ func ModifySheet(params utils.ModifySheetParams) (success bool, msg int) {
 	return
 }
 
-func ModifySheetCache(fid uint, row int, col int, content string) {
-	memSheet := sheetCache.Get(fid)
-	memSheet.Set(row, col, content)
-}
-
 func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sheet, redirect string) {
-	uid := CheckToken(params.Token)
 	redirect = ""
+
+	uid := CheckToken(params.Token)
 	if uid != 0 {
 		ownedFids := dao.GetSheetFidsByUid(uid)
 		sheet := dao.GetSheetByFid(params.Fid)
@@ -104,6 +103,10 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 		} else {
 			if !utils.UintListContains(ownedFids, params.Fid) {
 				dao.AddSheetToUser(uid, params.Fid)
+			}
+
+			if sheet.IsDeleted {
+				return true, utils.SheetIsInTrashBin, sheet, ""
 			}
 
 			if config.Get().WriteThrough {
@@ -123,9 +126,9 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 					return success, msg, data, addr
 				}
 
-				memSheet := sheetCache.Get(sheet.Fid)
+				memSheet := getSheetCache().Get(sheet.Fid)
 				if memSheet == nil {
-					// TODO
+					// TODO: load from dfs
 					panic("not really a exception")
 				}
 				sheet.Content = memSheet.ToStringSlice()
@@ -141,7 +144,9 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 	return success, msg, data, redirect
 }
 
-func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int) {
+func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int, redirect string) {
+	redirect = ""
+
 	uid := CheckToken(params.Token)
 	if uid != 0 {
 		ownedFids := dao.GetSheetFidsByUid(uid)
@@ -152,21 +157,26 @@ func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int) {
 			if sheet.Fid == 0 {
 				success, msg = false, utils.SheetDoNotExist
 			} else {
-				if sheet.IsDeleted == false {
-					sheet.IsDeleted = true
-					dao.SetSheet(sheet)
-				} else {
-					if config.Get().WriteThrough {
-
+				if config.Get().WriteThrough {
+					if !sheet.IsDeleted {
+						sheet.IsDeleted = true
+						dao.SetSheet(sheet)
 					} else {
-						dao.DeleteSheet(sheet.Fid)
-
-						sheetCache.Del(sheet.Fid)
-						// TODO: delete checkpoints and log in dfs
+						// TODO: delete in dfs
+					}
+				} else {
+					if addr, isMine := cluster.FileBelongsTo(sheet.Name, sheet.Fid); !isMine {
+						return success, msg, addr
 					}
 
+					if !sheet.IsDeleted {
+						sheet.IsDeleted = true
+						dao.SetSheet(sheet)
+						getSheetCache().Del(sheet.Fid)
+					} else {
+						// TODO: delete in dfs
+					}
 				}
-
 
 				success, msg = true, utils.SheetDeleteSuccess
 			}
@@ -178,7 +188,27 @@ func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int) {
 	return
 }
 
-func CommitSheet(params utils.CommitSheetParams) (success bool, msg int) {
+func CommitSheet(params utils.CommitSheetParams) (success bool, msg int, redirect string) {
+	// TODO: to be deleted
+	redirect = ""
+
+	uid := CheckToken(params.Token)
+	if uid != 0 {
+		ownedFids := dao.GetSheetFidsByUid(uid)
+		if !utils.UintListContains(ownedFids, params.Fid) {
+			success, msg = false, utils.SheetNoPermission
+		} else {
+			sheet := dao.GetSheetByFid(params.Fid)
+			if sheet.Fid == 0 {
+				success, msg = false, utils.SheetDoNotExist
+			} else {
+				//success, msg = true, utils.SheetDeleteSuccess
+			}
+		}
+	} else {
+		success, msg = false, utils.InvalidToken
+	}
+
 	return
 }
 
