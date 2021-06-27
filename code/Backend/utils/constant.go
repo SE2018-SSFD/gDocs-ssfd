@@ -24,8 +24,6 @@ const (
 	SheetIsInTrashBin		=	18
 )
 
-const CELL_SIZE int64 = 1 << 8
-
 var TokenTerm int64 = 30 * 60 // 30min
 
 /* Structure of Response */
