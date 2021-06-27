@@ -1,5 +1,5 @@
 import React from "react";
-import {Button, Col, Divider, Image, Input, Layout, Row, Space} from "antd";
+import {Button, Col, Divider, Image, Layout, Row, Space} from "antd";
 import logo from '../assets/logo.png'
 import {MenuOutlined} from "@ant-design/icons";
 import '../css/login.css'

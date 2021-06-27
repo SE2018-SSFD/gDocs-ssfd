@@ -3,26 +3,51 @@ import {withRouter} from "react-router-dom";
 import {Layout} from "antd";
 import {LuckySheet} from "../components/LuckySheet";
 import {DocHeader} from "../components/DocHeader";
+import {getSheet} from "../services/sheetService";
 
 const {Content,Footer} = Layout
 
 class DocView extends React.Component{
 
+    constructor(props) {
+        super(props);
+        this.state={
+            data:""
+        }
+    }
 
     componentDidMount(){
-        let user = localStorage.getItem("user");
-        this.setState({user:user});
+        const token = JSON.parse(localStorage.getItem('token'));
+        const query = this.props.location.search;
+        //分离
+        const arr = query.split('&');
+        //？id后面开始
+        const fid = parseInt(arr[0].substr(4));
+
+        const data = {
+            token:token,
+            fid:fid,
+        }
+        console.log("send data",data);
+        const callback = (data) =>{
+            console.log("recv data",data)
+            this.setState({
+                data: data.data
+            })
+        }
+        getSheet(data,callback);
     }
 
     render(){
+        const {data} = this.state;
         return(
          <Layout>
-               <DocHeader/>
+               <DocHeader data={data}/>
                 <Content style={{margin: '24px 16px 0'}}>
-                    <LuckySheet/>
+                    <LuckySheet data={data} fid/>
                 </Content>
 
-                <Footer style={{textAlign: 'center'}}>SSF Doc ©2021 Created by SJTU Super SofTware
+                <Footer style={{textAlign: 'center'}}>SSF Doc ©2021 Created by SJTU Super SoFtware
                     Developer
                 </Footer>
             </Layout>

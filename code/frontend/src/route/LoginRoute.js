@@ -1,23 +1,22 @@
 import React from 'react';
 import {Route, Redirect} from 'react-router-dom'
 import * as userService from "../services/userService"
-import {message} from "antd";
 
 export class LoginRoute extends React.Component{
     constructor(props) {
         super(props);
         this.state = {
             isAuthed: false,
-            hasAuthed: true,
+            hasAuthed: false,
         };
     }
 
     checkAuth = (data) => {
         console.log(data);
-        if (data.status >= 0) {
+        if (data.success === true) {
             this.setState({isAuthed: true, hasAuthed: true});
         } else {
-            localStorage.removeItem('user');
+            localStorage.removeItem('token');
             this.setState({isAuthed: false, hasAuthed: true});
         }
     };

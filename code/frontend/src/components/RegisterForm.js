@@ -2,7 +2,7 @@ import 'antd/dist/antd.css';
 import '../css/LoginForm.css'
 
 import {FileTextOutlined} from '@ant-design/icons';
-import {Button, Col, Input, Row} from 'antd';
+import {Button, Col, Input,Row} from 'antd';
 import React from 'react';
 import {Link} from 'react-router-dom';
 
@@ -32,6 +32,7 @@ class RegisterForm extends React.Component {
             password: this.state.password,
             email: this.state.email,
         };
+
         register(data);
     }
 
@@ -70,7 +71,7 @@ class RegisterForm extends React.Component {
                             <p className="login-hint">邮箱</p>
                         </div>
                         <div>
-                            <Input placeholder="请输入邮箱" value={this.state.password} onChange={this.passwordOnChange}
+                            <Input placeholder="请输入邮箱" value={this.state.email} onChange={this.emailOnChange}
                                    className="login-input"/>
                         </div>
                         <div style={{textAlign: 'center'}}>

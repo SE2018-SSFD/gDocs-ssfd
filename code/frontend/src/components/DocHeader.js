@@ -9,7 +9,7 @@ import {
     EditOutlined
 } from "@ant-design/icons";
 import {UserAvatar} from "./UserAvatar";
-import docs from "../assets/docs.png";
+import docs from "../assets/tencent_doc_word.png";
 import {Link} from "react-router-dom";
 
 const {Header} = Layout
@@ -18,7 +18,7 @@ export class DocHeader extends React.Component {
     render() {
         return (
             <Header className="site-layout-sub-header-background" style={{padding: 0}}>
-                <Row>
+                <Row justify={"center"}>
                     <Col span={2} offset={1}>
                     <Link to={{
                         pathname: '/',
@@ -36,6 +36,9 @@ export class DocHeader extends React.Component {
                     </Col>
                     <Col span={1}>
                         <CheckCircleOutlined />
+                    </Col>
+                    <Col span={4}>
+                        <h1>{this.props.data.name}</h1>
                     </Col>
                     <Col span={1} offset={13}>
                         <MenuOutlined/>

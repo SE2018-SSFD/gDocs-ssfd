@@ -1,9 +1,9 @@
 import React from 'react';
 import {withRouter} from "react-router-dom";
 import '../css/home.css'
-import docs from '../assets/docs.png'
+import docs from '../assets/tencent_doc_word.png'
 
-import { Button, Col, Divider, Image, Layout, Menu, Row, Space, Typography} from 'antd';
+import {Button, Col, Divider, Image, Layout, Menu, Row, Space, Typography} from 'antd';
 import {
     AppstoreAddOutlined,
     DeleteOutlined,
@@ -15,6 +15,7 @@ import {
 } from '@ant-design/icons';
 import {FileList} from "../components/FileList";
 import {HomeHeader} from "../components/HomeHeader";
+import {newSheet} from "../services/sheetService";
 
 const {Content, Footer, Sider} = Layout;
 
@@ -25,8 +26,19 @@ const {SubMenu} = Menu;
 class HomeView extends React.Component {
 
     componentDidMount() {
-        let user = localStorage.getItem("user");
-        this.setState({user: user});
+    }
+
+
+    newSheet(){
+        const token = JSON.parse(localStorage.getItem("token"));
+        const data = {
+            token:token,
+            name:'a new sheet',
+            intiRows: 84,
+            initColumns:60,
+        };
+
+        newSheet(data)
     }
 
     render() {
@@ -47,7 +59,7 @@ class HomeView extends React.Component {
                     <Row>
                         <Col span={20} offset={2}>
                             <Space direction="vertical">
-                                <Button size="large" type="primary" icon={<PlusOutlined/>} block={true}>新建</Button>
+                                <Button size="large" type="primary" icon={<PlusOutlined/> } onClick={this.newSheet} block={true}>新建</Button>
                                 <Button size="large" icon={<UploadOutlined/>} block={true}>导入本地文件</Button>
                             </Space>
                         </Col>
@@ -82,13 +94,12 @@ class HomeView extends React.Component {
                         </div>
                     </Content>
 
-                    <Footer style={{textAlign: 'center'}}>SSF Doc ©2021 Created by SJTU Super SofTware
+                    <Footer style={{textAlign: 'center'}}>SSF Doc ©2021 Created by SJTU Super SoFtware
                         Developer
                     </Footer>
                 </Layout>
             </Layout>
         )
-
     }
 }
 

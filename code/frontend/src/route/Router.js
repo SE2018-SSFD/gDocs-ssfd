@@ -24,16 +24,16 @@ class BasicRoute extends React.Component{
         return(
             <Router history={history}>
                 <Switch>
-                    <Route exact path="/" component={HomeView}/>
-                    <Route exact path="/login" component={LoginView}/>
-                    <Route exact path="/register" component={RegisterView}/>
-                    <Route exact path="/doc" component={DocView} />
-                    <Redirect from="/*" to="/" />
-                    {/*<PrivateRoute exact path="/" component={HomeView} />*/}
-                    {/*<LoginRoute exact path="/login" component={LoginView} />*/}
+                    {/*<Route exact path="/" component={HomeView}/>*/}
+                    {/*<Route exact path="/login" component={LoginView}/>*/}
                     {/*<Route exact path="/register" component={RegisterView}/>*/}
-                    {/*<PrivateRoute exact path="/doc" component={DocView} />*/}
+                    {/*<Route exact path="/doc" component={DocView} />*/}
                     {/*<Redirect from="/*" to="/" />*/}
+                    <PrivateRoute exact path="/" component={HomeView} />
+                    <LoginRoute exact path="/login" component={LoginView} />
+                    <Route exact path="/register" component={RegisterView}/>
+                    <PrivateRoute exact path="/doc" component={DocView} />
+                    <Redirect from="/*" to="/" />
                 </Switch>
             </Router>
         )

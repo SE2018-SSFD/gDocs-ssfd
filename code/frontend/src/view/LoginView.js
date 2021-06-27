@@ -20,8 +20,8 @@ class LoginView extends React.Component{
                 <LoginHeader />
                 <Row align={"middle"} style={{paddingTop: 40}}>
                     <Col span={8} offset={4}>
-                        <img src={loginPic2}/>
-                        <img src={loginPic1}/>
+                        <img src={loginPic2} alt={"show_pic"}/>
+                        <img src={loginPic1} alt={"show_pic"}/>
                     </Col>
                     <Col span={8} offset={3}>
                         <LoginForm/>

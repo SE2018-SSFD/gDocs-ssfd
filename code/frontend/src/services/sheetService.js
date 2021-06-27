@@ -1,8 +1,25 @@
 import {postRequest} from "../utils/ajax";
 import {apiUrl} from "../utils/config";
+import {MSGWORD} from "./common";
+import {history} from "../utils/history";
+import {message} from "antd";
 
-export const newSheet = (data,callback) =>{
+export const newSheet = (data) =>{
     const url = apiUrl+'newsheet';
+
+    const callback = (data) => {
+        console.log(data)
+        let msg_word = MSGWORD[data.msg];
+
+        if (data.success === true) {
+            history.push("/doc?id=" + data.data);
+            message.success(msg_word).then(r => {
+            });
+        } else {
+            message.error(msg_word).then(r => {
+            });
+        }
+    }
     postRequest(url, data, callback);
 }
 

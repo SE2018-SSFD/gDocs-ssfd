@@ -4,29 +4,31 @@ import * as userService from '../services/userService'
 
 export class UserAvatar extends React.Component {
 
+    componentDidMount() {
+    }
+
     render() {
+        const username = JSON.parse(localStorage.getItem('username')).toUpperCase()
         const menu = (
             <Menu>
                 <Menu.Item>
-                    <a target="_blank" rel="noopener noreferrer" href="http://www.alipay.com/">
+                    <div>
                         详细信息
-                    </a>
+                    </div>
                 </Menu.Item>
                 <Menu.Item>
-                    <a href="#" onClick={userService.logout}>
+                    <div onClick={userService.logout}>
                         Log Out
-                    </a>
+                    </div>
                 </Menu.Item>
             </Menu>
         );
-
-        const {user} = this.props;
 
         return(
             <div id="avatar">
                 <Dropdown overlay={menu} placement="bottomRight">
                     <Avatar shape="square" style={{cursor:"pointer"}}>
-                        LHN
+                        {username}
                     </Avatar>
                 </Dropdown>
             </div>
