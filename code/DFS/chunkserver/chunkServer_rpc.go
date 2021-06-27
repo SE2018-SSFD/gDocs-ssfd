@@ -38,8 +38,8 @@ func (cs *ChunkServer) StartRPCServer() error {
 		log.Print("ChunkServer: done\n")
 	}()
 
-	cs.RegisterNodes()
-	cs.Printf("Register zookeeper node\n")
+	// cs.RegisterNodes()
+	// cs.Printf("Register zookeeper node\n")
 	//
 	// go func() {
 	// 	hbTicker := time.Tick(util.HEARTBEATDURATION)
