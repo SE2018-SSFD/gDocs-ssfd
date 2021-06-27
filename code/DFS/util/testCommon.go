@@ -23,7 +23,7 @@ func AssertGreater(t *testing.T, a, b interface{}) {
 	t.Helper()
 	if a != b {
 		t.Fail()
-		t.Fatal("AssertEqual Failed :", a, b)
+		t.Fatal("AssertGreater Failed :", a, b)
 	}
 }
 func AssertTrue(t *testing.T, a bool) {
@@ -32,6 +32,8 @@ func AssertTrue(t *testing.T, a bool) {
 		t.Fail()
 		t.Fatal("AssertTrue Failed :", a)
 	}
+	t.Logf("AssertTrue Succeed :")
+
 }
 func AssertNotTrue(t *testing.T, a bool) {
 	t.Helper()
@@ -39,6 +41,8 @@ func AssertNotTrue(t *testing.T, a bool) {
 		t.Fail()
 		t.Fatal("AssertNotTrue Failed :", a)
 	}
+	t.Logf("AssertNotTrue Succeed :")
+
 }
 func AssertNotEqual(t *testing.T, a, b interface{}) {
 	t.Helper()
@@ -46,6 +50,7 @@ func AssertNotEqual(t *testing.T, a, b interface{}) {
 		t.Fail()
 		t.Fatal("AssertNotEqual Failed :", a, b)
 	}
+	t.Logf("AssertNotEqual Succeed :")
 }
 func AssertNil(t *testing.T, a interface{}) {
 	t.Helper()
@@ -53,6 +58,7 @@ func AssertNil(t *testing.T, a interface{}) {
 		t.Fail()
 		t.Fatal("AssertNil Failed :", a)
 	}
+	t.Logf("AssertNil Succeed :")
 }
 func AssertNotNil(t *testing.T, a interface{}) {
 	t.Helper()
@@ -60,4 +66,6 @@ func AssertNotNil(t *testing.T, a interface{}) {
 		t.Fail()
 		t.Fatal("AssertNotNil Failed :", a)
 	}
+	t.Logf("AssertNotNil Succeed :")
+
 }

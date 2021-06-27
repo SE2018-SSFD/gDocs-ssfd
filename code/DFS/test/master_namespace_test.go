@@ -13,7 +13,8 @@ import (
 	"time"
 )
 func initMasterTest()(m *master.Master) {
-	m,err := master.InitMaster("127.0.0.1:1234", ".")
+	logrus.SetLevel(logrus.DebugLevel)
+	m,err := master.InitMaster("127.0.0.1:1234", "../log")
 	if err!=nil{
 		os.Exit(1)
 	}
@@ -61,6 +62,51 @@ func testCreate(t *testing.T,path util.DFSPath,m *master.Master,ignore bool,coun
 	}
 	return
 }
+func TestNamespaceSingle(t *testing.T) {
+	m := initMasterTest()
+	defer m.Exit()
+	var createReply util.CreateRet
+	var mkdirReply util.MkdirRet
+	var listReply util.ListRet
+	var deleteReply util.DeleteRet
+	var getFileMetaReply util.GetFileMetaRet
+	err := m.CreateRPC(util.CreateArg{Path: "/file1"}, &createReply)
+	util.AssertNil(t,err)
+	err = m.CreateRPC(util.CreateArg{Path: "/file1"}, &createReply)
+	util.AssertNotNil(t,err)
+	err = m.MkdirRPC(util.MkdirArg{Path: "/dir1"}, &mkdirReply)
+	util.AssertNil(t,err)
+	err = m.MkdirRPC(util.MkdirArg{Path: "/dir1"}, &mkdirReply)
+	util.AssertNotNil(t,err)
+	err = m.CreateRPC(util.CreateArg{Path: "/dir1/file1"}, &createReply)
+	util.AssertNil(t,err)
+	err = m.CreateRPC(util.CreateArg{Path: "/dir1/file2"}, &createReply)
+	util.AssertNil(t,err)
+	err = m.CreateRPC(util.CreateArg{Path: "/nonexist/file1"}, &createReply)
+	util.AssertNotNil(t,err)
+	err = m.CreateRPC(util.CreateArg{Path: "/invalidPath/"}, &createReply)
+	util.AssertNotNil(t,err)
+	err = m.CreateRPC(util.CreateArg{Path: "invalidPath/file1"}, &createReply)
+	util.AssertNotNil(t,err)
+	err = m.ListRPC(util.ListArg{Path: "/dir1"}, &listReply)
+	util.AssertNil(t,err)
+	for _, file := range listReply.Files {
+		fmt.Print(file, " ")
+	}
+	fmt.Println()
+	err = m.GetFileMetaRPC(util.GetFileMetaArg{Path: "/dir1"}, &getFileMetaReply)
+	util.AssertNil(t,err)
+	fmt.Println(getFileMetaReply.Exist, " ", getFileMetaReply.IsDir, " ", getFileMetaReply.Size)
+	err = m.GetFileMetaRPC(util.GetFileMetaArg{Path: "/dir1/file1"}, &getFileMetaReply)
+	util.AssertNil(t,err)
+	fmt.Println(getFileMetaReply.Exist, " ", getFileMetaReply.IsDir, " ", getFileMetaReply.Size)
+	err = m.DeleteRPC(util.DeleteArg{Path: "/dir1/file1"},&deleteReply)
+	err = m.GetFileMetaRPC(util.GetFileMetaArg{Path: "/dir1/file1"}, &getFileMetaReply)
+	fmt.Println(getFileMetaReply.Exist, " ", getFileMetaReply.IsDir, " ", getFileMetaReply.Size)
+
+	util.AssertEqual(t,getFileMetaReply.Exist,false)
+}
+
 
 func TestNamespaceParallel(t *testing.T){
 	count := 0
@@ -169,50 +215,5 @@ func implicitWait(t time.Duration,wg *sync.WaitGroup){
 	}
 }
 
-
-func TestNamespaceSingle(t *testing.T) {
-	m := initMasterTest()
-	defer m.Exit()
-	var createReply util.CreateRet
-	var mkdirReply util.MkdirRet
-	var listReply util.ListRet
-	var deleteReply util.DeleteRet
-	var getFileMetaReply util.GetFileMetaRet
-	err := m.CreateRPC(util.CreateArg{Path: "/file1"}, &createReply)
-	util.AssertNil(t,err)
-	err = m.CreateRPC(util.CreateArg{Path: "/file1"}, &createReply)
-	util.AssertNotNil(t,err)
-	err = m.MkdirRPC(util.MkdirArg{Path: "/dir1"}, &mkdirReply)
-	util.AssertNil(t,err)
-	err = m.MkdirRPC(util.MkdirArg{Path: "/dir1"}, &mkdirReply)
-	util.AssertNotNil(t,err)
-	err = m.CreateRPC(util.CreateArg{Path: "/dir1/file1"}, &createReply)
-	util.AssertNil(t,err)
-	err = m.CreateRPC(util.CreateArg{Path: "/dir1/file2"}, &createReply)
-	util.AssertNil(t,err)
-	err = m.CreateRPC(util.CreateArg{Path: "/nonexist/file1"}, &createReply)
-	util.AssertNotNil(t,err)
-	err = m.CreateRPC(util.CreateArg{Path: "/invalidPath/"}, &createReply)
-	util.AssertNotNil(t,err)
-	err = m.CreateRPC(util.CreateArg{Path: "invalidPath/file1"}, &createReply)
-	util.AssertNotNil(t,err)
-	err = m.ListRPC(util.ListArg{Path: "/dir1"}, &listReply)
-	util.AssertNil(t,err)
-	for _, file := range listReply.Files {
-		fmt.Print(file, " ")
-	}
-	fmt.Println()
-	err = m.GetFileMetaRPC(util.GetFileMetaArg{Path: "/dir1"}, &getFileMetaReply)
-	util.AssertNil(t,err)
-	fmt.Println(getFileMetaReply.Exist, " ", getFileMetaReply.IsDir, " ", getFileMetaReply.Size)
-	err = m.GetFileMetaRPC(util.GetFileMetaArg{Path: "/dir1/file1"}, &getFileMetaReply)
-	util.AssertNil(t,err)
-	fmt.Println(getFileMetaReply.Exist, " ", getFileMetaReply.IsDir, " ", getFileMetaReply.Size)
-	err = m.DeleteRPC(util.DeleteArg{Path: "/dir1/file1"},&deleteReply)
-	err = m.GetFileMetaRPC(util.GetFileMetaArg{Path: "/dir1/file1"}, &getFileMetaReply)
-	fmt.Println(getFileMetaReply.Exist, " ", getFileMetaReply.IsDir, " ", getFileMetaReply.Size)
-
-	util.AssertEqual(t,getFileMetaReply.Exist,false)
-}
 
 

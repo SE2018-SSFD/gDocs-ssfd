@@ -198,7 +198,7 @@ func (m *Master) StoreCheckPoint() error {
 
 func (m *Master) TryRecover() error{
 	// Check if a checkpoint exists
-	_,err := os.Stat(path.Join(string(m.metaPath),"log.dat"))
+	_,err := os.Stat(path.Join(string(m.metaPath),"checkpoint.dat"))
 	if os.IsNotExist(err){
 		logrus.Infof("No checkpoint, start master directly\n")
 		return nil

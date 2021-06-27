@@ -1,4 +1,37 @@
 package main
+
+import (
+	"DFS/util"
+	"fmt"
+	"testing"
+)
+
+func TestLogAndCheckpointSingle(t *testing.T){
+	m := initMasterTest()
+	defer m.Exit()
+	var createReply util.CreateRet
+	var mkdirReply util.MkdirRet
+	var listReply util.ListRet
+	var deleteReply util.DeleteRet
+	var getFileMetaReply util.GetFileMetaRet
+	err := m.CreateRPC(util.CreateArg{Path: "/file1"}, &createReply)
+	util.AssertNil(t,err)
+	err := m.CreateRPC(util.CreateArg{Path: "/file2"}, &createReply)
+	util.AssertNil(t,err)
+	err := m.CreateRPC(util.CreateArg{Path: "/file3"}, &createReply)
+	util.AssertNil(t,err)
+	err = m.MkdirRPC(util.MkdirArg{Path: "/dir1"}, &mkdirReply)
+	util.AssertNil(t,err)
+	err = m.CreateRPC(util.CreateArg{Path: "/dir1/file1"}, &createReply)
+	util.AssertNil(t,err)
+	err = m.CreateRPC(util.CreateArg{Path: "/dir1/file2"}, &createReply)
+	util.AssertNil(t,err)
+	err = m.ListRPC(util.ListArg{Path: "/dir1"}, &listReply)
+	util.AssertNil(t,err)
+	for _, file := range listReply.Files {
+		fmt.Print(file, " ")
+	}
+}
 //
 //import (
 //	"DFS/chunkserver"

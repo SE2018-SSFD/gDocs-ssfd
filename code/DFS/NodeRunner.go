@@ -20,6 +20,8 @@ func main() {
 	switch os.Args[1] {
 	case "master":
 		masterRun()
+	case "multimaster":
+		multiMasterRun()
 	case "chunkServer":
 		chunkServerRun()
 	case "client":
@@ -56,8 +58,11 @@ func chunkServerRun() {
 	ch := make(chan bool)
 	<-ch
 }
+func masterRun(){
 
-func masterRun() {
+}
+
+func multiMasterRun() {
 	if len(os.Args) < 8 {
 		printUsage()
 		return
@@ -85,7 +90,8 @@ func setLoggingStrategy() {
 
 func printUsage() {
 	fmt.Println("Usage:")
-	fmt.Println(" NodeRunner master <addr1> <addr2> <addr3> <metapath1> <metapath2> <metapath3>")
+	fmt.Println(" NodeRunner master <addr1> <metapath1>")
+	fmt.Println(" NodeRunner multimaster <addr1> <addr2> <addr3> <metapath1> <metapath2> <metapath3>")
 	fmt.Println(" NodeRunner chunkServer <addr> <root path> <master addr>")
 	fmt.Println(" NodeRunner client <addr> <master addr>")
 	fmt.Println()
