@@ -1,10 +1,14 @@
 package master
 
 import (
+	"DFS/util"
 	"encoding/gob"
+	"encoding/json"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"
 	"path"
+	"time"
 )
 
 type MasterCKP struct {
@@ -13,6 +17,98 @@ type MasterCKP struct {
 	cs SerialChunkStates
 	namespace []SerialTreeNode
 }
+type MasterLog struct{
+	opType OperationType
+	path util.DFSPath
+	size int // for setFileMetaRPC
+	addrs []util.Address // for GetReplicasRPC
+}
+
+// AppendLog appends a log structure to persistent file
+func (m *Master) AppendLog(ml MasterLog)error{
+	m.logLock.Lock()
+	defer m.logLock.Unlock()
+	logrus.Debugf("AppendLog : %d\n", ml.opType)
+	filename := path.Join(string(m.metaPath),"log.dat")
+	fd, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
+	if err != nil {
+		logrus.Warnf("AppendLogError :%s\n", err)
+		return err
+	}
+	defer fd.Close()
+	enc := json.NewEncoder(fd)
+	err = enc.Encode(ml)
+	if err != nil {
+		logrus.Warnf("AppendLogError :%s\n",err)
+		return err
+	}
+	return nil
+}
+
+// RecoverLog recovers a set of logs into master metadata
+func (m *Master) RecoverLog(logs []MasterLog) error {
+	m.logLock.Lock()
+	defer m.logLock.Unlock()
+
+	var cret *util.CreateRet
+	var mret *util.MkdirRet
+	var dret *util.DeleteRet
+	var sret *util.SetFileMetaRet
+
+	for _,log := range logs{
+		logrus.Debugf("RecoverLog : %d\n", log.opType)
+		switch log.opType {
+		case util.CREATEOPS:
+			err := m.CreateRPC(util.CreateArg{Path: log.path},cret)
+			if err != nil {
+				logrus.Warnf("RecoverLog Failed : Create failed : %s\n", err)
+				return err
+			}
+		case util.MKDIROPS:
+			err := m.MkdirRPC(util.MkdirArg{Path: log.path},mret)
+			if err != nil {
+				logrus.Warnf("RecoverLog Failed : Mkdir failed : %s\n", err)
+				return err
+			}
+		case util.DELETEOPS:
+			err := m.DeleteRPC(util.DeleteArg{Path: log.path},dret)
+			if err != nil {
+				logrus.Warnf("RecoverLog Failed : Delete failed : %s\n", err)
+				return err
+			}
+		case util.SETFILEMETAOPS:
+			err := m.SetFileMetaRPC(util.SetFileMetaArg{Path: log.path,Size:log.size},sret)
+			if err != nil {
+				logrus.Warnf("RecoverLog Failed : Delete failed : %s\n", err)
+				return err
+			}
+		case util.GETREPLICASOPS:
+			// when this operation is in the log, there must be new chunk created
+			// increment handle
+			newHandle := m.cs.handle.curHandle+1
+			m.cs.handle.curHandle+=1
+			// add chunk to file
+			newChunk := &chunkState{
+				Locations: make([]util.Address,0),
+				Handle: newHandle,
+				expire: time.Now(),
+			}
+			fs, exist := m.cs.file[log.path]
+			if !exist {
+				err := fmt.Errorf("FileNotExistsError : the requested DFS path %s is non-existing!\n", string(log.path))
+				return err
+			}
+			fs.chunks = append(fs.chunks,newChunk)
+			for _ , addr := range log.addrs{
+				newChunk.Locations = append(newChunk.Locations,addr)
+			}
+		}
+
+	}
+	return nil
+}
+
+// LoadCheckPoint loads master metadata from disk
 func (m *Master) LoadCheckPoint() error{
 	filename := path.Join(string(m.metaPath),"checkpoint.dat")
 	fd, err := os.Open(filename)
@@ -46,6 +142,7 @@ func (m *Master) LoadCheckPoint() error{
 	return nil
 }
 
+// StoreCheckPoint store master metadata to disk
 func (m *Master) StoreCheckPoint() error {
 	m.RLock()
 	defer m.RUnlock()

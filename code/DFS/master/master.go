@@ -15,6 +15,7 @@ import (
 
 type Master struct {
 	sync.RWMutex
+	logLock sync.Mutex
 	addr     util.Address
 	metaPath util.LinuxPath
 	L        net.Listener
@@ -26,6 +27,8 @@ type Master struct {
 	ns       *NamespaceState
 	shutdown chan interface{}
 }
+
+type OperationType int32
 
 func InitMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error) {
 	// Init RPC server
@@ -75,7 +78,34 @@ func InitMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error) {
 	}
 	return m,err
 }
-
+//func InitMaster(addr util.Address, metaPath util.LinuxPath) *Master {
+//	// Init RPC server
+//	m := &Master{
+//		addr:     addr,
+//		metaPath: metaPath,
+//		rpcs:     rpc.NewServer(),
+//		shutdown: make(chan interface{}),
+//	}
+//	err := m.rpcs.Register(m)
+//	if err != nil {
+//		logrus.Fatal("Register error:", err)
+//		os.Exit(1)
+//	}
+//	l, err := net.Listen("tcp", string(m.addr))
+//	if err != nil {
+//		logrus.Fatal("listen error:", err)
+//	}
+//	logrus.Infoln("master "+addr+": init success")
+//	m.L = l
+//	// Init zookeeper
+//	//c, _, err := zk.Connect([]string{"127.0.0.1"}, time.Second) //*10)
+//
+//	// Init metadata manager
+//	m.ns = newNamespaceState()
+//	m.cs = newChunkStates()
+//	m.css = newChunkServerState()
+//	return m
+//}
 func implicitWait(t time.Duration,wg *sync.WaitGroup)error{
 	c := make(chan int)
 	go func(){
@@ -138,14 +168,25 @@ func (m *Master) GetStatusString() string {
 // CreateRPC is called by client to create a new file
 func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
 	logrus.Debugf("RPC create, File Path : %s\n", args.Path)
-	err := m.ns.Mknod(args.Path, false)
+
+	// Write ahead log
+	m.logLock.Lock()
+	err := m.AppendLog(MasterLog{opType: util.CREATEOPS,path: args.Path})
 	if err != nil {
-		logrus.Debugf("RPC create failed : %s\n", err)
+		logrus.Warnf("RPC delete failed : %s\n", err)
+		return err
+	}
+	m.logLock.Unlock()
+
+	// Modified metadata
+	err = m.ns.Mknod(args.Path, false)
+	if err != nil {
+		logrus.Warnf("RPC create failed : %s\n", err)
 		return err
 	}
 	err = m.cs.NewFile(args.Path)
 	if err != nil {
-		logrus.Debugf("RPC create failed : %s\n", err)
+		logrus.Warnf("RPC create failed : %s\n", err)
 		return err
 	}
 	return nil
@@ -154,9 +195,20 @@ func (m *Master) CreateRPC(args util.CreateArg, reply *util.CreateRet) error {
 // MkdirRPC is called by client to create a new dir
 func (m *Master) MkdirRPC(args util.MkdirArg, reply *util.MkdirRet) error {
 	logrus.Debugf("RPC mkdir, Dir Path : %s\n", args.Path)
-	err := m.ns.Mknod(args.Path, true)
+
+	// Write ahead log
+	m.logLock.Lock()
+	err := m.AppendLog(MasterLog{opType: util.MKDIROPS,path: args.Path})
 	if err != nil {
-		logrus.Debugf("RPC mkdir failed : %s\n", err)
+		logrus.Warnf("RPC mkdir failed : %s\n", err)
+		return err
+	}
+	m.logLock.Unlock()
+
+	// Modified metadata
+	err = m.ns.Mknod(args.Path, true)
+	if err != nil {
+		logrus.Warnf("RPC mkdir failed : %s\n", err)
 		return err
 	}
 	return nil
@@ -166,14 +218,24 @@ func (m *Master) MkdirRPC(args util.MkdirArg, reply *util.MkdirRet) error {
 func (m *Master) DeleteRPC(args util.DeleteArg, reply *util.DeleteRet) error {
 	logrus.Debugf("RPC delete, Dir Path : %s\n", args.Path)
 
-	err := m.cs.Delete(args.Path)
+	// Write ahead log
+	m.logLock.Lock()
+	err := m.AppendLog(MasterLog{opType: util.DELETEOPS,path: args.Path})
 	if err != nil {
-		logrus.Debugf("RPC delete failed : %s\n", err)
+		logrus.Warnf("RPC delete failed : %s\n", err)
+		return err
+	}
+	m.logLock.Unlock()
+
+	// Modified metadata
+	err = m.cs.Delete(args.Path)
+	if err != nil {
+		logrus.Warnf("RPC delete failed : %s\n", err)
 		return err
 	}
 	err = m.ns.Delete(args.Path)
 	if err != nil {
-		logrus.Debugf("RPC delete failed : %s\n", err)
+		logrus.Warnf("RPC delete failed : %s\n", err)
 		return err
 	}
 	return nil
@@ -184,7 +246,7 @@ func (m *Master) ListRPC(args util.ListArg, reply *util.ListRet) (err error) {
 	logrus.Debugf("RPC list, Dir Path : %s\n", args.Path)
 	reply.Files, err = m.ns.List(args.Path)
 	if err != nil {
-		logrus.Debugf("RPC list failed : %s\n", err)
+		logrus.Warnf("RPC list failed : %s\n", err)
 	}
 	return err
 }
@@ -194,7 +256,7 @@ func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMet
 	logrus.Debugf("RPC getFileMeta, File Path : %s\n", args.Path)
 	node,err := m.ns.GetNode(args.Path)
 	if err != nil {
-		logrus.Debugf("RPC getFileMeta failed : %s\n", err)
+		logrus.Warnf("RPC getFileMeta failed : %s\n", err)
 		*reply = util.GetFileMetaRet{
 			Exist: false,
 			IsDir: false,
@@ -215,6 +277,17 @@ func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMet
 // SetFileMetaRPC set the file metadata by path
 func (m *Master) SetFileMetaRPC(args util.SetFileMetaArg, reply *util.SetFileMetaRet) error {
 	logrus.Debugf("RPC setFileMeta, File Path : %s\n", args.Path)
+
+	// Write ahead log
+	m.logLock.Lock()
+	err := m.AppendLog(MasterLog{opType: util.SETFILEMETAOPS,path: args.Path,size: args.Size})
+	if err != nil {
+		logrus.Warnf("RPC SetFileMeta failed : %s\n", err)
+		return err
+	}
+	m.logLock.Unlock()
+
+	// Modified metadata
 	m.cs.file[args.Path].size = args.Size
 	return nil
 }
@@ -245,6 +318,16 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		if err!= nil{
 			return err
 		}
+
+		// Write ahead log
+		m.logLock.Lock()
+		err := m.AppendLog(MasterLog{opType: util.GETREPLICASOPS,path: args.Path,addrs: addrs})
+		if err != nil {
+			logrus.Warnf("RPC SetFileMeta failed : %s\n", err)
+			return err
+		}
+		m.logLock.Unlock()
+
 		// enter the function with write lock of fs
 		targetChunk,err = m.cs.CreateChunkAndReplica(fs,addrs)
 		if err!=nil{
@@ -256,7 +339,7 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		fs.Unlock()
 		targetChunk = fs.chunks[args.ChunkIndex]
 	}
-	logrus.Infoln("targetchunk : ",targetChunk)
+	logrus.Debugln("targetchunk : ",targetChunk)
 	 // Get target servers which store the replicate
 	 reply.ChunkServerAddrs = make([]util.Address, 0)
 	for _, addr := range targetChunk.Locations {
