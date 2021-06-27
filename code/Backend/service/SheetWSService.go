@@ -3,6 +3,7 @@ package service
 import (
 	"backend/dao"
 	"backend/lib/cache"
+	"backend/lib/cluster"
 	"backend/lib/wsWrap"
 	"backend/model"
 	"backend/utils"
@@ -120,20 +121,26 @@ func SheetOnMessage(wss *wsWrap.WSServer, uid uint, username string, fid uint, b
 	}
 }
 
-func SheetOnConnEstablished(token string, fid uint) (bool, int, *model.User) {
+func SheetOnConnEstablished(token string, fid uint) (bool, int, *model.User, string) {
 	if token == "" || fid == 0 {
-		return false, utils.InvalidFormat, nil
+		return false, utils.InvalidFormat, nil, ""
 	}
 
 	uid := CheckToken(token)
 	if uid != 0 {
 		ownedFids := dao.GetSheetFidsByUid(uid)
 		if !utils.UintListContains(ownedFids, fid) {
-			return false, utils.SheetNoPermission, nil
+			return false, utils.SheetNoPermission, nil, ""
 		} else {
 			sheet := dao.GetSheetByFid(fid)
 			if sheet.IsDeleted {
-				return false, utils.SheetIsInTrashBin, nil
+				return false, utils.SheetIsInTrashBin, nil, ""
+			}
+
+			if !config.Get().WriteThrough {
+				if addr, isMine := cluster.FileBelongsTo(sheet.Name, sheet.Fid); !isMine {
+					return false, 0, nil, addr
+				}
 			}
 
 			user := dao.GetUserByUid(uid)
@@ -142,13 +149,13 @@ func SheetOnConnEstablished(token string, fid uint) (bool, int, *model.User) {
 				fid: fid,
 				userN: 0,
 			}); loaded {
-				return false, utils.SheetDupConnection, nil
+				return false, utils.SheetDupConnection, nil, ""
 			}
 
-			return true, 0, &user
+			return true, 0, &user, ""
 		}
 	} else {
-		return false, utils.InvalidToken, nil
+		return false, utils.InvalidToken, nil, ""
 	}
 }
 

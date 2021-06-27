@@ -5,6 +5,7 @@ import (
 	"backend/service"
 	"backend/utils"
 	"github.com/kataras/iris/v12/context"
+	"strconv"
 )
 
 var wss *wsWrap.WSServer
@@ -52,9 +53,13 @@ func SheetBeforeUpgradeHandler() context.Handler {
 	return func(ctx *context.Context) {
 		fid := uint(ctx.URLParamUint64("fid"))
 		token := ctx.URLParam("token")
-		if success, msg, user := service.SheetOnConnEstablished(token, fid); !success {
-			utils.SendResponse(ctx, success, msg, nil)
-			ctx.StopExecution()
+		if success, msg, user, addr := service.SheetOnConnEstablished(token, fid); !success {
+			if addr != "" {
+				utils.RequestRedirectTo(ctx, addr, "/sheetws?"+"token="+token+"&"+"fid="+strconv.Itoa(int(fid)))
+			} else {
+				utils.SendResponse(ctx, success, msg, nil)
+				ctx.StopExecution()
+			}
 		} else {
 			ctx.Params().Save("ns", "sheet", false)
 			ctx.Params().Save("uid", user.Uid, false)
