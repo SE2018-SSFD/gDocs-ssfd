@@ -10,6 +10,7 @@ type Sheet struct {
 	Path		string			`gorm:"type:VARCHAR(200)" json:"-"`
 	Users		[]User			`gorm:"many2many:users_sheets" json:"-"`
 	Columns		int				`gorm:"-" json:"columns"`
+	Owner		string			`json:"owner"`
 
 	CreatedAt	time.Time
 	UpdatedAt	time.Time
