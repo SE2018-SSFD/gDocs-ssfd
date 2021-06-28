@@ -81,3 +81,11 @@ func GenID(ns string, uid uint, username string, fid uint) (id string) {
 	return ns + "#" + strconv.FormatUint(uint64(uid), 10) + "#" +
 		username + "#" + strconv.FormatUint(uint64(fid), 10)
 }
+
+func InterfaceSliceToUintSlice(before []interface{}) (after []uint) {
+	for i := 0; i < len(before); i += 1 {
+		after = append(after, before[i].(uint))
+	}
+
+	return after
+}
