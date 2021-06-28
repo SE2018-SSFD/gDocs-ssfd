@@ -11,15 +11,19 @@ type Sheet struct {
 	Users		[]User			`gorm:"many2many:users_sheets" json:"-"`
 	Columns		int				`gorm:"-" json:"columns"`
 
+	CreatedAt	time.Time
+	UpdatedAt	time.Time
+
 	Content		[]string		`gorm:"-" json:"content"`
 }
 
 type CheckPoint struct {
 	Cid			uint			`gorm:"primaryKey;AUTOINCREMENT=1" json:"cid"`
 	SheetID		uint			`json:"-"`
-	CreatedAt	time.Time
 	Columns		uint			`json:"columns"`
 	Path		string			`gorm:"type:VARCHAR(200)" json:"-"`
+
+	CreatedAt	time.Time
 
 	Content		[]string		`gorm:"-" json:"content"`
 }
