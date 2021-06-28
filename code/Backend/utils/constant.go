@@ -75,7 +75,7 @@ type GetSheetParams struct {
 	Fid			uint		`json:"fid"`
 }
 
-type GetSheetCheckpoint struct {
+type GetSheetCheckPoint struct {
 	Token		string		`json:"token"`
 	Fid			uint		`json:"fid"`
 	Cid			uint		`json:"cid"`
