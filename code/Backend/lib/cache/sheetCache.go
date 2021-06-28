@@ -134,14 +134,14 @@ func (ms *MemSheet) Get(row int, col int) string {
 	return ms.cells.Get(row, col)
 }
 
-func (ms *MemSheet) GetSize() (size int) {
-	size += int(unsafe.Sizeof(ms.cells.cells))
+func (ms *MemSheet) GetSize() int64 {
+	size := int(unsafe.Sizeof(ms.cells.cells))
 	size += ms.cells.maxRow * int(unsafe.Sizeof(ms.cells.cells[0]))
 	size += ms.cells.maxRow * ms.cells.maxCol * int(unsafe.Sizeof(ms.cells.cells[0][0]))
 
 	size += ms.cells.RuneNum * int(unsafe.Sizeof('0'))
 
-	return
+	return int64(size)
 }
 
 func (ms *MemSheet) Shape() (rows int, cols int) {
@@ -169,8 +169,8 @@ func NewSheetCache(maxSize int64) *SheetCache {
 // If excess memory constraint, do eviction and return true
 func (sc *SheetCache) Add(key interface{}, ms *MemSheet) (evicted []*MemSheet) {
 	evicted = nil
-	if sc.curSize + int64(ms.GetSize()) > sc.maxSize {
-		if evicted = sc.doEvict(int64(ms.GetSize())); evicted == nil {
+	if sc.curSize + ms.GetSize() > sc.maxSize {
+		if evicted = sc.doEvict(ms.GetSize()); evicted == nil {
 			logger.Fatal("Cannot get enough memory from eviction!")
 		}
 	}
