@@ -32,6 +32,7 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 		sheet := dao.GetSheetByFid(fid)
 		path := gdocFS.GetCheckPointPath("sheet", fid, 0)
 		sheet.Path = path
+		sheet.Columns = int(params.InitColumns)
 		dao.SetSheet(sheet)
 		dao.AddSheetToUser(uid, fid)
 
