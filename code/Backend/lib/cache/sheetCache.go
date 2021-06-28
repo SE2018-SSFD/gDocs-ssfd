@@ -167,16 +167,15 @@ func NewSheetCache(maxSize int64) *SheetCache {
 }
 
 // If excess memory constraint, do eviction and return true
-func (sc *SheetCache) Add(key interface{}, ms *MemSheet) (evicted []*MemSheet) {
-	evicted = nil
+func (sc *SheetCache) Add(key interface{}, ms *MemSheet) (keys []interface{}, evicted []*MemSheet) {
 	if sc.curSize + ms.GetSize() > sc.maxSize {
-		if evicted = sc.doEvict(ms.GetSize()); evicted == nil {
+		if keys, evicted = sc.doEvict(ms.GetSize()); evicted == nil {
 			logger.Fatal("Cannot get enough memory from eviction!")
 		}
 	}
 
 	sc.cache.Store(key, ms)
-	return evicted
+	return keys, evicted
 }
 
 func (sc *SheetCache) Get(key interface{}) *MemSheet {
@@ -191,12 +190,12 @@ func (sc *SheetCache) Del(key interface{}) {
 	sc.cache.Delete(key)
 }
 
-func (sc *SheetCache) doEvict(spareAtLeast int64) (evicted []*MemSheet) {
+func (sc *SheetCache) doEvict(spareAtLeast int64) (keys []interface{}, evicted []*MemSheet) {
 	if sc.curSize < spareAtLeast {
-		return nil
+		return nil, nil
 	}
 
 	// TODO: finish eviction, e.g. LRU
 
-	return nil
+	return nil, nil
 }
