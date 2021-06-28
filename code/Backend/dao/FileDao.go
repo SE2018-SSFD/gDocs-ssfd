@@ -38,5 +38,5 @@ func GetSheetFidsByUid(uid uint) []uint {
 }
 
 func SaveCheckPoint(checkpoint model.CheckPoint) {
-
+	repository.SaveCheckPoint(checkpoint)
 }

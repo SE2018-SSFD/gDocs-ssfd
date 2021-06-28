@@ -28,3 +28,7 @@ func DeleteSheet(sheet model.Sheet) {
 	db.Delete(&sheet)
 	return
 }
+
+func SaveCheckPoint(checkpoint model.CheckPoint) {
+	db.Save(&checkpoint)
+}
