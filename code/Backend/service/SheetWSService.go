@@ -238,18 +238,7 @@ func doSheetAcquire(wss *wsWrap.WSServer, fid uint, uid uint, username string,
 		return
 	}
 	if success := tryLockOnCell(group, uid, msg.Row, msg.Col); success {
-		bodyRaw, _ := json.Marshal(sheetPrepareNotify{
-			Row: msg.Row,
-			Col: msg.Col,
-			Username: username,
-		})
-
-		toBroadCast, _ := json.Marshal(sheetMessage{
-			MsgType: "acquire",
-			Body: bodyRaw,
-		})
-
-		broadcast(wss, group, uid, fid, toBroadCast)
+		sheetPrepareBroadcast(wss, msg.Row, msg.Col, username, "acquire", fid, uid, group)
 	}
 }
 
@@ -261,65 +250,76 @@ func doSheetRelease(wss *wsWrap.WSServer, fid uint, uid uint, username string,
 		return
 	}
 	if success := unlockOnCell(group, uid, msg.Row, msg.Col); success {
-		bodyRaw, _ := json.Marshal(sheetPrepareNotify{
-			Row: msg.Row,
-			Col: msg.Col,
-			Username: username,
-		})
-
-		toBroadCast, _ := json.Marshal(sheetMessage{
-			MsgType: "release",
-			Body: bodyRaw,
-		})
-
-		broadcast(wss, group, uid, fid, toBroadCast)
+		sheetPrepareBroadcast(wss, msg.Row, msg.Col, username, "release", fid, uid, group)
 	}
 }
 
 func doSheetModifyWriteThrough(wss *wsWrap.WSServer, fid uint, uid uint, username string,
 	sheetMsg sheetMessage, group *sheetGroupEntry) {
+	if msg := sheetModifyAuthenticateCell(fid, uid, username, sheetMsg, group); msg != nil {
+		path := utils.GetCheckPointPath("sheet", fid, 0)
+		fileRaw, err := dao.FileGetAll(path)
+		if err != nil {
+			logger.Errorf("[%s] Checkpoint file does not exist!", path)
+			return
+		}
+
+		filePickled := utils.CheckPointPickle{}
+		if err = json.Unmarshal([]byte(fileRaw), &filePickled); err != nil {
+			logger.Errorf("[%s] Checkpoint file cannot be pickled!", path)
+			return
+		}
+
+		if msg.Row >= filePickled.Rows || msg.Col >= filePickled.Columns {
+			tmpCells := cache.NewCellNetFromStringSlice(filePickled.Content, filePickled.Columns)
+			tmpCells.Set(msg.Row, msg.Col, msg.Content)
+			filePickled.Content = tmpCells.ToStringSlice()
+			filePickled.Rows, filePickled.Columns = tmpCells.Shape()
+		} else {
+			filePickled.Content[msg.Row * filePickled.Columns + msg.Col] = msg.Content
+		}
+
+		filePickled.Timestamp = time.Now()
+		fileRawByte, _ := json.Marshal(filePickled)
+		fileRaw = string(fileRawByte)
+		if err = dao.FileOverwriteAll(path, fileRaw); err != nil {
+			logger.Errorf("[%s] Checkpoint file overwrite fails!", path)
+			return
+		}
+
+		sheetModifyBroadcast(wss, fid, uid, username, group, msg)
+	}
+}
+
+func doSheetModifyWithCache(wss *wsWrap.WSServer, fid uint, uid uint, username string,
+	sheetMsg sheetMessage, group *sheetGroupEntry) {
+	if msg := sheetModifyAuthenticateCell(fid, uid, username, sheetMsg, group); msg != nil {
+		// TODO: cache and log
+
+
+		sheetModifyBroadcast(wss, fid, uid, username, group, msg)
+	}
+}
+
+func sheetModifyAuthenticateCell(fid uint, uid uint, username string,
+	sheetMsg sheetMessage, group *sheetGroupEntry) *sheetModifyMessage {
 	msg := sheetModifyMessage{}
 	if err := json.Unmarshal(sheetMsg.Body, &msg); err != nil {
 		logger.Errorf("[fid:%d msgType:%s] Wrong format of sheet message!", fid, sheetMsg.MsgType)
-		return
+		return nil
 	}
 
 	if success := tryLockOnCell(group, uid, msg.Row, msg.Col); !success {
 		logger.Errorf("[fid:%d msgType:%s uid:%d username:%s] User modify a cell without lock!",
 			fid, sheetMsg.MsgType, uid, username)
-		return
+		return nil
 	}
 
-	path := utils.GetCheckPointPath("sheet", fid, 0)
-	fileRaw, err := dao.FileGetAll(path)
-	if err != nil {
-		logger.Errorf("[%s] Checkpoint file does not exist!", path)
-		return
-	}
+	return &msg
+}
 
-	filePickled := utils.CheckPointPickle{}
-	if err = json.Unmarshal([]byte(fileRaw), &filePickled); err != nil {
-		logger.Errorf("[%s] Checkpoint file cannot be pickled!", path)
-		return
-	}
-
-	if msg.Row >= filePickled.Rows || msg.Col >= filePickled.Columns {
-		tmpCells := cache.NewCellNetFromStringSlice(filePickled.Content, filePickled.Columns)
-		tmpCells.Set(msg.Row, msg.Col, msg.Content)
-		filePickled.Content = tmpCells.ToStringSlice()
-		filePickled.Rows, filePickled.Columns = tmpCells.Shape()
-	} else {
-		filePickled.Content[msg.Row * filePickled.Columns + msg.Col] = msg.Content
-	}
-
-	filePickled.Timestamp = time.Now()
-	fileRawByte, _ := json.Marshal(filePickled)
-	fileRaw = string(fileRawByte)
-	if err = dao.FileOverwriteAll(path, fileRaw); err != nil {
-		logger.Errorf("[%s] Checkpoint file overwrite fails!", path)
-		return
-	}
-
+func sheetModifyBroadcast(wss *wsWrap.WSServer, fid uint, uid uint, username string,
+	group *sheetGroupEntry, msg *sheetModifyMessage) {
 	bodyRaw, _ := json.Marshal(sheetModifyNotify{
 		Row: msg.Row,
 		Col: msg.Col,
@@ -327,15 +327,26 @@ func doSheetModifyWriteThrough(wss *wsWrap.WSServer, fid uint, uid uint, usernam
 		Username: username,
 	})
 
-	toBroadCast, _ := json.Marshal(sheetMessage{
+	toBroadcast, _ := json.Marshal(sheetMessage{
 		MsgType: "modify",
 		Body: bodyRaw,
 	})
 
-	broadcast(wss, group, uid, fid, toBroadCast)
+	broadcast(wss, group, uid, fid, toBroadcast)
 }
 
-func doSheetModifyWithCache(wss *wsWrap.WSServer, fid uint, uid uint, username string,
-	sheetMsg sheetMessage, group *sheetGroupEntry) {
+func sheetPrepareBroadcast(wss *wsWrap.WSServer, row int, col int, username string, msgType string, fid uint, uid uint,
+	group *sheetGroupEntry) {
+	bodyRaw, _ := json.Marshal(sheetPrepareNotify{
+		Row: row,
+		Col: col,
+		Username: username,
+	})
 
+	toBroadcast, _ := json.Marshal(sheetMessage{
+		MsgType: msgType,
+		Body: bodyRaw,
+	})
+
+	broadcast(wss, group, uid, fid, toBroadcast)
 }
