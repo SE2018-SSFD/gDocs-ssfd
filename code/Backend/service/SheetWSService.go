@@ -72,7 +72,7 @@ type sheetLockedOrNotNotify struct {
 func SheetOnConn(uid uint, username string, fid uint) {
 	logger.Debugf("[%d %s %d] Connected to server!", uid, username, fid)
 	if v, ok := sheetGroup.Load(fid); !ok {
-		logger.Fatalf("[fid:%d username:%s uid:%d] No group entry for sheetws!", fid, username, uid)
+		logger.Errorf("[fid:%d username:%s uid:%d] No group entry for sheetws!", fid, username, uid)
 	} else {
 		user := sheetUserEntry{
 			uid:      uid,
@@ -89,7 +89,7 @@ func SheetOnDisConn(uid uint, username string, fid uint) {
 	logger.Debugf("[%d %s %d] DisConnected from server!", uid, username, fid)
 
 	if v, ok := sheetGroup.Load(fid); !ok {
-		logger.Fatalf("[fid:%d username:%s uid:%d] No group entry for sheetws!", fid, username, uid)
+		logger.Errorf("[fid:%d username:%s uid:%d] No group entry for sheetws!", fid, username, uid)
 	} else {
 		group := v.(*sheetGroupEntry)
 		group.userMap.Delete(uid)
