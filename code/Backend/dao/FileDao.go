@@ -13,6 +13,10 @@ func GetSheetByFid(fid uint) model.Sheet {
 	return repository.GetSheetByFid(fid)
 }
 
+func GetSheetWithCheckPointsByFid(fid uint) model.Sheet {
+	return repository.GetSheetWithCheckPointsByFid(fid)
+}
+
 func SetSheet(file model.Sheet) {
 	repository.SaveSheet(file)
 	return

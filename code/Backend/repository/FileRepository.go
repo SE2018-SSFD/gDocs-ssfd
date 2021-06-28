@@ -9,6 +9,11 @@ func GetSheetByFid(fid uint) (ret model.Sheet) {
 	return
 }
 
+func GetSheetWithCheckPointsByFid(fid uint) (ret model.Sheet) {
+	db.Preload("CheckPoints").First(&ret, "fid = ?", fid)
+	return
+}
+
 func CreateSheet(sheet model.Sheet) uint {
 	db.Create(&sheet)
 	return sheet.Fid
