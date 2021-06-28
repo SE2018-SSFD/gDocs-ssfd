@@ -4,6 +4,7 @@ import (
 	"backend/dao"
 	"backend/lib/cache"
 	"backend/lib/cluster"
+	"backend/lib/gdocFS"
 	"backend/model"
 	"backend/utils"
 	"backend/utils/config"
@@ -29,7 +30,7 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 			Name: params.Name,
 		})
 		sheet := dao.GetSheetByFid(fid)
-		path := utils.GetCheckPointPath("sheet", fid, 0)
+		path := gdocFS.GetCheckPointPath("sheet", fid, 0)
 		sheet.Path = path
 		dao.SetSheet(sheet)
 		dao.AddSheetToUser(uid, fid)
@@ -86,7 +87,7 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 			}
 
 			if config.Get().WriteThrough {
-				path := utils.GetCheckPointPath("sheet", params.Fid, 0)
+				path := gdocFS.GetCheckPointPath("sheet", params.Fid, 0)
 				fileRaw, err := dao.FileGetAll(path)
 				if err != nil {
 					panic(err)

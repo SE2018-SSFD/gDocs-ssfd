@@ -81,8 +81,3 @@ func GenID(ns string, uid uint, username string, fid uint) (id string) {
 	return ns + "#" + strconv.FormatUint(uint64(uid), 10) + "#" +
 		username + "#" + strconv.FormatUint(uint64(fid), 10)
 }
-
-func GetCheckPointPath(fileType string, fid uint, cid uint) string {
-	return "/" + fileType + "/" + strconv.FormatUint(uint64(fid), 10) + "/checkpoint/" +
-		strconv.FormatUint(uint64(cid), 10) + ".txt"
-}
