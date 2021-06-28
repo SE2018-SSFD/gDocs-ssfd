@@ -40,7 +40,7 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 				panic(err)
 			}
 
-			initFile := utils.CheckPointPickle{
+			initFile := gdocFS.SheetCheckPointPickle{
 				Cid: 0,
 				Timestamp: time.Now(),
 				Rows: int(params.InitRows),
@@ -92,7 +92,7 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 				if err != nil {
 					panic(err)
 				}
-				filePickled := utils.CheckPointPickle{}
+				filePickled := gdocFS.SheetCheckPointPickle{}
 				if err := json.Unmarshal([]byte(fileRaw), &filePickled); err != nil {
 					panic("cannot pickle checkpoint from file")
 				}

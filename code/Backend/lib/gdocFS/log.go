@@ -1,6 +1,20 @@
 package gdocFS
 
-import "strconv"
+import (
+	"strconv"
+	"time"
+)
+
+type SheetLogPickle struct {
+	Lid			uint		`json:"lid"`
+	Timestamp	time.Time	`json:"timestamp"`
+	Row			int 		`json:"row"`
+	Col			int			`json:"col"`
+	Old			string		`json:"old"`
+	New			string		`json:"new"`
+	Uid			uint		`json:"uid"`
+	Username	string		`json:"username"`
+}
 
 func GetLogPath(fileType string, fid uint, lid uint) string {
 	return "/" + fileType + "/" + strconv.FormatUint(uint64(fid), 10) + "/log/" +
