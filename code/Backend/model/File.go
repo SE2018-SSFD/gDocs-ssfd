@@ -20,7 +20,7 @@ type Sheet struct {
 type CheckPoint struct {
 	Cid			uint			`gorm:"primaryKey;AUTOINCREMENT=1" json:"cid"`
 	SheetID		uint			`json:"-"`
-	Columns		uint			`json:"columns"`
+	Columns		int				`json:"columns"`
 	Path		string			`gorm:"type:VARCHAR(200)" json:"-"`
 
 	CreatedAt	time.Time
