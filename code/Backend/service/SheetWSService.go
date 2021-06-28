@@ -38,12 +38,12 @@ type sheetUserEntry struct {
 	username	string
 }
 
-// client -> server
 type sheetMessage struct {
 	MsgType		string				`json:"msgType"`	// acquire, modify, release
 	Body		json.RawMessage		`json:"body"`
 }
 
+// client -> server
 type sheetAcquireMessage struct {
 	Row			int 		`json:"row"`
 	Col			int			`json:"col"`
@@ -61,11 +61,16 @@ type sheetReleaseMessage struct {
 }
 
 // server -> client
-type sheetLockedOrNotNotify struct {
-	Locked		bool		`json:"locked"`
+type sheetPrepareNotify struct {
 	Row			int 		`json:"row"`
 	Col			int			`json:"col"`
-	Uid			uint		`json:"uid"`
+	Username	string		`json:"username"`
+}
+
+type sheetModifyNotify struct {
+	Row			int 		`json:"row"`
+	Col			int			`json:"col"`
+	Content		string		`json:"content"`
 	Username	string		`json:"username"`
 }
 
@@ -219,7 +224,6 @@ func broadcast(wss *wsWrap.WSServer, group *sheetGroupEntry, uid uint, fid uint,
 		curUid := k.(uint)
 		curUser := v.(*sheetUserEntry)
 		if curUid != uid {
-			// TODO: implement queued write (is concurrent write async-safe?)
 			go wss.Send(utils.GenID("sheet", curUid, curUser.username, fid), content)
 		}
 		return true
@@ -234,15 +238,18 @@ func doSheetAcquire(wss *wsWrap.WSServer, fid uint, uid uint, username string,
 		return
 	}
 	if success := tryLockOnCell(group, uid, msg.Row, msg.Col); success {
-		if content, err := json.Marshal(sheetLockedOrNotNotify{
-			Locked: true,
+		bodyRaw, _ := json.Marshal(sheetPrepareNotify{
 			Row: msg.Row,
 			Col: msg.Col,
-			Uid: uid,
 			Username: username,
-		}); err == nil {
-			broadcast(wss, group, uid, fid, content)
-		}
+		})
+
+		toBroadCast, _ := json.Marshal(sheetMessage{
+			MsgType: "acquire",
+			Body: bodyRaw,
+		})
+
+		broadcast(wss, group, uid, fid, toBroadCast)
 	}
 }
 
@@ -254,15 +261,18 @@ func doSheetRelease(wss *wsWrap.WSServer, fid uint, uid uint, username string,
 		return
 	}
 	if success := unlockOnCell(group, uid, msg.Row, msg.Col); success {
-		if content, err := json.Marshal(sheetLockedOrNotNotify{
-			Locked: false,
+		bodyRaw, _ := json.Marshal(sheetPrepareNotify{
 			Row: msg.Row,
 			Col: msg.Col,
-			Uid: uid,
 			Username: username,
-		}); err == nil {
-			broadcast(wss, group, uid, fid, content)
-		}
+		})
+
+		toBroadCast, _ := json.Marshal(sheetMessage{
+			MsgType: "release",
+			Body: bodyRaw,
+		})
+
+		broadcast(wss, group, uid, fid, toBroadCast)
 	}
 }
 
@@ -310,7 +320,19 @@ func doSheetModifyWriteThrough(wss *wsWrap.WSServer, fid uint, uid uint, usernam
 		return
 	}
 
-	broadcast(wss, group, uid, fid, sheetMsg.Body)
+	bodyRaw, _ := json.Marshal(sheetModifyNotify{
+		Row: msg.Row,
+		Col: msg.Col,
+		Content: msg.Content,
+		Username: username,
+	})
+
+	toBroadCast, _ := json.Marshal(sheetMessage{
+		MsgType: "modify",
+		Body: bodyRaw,
+	})
+
+	broadcast(wss, group, uid, fid, toBroadCast)
 }
 
 func doSheetModifyWithCache(wss *wsWrap.WSServer, fid uint, uid uint, username string,
