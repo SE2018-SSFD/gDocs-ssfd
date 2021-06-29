@@ -13,6 +13,7 @@ type config struct{
 	ZKAddr			string		`required:"true"`
 	Addr			string		`required:"true"`
 	MySqlAddr		string		`required:"true"`
+	JWTSharedKey	string		`required:"true"`
 }
 
 var cfg config
