@@ -16,7 +16,7 @@ type SheetLogPickle struct {
 	Username	string		`json:"username"`
 }
 
-func getLogRootPath(fileType string, fid uint) (path string) {
+func GetLogRootPath(fileType string, fid uint) (path string) {
 	return "/" + fileType + "/" + strconv.FormatUint(uint64(fid), 10) + "/log"
 }
 
