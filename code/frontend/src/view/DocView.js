@@ -28,9 +28,7 @@ class DocView extends React.Component{
             token:token,
             fid:fid,
         }
-        console.log("send data",data);
         const callback = (data) =>{
-            console.log("recv data",data)
             this.setState({
                 data: data.data
             })

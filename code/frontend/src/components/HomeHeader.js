@@ -10,7 +10,7 @@ export class HomeHeader extends React.Component{
         return(
             <Header className="site-layout-sub-header-background" style={{padding: 0}}>
                 <Row align={"middle"} justify={"center"}>
-                    <Col span={9} offset={1} >
+                    <Col span={8} offset={1} style={{marginTop:"18px"}}>
                         <Search placeholder="搜索"/>
                     </Col>
                     <Col span={1} offset={10}>
@@ -22,7 +22,7 @@ export class HomeHeader extends React.Component{
                     <Col span={1}>
                         <MenuOutlined/>
                     </Col>
-                    <Col>
+                    <Col span={1} style={{marginLeft:"5px",marginBottom:"5px"}}>
                         <UserAvatar/>
                     </Col>
                 </Row>

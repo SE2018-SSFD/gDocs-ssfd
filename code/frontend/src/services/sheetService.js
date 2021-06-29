@@ -8,7 +8,6 @@ export const newSheet = (data) =>{
     const url = apiUrl+'newsheet';
 
     const callback = (data) => {
-        console.log(data)
         let msg_word = MSGWORD[data.msg];
 
         if (data.success === true) {

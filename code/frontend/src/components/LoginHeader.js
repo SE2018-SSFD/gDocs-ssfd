@@ -13,10 +13,9 @@ export class LoginHeader extends React.Component {
             <Header style={{paddingTop: 20}} className={"login-header"}>
                 <Row>
                     <Col span={1} offset={0.5}>
-                        <Image preview={false} src={logo} alt={'logo'} height={50} width={50}/>
+                        <Image preview={false} src={logo} alt={'logo'} height={50} width={100}/>
                     </Col>
                     <Col span={1}>
-                        <strong><h1>SSFDoc</h1></strong>
                     </Col>
                     <Col span={1} offset={17}>
                         <Space>

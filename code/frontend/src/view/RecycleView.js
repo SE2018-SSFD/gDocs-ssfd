@@ -21,7 +21,7 @@ const {Content, Footer, Sider} = Layout;
 
 const {SubMenu} = Menu;
 
-class HomeView extends React.Component {
+class RecycleView extends React.Component {
 
     componentDidMount() {
     }
@@ -81,19 +81,15 @@ class HomeView extends React.Component {
                     <Content style={{margin: '24px 16px 0'}}>
                         <Menu mode="horizontal">
                             <Menu.Item key="nearlyLook">
-                                最近查看
-                            </Menu.Item>
-                            <Menu.Item key="star">
-                                星标
+                                回收站
                             </Menu.Item>
                         </Menu>
                         <div className="site-layout-background" style={{padding: 24, minHeight: 360}}>
-                            <FileList/>
+                            <FileList data={}/>
                         </div>
                     </Content>
 
-                    <Footer style={{textAlign: 'center'}}>SSF Doc ©2021 Created by SJTU Super SoFtware
-                        Developer
+                    <Footer style={{textAlign: 'center'}}>SSF Doc ©2021 Created by SJTU Super SoFtware Developer
                     </Footer>
                 </Layout>
             </Layout>

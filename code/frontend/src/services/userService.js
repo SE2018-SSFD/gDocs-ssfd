@@ -7,7 +7,6 @@ import {MSGWORD} from "./common";
 export const login = (data) => {
     const url = apiUrl + 'login';
     const callback = (data) =>{
-        console.log(data)
         let msg_word = MSGWORD[data.msg];
         if (data.success === true) {
             localStorage.setItem('uid', JSON.stringify(data.data.info.uid));
@@ -28,7 +27,6 @@ export const login = (data) => {
 export const register = (data) => {
     const url = apiUrl + 'register';
     const callback = (data) => {
-        console.log(data)
         let msg_word = MSGWORD[data.msg];
         if (data.success === true) {
             localStorage.setItem('sheets',JSON.stringify(data.data.info.sheets))
@@ -68,7 +66,6 @@ export const getUser = () =>{
         token:token
     };
     const callback = (data) =>{
-        console.log(data)
         let msg_word = MSGWORD[data.msg];
         if (data.success === true) {
             localStorage.setItem('sheets',JSON.stringify(data.data.info.sheets))
@@ -85,7 +82,6 @@ export const getUser = () =>{
 export const modifyUser = (data) =>{
     const url = apiUrl+'modifyuser';
     const callback = (data) =>{
-        console.log(data)
         let msg_word = MSGWORD[data.msg];
         if (data.success === true) {
             // localStorage.setItem('username',JSON.stringify(data.username));
@@ -103,7 +99,6 @@ export const modifyUserAuth = (data) =>{
     const url = apiUrl+'modifyuserauth';
 
     const callback = (data) =>{
-        console.log(data)
         let msg_word = MSGWORD[data.msg];
         if (data.success === true) {
             // localStorage.setItem('username',JSON.stringify(data.username));
