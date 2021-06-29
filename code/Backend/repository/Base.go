@@ -19,7 +19,6 @@ func InitDBConn() {
 	}
 
 	_ = db.AutoMigrate(&model.UserAuth{})
-	_ = db.AutoMigrate(&model.CheckPoint{})
 	_ = db.AutoMigrate(&model.User{})
 	_ = db.AutoMigrate(&model.Sheet{})
 
