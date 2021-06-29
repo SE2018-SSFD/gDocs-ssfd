@@ -108,6 +108,7 @@ func mockNameX(path string, create bool) error {
 
 func osFileInfo2DfsFileInfo(before os.FileInfo) FileInfo {
 	return FileInfo{
+		Name: before.Name(),
 		IsDir: before.IsDir(),
 		Size: before.Size(),
 	}

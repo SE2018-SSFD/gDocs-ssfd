@@ -33,6 +33,7 @@ func Scan(path string) ([]FileInfo, error) {
 }
 
 type FileInfo struct {
+	Name		string
 	IsDir		bool
 	Size		int64
 }
