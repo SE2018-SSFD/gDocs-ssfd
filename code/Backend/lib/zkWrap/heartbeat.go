@@ -93,6 +93,8 @@ func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string
 				}
 			}
 			break
+		} else {
+			break
 		}
 	}
 
