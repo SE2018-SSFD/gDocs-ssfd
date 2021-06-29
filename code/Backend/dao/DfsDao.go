@@ -5,6 +5,7 @@ import (
 	"backend/utils"
 	"errors"
 	"fmt"
+	"sort"
 )
 
 
@@ -115,6 +116,32 @@ func FileOverwriteAll(path string, content string) error {
 
 	err = dfs.Close(fd)
 	return err
+}
+
+
+
+func DirFileNamesAll(path string) (filenames []string, err error) {
+	fileInfos, err := dfs.Scan(path)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(filenames); i += 1 {
+		filenames = append(filenames, fileInfos[i].Name)
+	}
+
+	return filenames, err
+}
+
+// DirFilenamesAllSorted returns names of all files in the directory in increasing order
+func DirFilenamesAllSorted(path string) (filenames []string, err error) {
+	filenames, err = DirFileNamesAll(path)
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Strings(filenames)
+	return filenames, nil
 }
 
 //func FileInsert(path string, off int64, content string, maxsize int64) error {
