@@ -12,12 +12,6 @@ const root = "/mockdfs"
 var fdMap sync.Map
 var curFd = 0
 
-func init() {
-	if err := os.MkdirAll(root, os.ModePerm); err != nil {
-		panic(err)
-	}
-}
-
 func mockOpen(path string) (fd int, err error) {
 	file, err := os.OpenFile(root + path, os.O_RDWR, os.ModePerm)
 	fdMap.Store(curFd, file)

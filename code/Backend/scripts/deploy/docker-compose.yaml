@@ -54,6 +54,8 @@ services:
       GDOC_MYSQLADDR: "gdoc:gdoc@tcp(mysql:3306)/gdoc?charset=utf8mb4&parseTime=True&loc=Local"
       GDOC_ZKADDR: "zoo1:2181;zoo2:2181;zoo3:2181"
       GDOC_WRITETHROUGH: "false"
+    volumes:
+      - mockdfs:/mockdfs
 
   backend2:
     container_name: backend2
@@ -67,6 +69,8 @@ services:
       GDOC_MYSQLADDR: "gdoc:gdoc@tcp(mysql:3306)/gdoc?charset=utf8mb4&parseTime=True&loc=Local"
       GDOC_ZKADDR: "zoo1:2181;zoo2:2181;zoo3:2181"
       GDOC_WRITETHROUGH: "false"
+    volumes:
+      - mockdfs:/mockdfs
 
   backend3:
     container_name: backend3
@@ -80,6 +84,11 @@ services:
       GDOC_MYSQLADDR: "gdoc:gdoc@tcp(mysql:3306)/gdoc?charset=utf8mb4&parseTime=True&loc=Local"
       GDOC_ZKADDR: "zoo1:2181;zoo2:2181;zoo3:2181"
       GDOC_WRITETHROUGH: "false"
+    volumes:
+      - mockdfs:/mockdfs
+
+volumes:
+  mockdfs:
 
 #networks:
 #  gdoc_backend:
