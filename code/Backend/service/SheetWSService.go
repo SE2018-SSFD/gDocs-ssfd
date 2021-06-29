@@ -319,7 +319,7 @@ func doSheetModifyWithCache(wss *wsWrap.WSServer, fid uint, uid uint, username s
 			Lid: lid,
 			Timestamp: time.Now(),
 			Row: row,
-			Col: row,
+			Col: col,
 			Old: memSheet.Get(row, col),
 			New: msg.Content,
 			Uid: uid,
