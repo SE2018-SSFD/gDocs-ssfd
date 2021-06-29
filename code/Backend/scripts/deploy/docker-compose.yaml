@@ -7,7 +7,7 @@ services:
     restart: always
     hostname: mysql
     ports:
-      - 31086:3306
+      - 11086:3306
     environment:
       MYSQL_DATABASE: gdoc
       MYSQL_USER: gdoc
@@ -19,6 +19,8 @@ services:
     image: zookeeper
     restart: always
     hostname: zoo1
+    ports:
+      - 12086:2181
     environment:
       ZOO_MY_ID: 1
       ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
@@ -28,6 +30,8 @@ services:
     image: zookeeper
     restart: always
     hostname: zoo2
+    ports:
+      - 12087:2181
     environment:
       ZOO_MY_ID: 2
       ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
@@ -37,6 +41,9 @@ services:
     image: zookeeper
     restart: always
     hostname: zoo3
+
+    ports:
+      - 12088:2181
     environment:
       ZOO_MY_ID: 3
       ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
@@ -50,10 +57,11 @@ services:
     ports:
       - 10086:8080
     environment:
-      GDOC_ADDR: "localhost:10086"
+      GDOC_ADDR: "123.57.65.161:10086"
       GDOC_MYSQLADDR: "gdoc:gdoc@tcp(mysql:3306)/gdoc?charset=utf8mb4&parseTime=True&loc=Local"
       GDOC_ZKADDR: "zoo1:2181;zoo2:2181;zoo3:2181"
       GDOC_WRITETHROUGH: "false"
+      GDOC_JWTSHAREDKEY: "gdoc_backend@ssfd_musthave32char"
     volumes:
       - mockdfs:/mockdfs
 
@@ -65,10 +73,11 @@ services:
     ports:
       - 10087:8080
     environment:
-      GDOC_ADDR: "localhost:10087"
+      GDOC_ADDR: "123.57.65.161:10087"
       GDOC_MYSQLADDR: "gdoc:gdoc@tcp(mysql:3306)/gdoc?charset=utf8mb4&parseTime=True&loc=Local"
       GDOC_ZKADDR: "zoo1:2181;zoo2:2181;zoo3:2181"
       GDOC_WRITETHROUGH: "false"
+      GDOC_JWTSHAREDKEY: "gdoc_backend@ssfd_musthave32char"
     volumes:
       - mockdfs:/mockdfs
 
@@ -80,10 +89,11 @@ services:
     ports:
       - 10088:8080
     environment:
-      GDOC_ADDR: "localhost:10088"
+      GDOC_ADDR: "123.57.65.161:10088"
       GDOC_MYSQLADDR: "gdoc:gdoc@tcp(mysql:3306)/gdoc?charset=utf8mb4&parseTime=True&loc=Local"
       GDOC_ZKADDR: "zoo1:2181;zoo2:2181;zoo3:2181"
       GDOC_WRITETHROUGH: "false"
+      GDOC_JWTSHAREDKEY: "gdoc_backend@ssfd_musthave32char"
     volumes:
       - mockdfs:/mockdfs
 
