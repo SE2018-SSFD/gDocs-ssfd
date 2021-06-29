@@ -4,6 +4,7 @@ import (
 	"backend/dao"
 	"backend/lib/cache"
 	"backend/lib/cluster"
+	"backend/lib/gdocFS"
 	"backend/lib/wsWrap"
 	"backend/model"
 	"backend/utils"
@@ -190,8 +191,6 @@ func handleSheetMessageWithCache(wss *wsWrap.WSServer, fid uint, uid uint, usern
 	default:
 		logger.Errorf("[fid:%d msgType:%s] Unknown type of sheet message!", fid, sheetMsg.MsgType)
 	}
-	//memSheet := sheetCache.Get(fid)
-	//memSheet.Set(msg.Row, msg.Col, msg.Content)
 }
 
 func tryLockOnCell(group *sheetGroupEntry, uid uint, row int, col int) bool {
@@ -257,15 +256,15 @@ func doSheetRelease(wss *wsWrap.WSServer, fid uint, uid uint, username string,
 func doSheetModifyWriteThrough(wss *wsWrap.WSServer, fid uint, uid uint, username string,
 	sheetMsg sheetMessage, group *sheetGroupEntry) {
 	if msg := sheetModifyAuthenticateCell(fid, uid, username, sheetMsg, group); msg != nil {
-		path := utils.GetCheckPointPath("sheet", fid, 0)
+		path := gdocFS.GetCheckPointPath("sheet", fid, 0)
 		fileRaw, err := dao.FileGetAll(path)
 		if err != nil {
 			logger.Errorf("[%s] Checkpoint file does not exist!", path)
 			return
 		}
 
-		filePickled := utils.CheckPointPickle{}
-		if err = json.Unmarshal([]byte(fileRaw), &filePickled); err != nil {
+		filePickled, err := gdocFS.PickleCheckPointFromContent(fileRaw)
+		if err != nil {
 			logger.Errorf("[%s] Checkpoint file cannot be pickled!", path)
 			return
 		}
@@ -287,6 +286,10 @@ func doSheetModifyWriteThrough(wss *wsWrap.WSServer, fid uint, uid uint, usernam
 			return
 		}
 
+		sheet := dao.GetSheetByFid(fid)
+		sheet.Columns = filePickled.Columns
+		dao.SetSheet(sheet)
+
 		sheetModifyBroadcast(wss, fid, uid, username, group, msg)
 	}
 }
@@ -294,8 +297,34 @@ func doSheetModifyWriteThrough(wss *wsWrap.WSServer, fid uint, uid uint, usernam
 func doSheetModifyWithCache(wss *wsWrap.WSServer, fid uint, uid uint, username string,
 	sheetMsg sheetMessage, group *sheetGroupEntry) {
 	if msg := sheetModifyAuthenticateCell(fid, uid, username, sheetMsg, group); msg != nil {
-		// TODO: cache and log
+		sheet := dao.GetSheetByFid(fid)
 
+		memSheet := getSheetCache().Get(fid)
+		// not in sheetCache, load from log and do eviction if needed
+		if memSheet == nil {
+			if memSheet = recoverSheetFromLog(&sheet); memSheet == nil {
+				panic("recoverSheetFromLog fails")
+			}
+		}
+
+		// log
+		lid := uint(sheet.CheckPointNum) + 1
+		row, col := msg.Row, msg.Col
+		appendOneSheetLog(fid, lid, &gdocFS.SheetLogPickle{
+			Lid: lid,
+			Timestamp: time.Now(),
+			Row: row,
+			Col: row,
+			Old: memSheet.Get(row, col),
+			New: msg.Content,
+			Uid: uid,
+			Username: username,
+		})
+
+		// cache
+		memSheet.Set(msg.Row, msg.Col, msg.Content)
+		_, sheet.Columns = memSheet.Shape()
+		dao.SetSheet(sheet)
 
 		sheetModifyBroadcast(wss, fid, uid, username, group, msg)
 	}

@@ -31,15 +31,12 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 		})
 		sheet := dao.GetSheetByFid(fid)
 		user := dao.GetUserByUid(uid)
-		path := gdocFS.GetCheckPointPath("sheet", fid, 0)
-		sheet.Path = path
-		sheet.Columns = int(params.InitColumns)
+		sheet.Path = gdocFS.GetRootPath("sheet", fid)
 		sheet.Owner = user.Username
-		dao.SetSheet(sheet)
-		dao.AddSheetToUser(uid, fid)
 
 		if config.Get().WriteThrough {
-			if err := dao.FileCreate(path, 0); err != nil {
+			chkpPath := gdocFS.GetCheckPointPath("sheet", fid, 0)
+			if err := dao.FileCreate(chkpPath, 0); err != nil {
 				panic(err)
 			}
 
@@ -52,15 +49,41 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 			}
 
 			initFileRaw, _ := json.Marshal(initFile)
-			if err := dao.FileOverwriteAll(path, string(initFileRaw)); err != nil {
+			if err := dao.FileOverwriteAll(chkpPath, string(initFileRaw)); err != nil {
 				panic(err)
 			}
 		} else {
-			// TODO: record log
+			// create initial log file
+			logPath := gdocFS.GetLogPath("sheet", fid, 1)
+			if err := dao.FileCreate(logPath, 0); err != nil {
+				panic(err)
+			}
 
-			memSheet := cache.NewMemSheet(int(params.InitRows), int(params.InitColumns))
-			getSheetCache().Add(fid, memSheet)
+			// write one log at (rows - 1, cols - 1) to initialize a rows x cols sheet
+			rows, cols := int(params.InitRows), int(params.InitColumns)
+			if rows < minRows {
+				rows = minRows
+			}
+			if cols < minCols {
+				cols = minCols
+			}
+			appendOneSheetLog(fid, 1, &gdocFS.SheetLogPickle{
+				Lid: 1,
+				Timestamp: time.Now(),
+				Row: rows - 1,
+				Col: cols - 1,
+				Old: "",
+				New: "",
+				Uid: uid,
+				Username: user.Username,
+			})
+
+			sheet.Columns = cols
 		}
+
+
+		dao.SetSheet(sheet)
+		dao.AddSheetToUser(uid, fid)
 
 		success, msg, data = true, utils.SheetNewSuccess, fid
 	} else {
@@ -95,8 +118,8 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 				if err != nil {
 					panic(err)
 				}
-				filePickled := gdocFS.SheetCheckPointPickle{}
-				if err := json.Unmarshal([]byte(fileRaw), &filePickled); err != nil {
+				filePickled, err := gdocFS.PickleCheckPointFromContent(fileRaw)
+				if err != nil {
 					panic("cannot pickle checkpoint from file")
 				}
 				sheet.Columns = filePickled.Columns
@@ -108,8 +131,9 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 
 				memSheet := getSheetCache().Get(sheet.Fid)
 				if memSheet == nil {
-					// TODO: load from dfs
-					panic("not really a exception")
+					if memSheet = recoverSheetFromLog(&sheet); memSheet == nil {
+						panic("recoverSheetFromLog fails")
+					}
 				}
 				sheet.Content = memSheet.ToStringSlice()
 				_, sheet.Columns = memSheet.Shape()
