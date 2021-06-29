@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-const root = "../../../mockdfs"
+const root = "/mockdfs"
 
 var fdMap sync.Map
 var curFd = 0

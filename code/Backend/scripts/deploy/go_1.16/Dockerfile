@@ -4,6 +4,6 @@ ENV GOPROXY=https://goproxy.cn \
     GO111MODULE=on
 
 WORKDIR /backend
-CMD go run main.go
+CMD mkdir /mockdfs && go run main.go
 
 EXPOSE 8080
