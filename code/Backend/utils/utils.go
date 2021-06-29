@@ -31,7 +31,7 @@ func SendResponse(ctx iris.Context, success bool, msg int, data interface{}) {
 }
 
 func RequestRedirectTo(ctx iris.Context, addr string, api string) {
-	ctx.Header("Location", addr + api)
+	ctx.Header("Location", "http://" + addr + api)
 	ctx.StopWithStatus(iris.StatusTemporaryRedirect)
 }
 
