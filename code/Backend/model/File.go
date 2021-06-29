@@ -9,7 +9,7 @@ type Sheet struct {
 	CheckPointNum	int				`json:"checkpoint_num"`
 	Path			string			`gorm:"type:VARCHAR(200)" json:"-"`
 	Users			[]User			`gorm:"many2many:users_sheets" json:"-"`
-	Columns			int				`gorm:"-" json:"columns"`
+	Columns			int				`json:"columns"`
 	Owner			string			`json:"owner"`
 
 	CreatedAt		time.Time
