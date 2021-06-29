@@ -170,7 +170,8 @@ func NewSheetCache(maxSize int64) *SheetCache {
 func (sc *SheetCache) Add(key interface{}, ms *MemSheet) (keys []interface{}, evicted []*MemSheet) {
 	if sc.curSize + ms.GetSize() > sc.maxSize {
 		if keys, evicted = sc.doEvict(ms.GetSize()); evicted == nil {
-			logger.Fatal("Cannot get enough memory from eviction!")
+			logger.Error("Cannot get enough memory from eviction!")
+			return nil, nil
 		}
 	}
 
