@@ -145,17 +145,20 @@ func SheetOnConnEstablished(token string, fid uint) (bool, int, *model.User, str
 
 			if !config.Get().WriteThrough {
 				if addr, isMine := cluster.FileBelongsTo(sheet.Name, sheet.Fid); !isMine {
-					return false, 0, nil, addr
+					return false, utils.SheetWSRedirect, nil, addr
 				}
 			}
 
 			user := dao.GetUserByUid(uid)
 
-			if _, loaded := sheetGroup.LoadOrStore(fid, &sheetGroupEntry{
+			if actual, loaded := sheetGroup.LoadOrStore(fid, &sheetGroupEntry{
 				fid: fid,
 				userN: 0,
 			}); loaded {
-				return false, utils.SheetDupConnection, nil, ""
+				group := actual.(*sheetGroupEntry)
+				if _, ok := group.userMap.Load(uid); ok {
+					return false, utils.SheetDupConnection, nil, ""
+				}
 			}
 
 			return true, 0, &user, ""
