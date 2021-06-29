@@ -55,7 +55,9 @@ func SheetBeforeUpgradeHandler() context.Handler {
 		token := ctx.URLParam("token")
 		if success, msg, user, addr := service.SheetOnConnEstablished(token, fid); !success {
 			if addr != "" {
-				utils.RequestRedirectTo(ctx, addr, "/sheetws?"+"token="+token+"&"+"fid="+strconv.Itoa(int(fid)))
+				utils.SendResponse(ctx, success, msg, "ws://" + addr +
+					"/sheetws?" + "token=" + token + "&" + "fid=" + strconv.Itoa(int(fid)))
+				ctx.StopExecution()
 			} else {
 				utils.SendResponse(ctx, success, msg, nil)
 				ctx.StopExecution()
