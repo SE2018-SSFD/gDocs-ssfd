@@ -25,7 +25,7 @@ func GetSheet(ctx iris.Context) {
 
 	success, msg, data, addr := service.GetSheet(params)
 	if addr != "" {
-		utils.RequestRedirectTo(ctx, addr, "/getsheet")
+		utils.RequestRedirectTo(ctx, "http://", addr, "/getsheet")
 	} else {
 		utils.SendResponse(ctx, success, msg, data)
 	}
@@ -39,7 +39,7 @@ func DeleteSheet(ctx iris.Context) {
 
 	success, msg, addr := service.DeleteSheet(params)
 	if addr != "" {
-		utils.RequestRedirectTo(ctx, addr, "/deletesheet")
+		utils.RequestRedirectTo(ctx, addr, "http://", "/deletesheet")
 	} else {
 		utils.SendResponse(ctx, success, msg, nil)
 	}
