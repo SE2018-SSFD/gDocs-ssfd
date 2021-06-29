@@ -21,6 +21,10 @@ func LoadConfig() {
 	if err := configor.New(&configor.Config{ENVPrefix: "GDOC"}).Load(&cfg); err != nil {
 		panic(err)
 	}
+
+	cfg.MaxSheetCache <<= 20
+	cfg.UnitCache <<= 20
+
 	logger.Debug(cfg)
 }
 
