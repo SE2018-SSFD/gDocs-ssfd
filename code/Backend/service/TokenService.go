@@ -1,19 +1,14 @@
 package service
 
 import (
-	"backend/utils"
-	"crypto/sha256"
-	"fmt"
-	"sync"
+	"backend/utils/config"
+	"backend/utils/logger"
+	"github.com/kataras/iris/v12/middleware/jwt"
 	"time"
 )
 
-var tokenMap sync.Map
-
-type grant struct {
-	Uid		uint
-	Begin	int64
-	Term	int64
+type tokenClaims struct {
+	Uid		uint	`json:"uid"`
 }
 
 func CheckToken(token string) uint {
@@ -24,26 +19,34 @@ func CheckToken(token string) uint {
 	} else if token == "2222222222222222222222222222222222222222222222222222222222222222" {
 		return 3
 	}
-	if g, exist := tokenMap.Load(token); exist {
-		grant := g.(grant)
-		if grant.Begin + grant.Term <= time.Now().Unix() {
-			tokenMap.Delete(token)
-			return 0
-		} else {
-			return grant.Uid
-		}
-	} else {
+
+	key := []byte(config.Get().JWTSharedKey)
+	verifiedToken, err := jwt.Verify(jwt.HS256, key, []byte(token))
+	if err != nil {		// not verified
 		return 0
 	}
+
+	claims := tokenClaims{}
+	err = verifiedToken.Claims(&claims)
+	if err != nil {
+		logger.Errorf("[%v] Cannot decode jwt token claims!", err)
+		return 0
+	}
+
+	return claims.Uid
 }
 
-func NewToken(uid uint, username string) (token string) {
-	origin := fmt.Sprintf("%d %s %s", uid, username, time.Now().Format("2006-01-02 15:04:05"))
-	token = fmt.Sprintf("%x", sha256.Sum256([]byte(origin)))
-	tokenMap.Store(token, grant{
+func NewToken(uid uint, _ string) (token string) {
+	key := []byte(config.Get().JWTSharedKey)
+	claims := tokenClaims{
 		Uid: uid,
-		Begin: time.Now().Unix(),
-		Term: utils.TokenTerm,
-	})
-	return
+	}
+
+	tokenRaw, err := jwt.Sign(jwt.HS256, key, claims, jwt.MaxAge(30 * time.Minute))
+	if err != nil {
+		logger.Errorf("[%v] Cannot generate jwt token!", err)
+		return ""
+	}
+
+	return string(tokenRaw)
 }
