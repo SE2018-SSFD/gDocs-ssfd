@@ -51,9 +51,10 @@ type sheetAcquireMessage struct {
 }
 
 type sheetModifyMessage struct {
-	Row			int 		`json:"row"`
-	Col			int			`json:"col"`
-	Content		string		`json:"content"`
+	Row			int 			`json:"row"`
+	Col			int				`json:"col"`
+	Content		string			`json:"content"`
+	Info		json.RawMessage	`json:"info"`
 }
 
 type sheetReleaseMessage struct {
@@ -69,10 +70,11 @@ type sheetPrepareNotify struct {
 }
 
 type sheetModifyNotify struct {
-	Row			int 		`json:"row"`
-	Col			int			`json:"col"`
-	Content		string		`json:"content"`
-	Username	string		`json:"username"`
+	Row			int 			`json:"row"`
+	Col			int				`json:"col"`
+	Content		string			`json:"content"`
+	Info		json.RawMessage	`json:"info"`
+	Username	string			`json:"username"`
 }
 
 func SheetOnConn(uid uint, username string, fid uint) {
@@ -356,6 +358,7 @@ func sheetModifyBroadcast(wss *wsWrap.WSServer, fid uint, uid uint, username str
 		Row: msg.Row,
 		Col: msg.Col,
 		Content: msg.Content,
+		Info: msg.Info,
 		Username: username,
 	})
 
