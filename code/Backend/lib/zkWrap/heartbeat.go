@@ -43,6 +43,24 @@ func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string
 		}
 	}
 
+	hbPath := path + "/" + regData
+	for {
+		if pExists, stat, err := conn.Exists(hbPath); err != nil {
+			return nil, err
+		} else if pExists {
+			if err := conn.Delete(hbPath, stat.Version); err != nil {
+				if err == zk.ErrBadVersion {
+					continue
+				} else {
+					return nil, err
+				}
+			}
+			break
+		} else {
+			break
+		}
+	}
+
 	var mates, originMates []string
 	var oldChildren, newChildren []string
 	var evenChan <-chan zk.Event
@@ -50,6 +68,9 @@ func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string
 	if oldChildren, _, evenChan, err = conn.ChildrenW(path); err != nil {
 		return nil, err
 	} else {
+		mateSet := mapset.NewSetFromSlice(stringSlice2InterfaceSlice(oldChildren))
+		mateSet.Remove(regData)
+		oldChildren = interfaceSlice2StringSlice(mateSet.ToSlice())
 		originMates = make([]string, len(oldChildren)); copy(originMates, oldChildren)
 		mates = oldChildren
 		go func() {
@@ -78,24 +99,6 @@ func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string
 				}
 			}
 		}()
-	}
-
-	hbPath := path + "/" + regData
-	for {
-		if pExists, stat, err := conn.Exists(hbPath); err != nil {
-			return nil, err
-		} else if pExists {
-			if err := conn.Delete(hbPath, stat.Version); err != nil {
-				if err == zk.ErrBadVersion {
-					continue
-				} else {
-					return nil, err
-				}
-			}
-			break
-		} else {
-			break
-		}
 	}
 
 	newPath, err := conn.Create(hbPath, nil, zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
