@@ -2,25 +2,24 @@ package zkWrap
 
 import (
 	"errors"
+	"github.com/deckarep/golang-set"
+	"github.com/go-zookeeper/zk"
 	"strings"
 	"time"
-
-	mapset "github.com/deckarep/golang-set"
-	"github.com/go-zookeeper/zk"
 )
 
 type Heartbeat struct {
-	conn        *zk.Conn
-	timeout     time.Duration
-	path        string
-	closeChan   chan int
-	mates       *[]string
-	originMates *[]string
+	conn			*zk.Conn
+	timeout			time.Duration
+	path			string
+	closeChan		chan int
+	mates			*[]string
+	originMates		*[]string
 
-	ServiceName string
+	ServiceName		string
 }
 
-type HeartbeatEventCallback func(string, string) // regData, nodeName
+type HeartbeatEventCallback func(string, string)	// regData, nodeName
 
 func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string,
 	onConnectCallback HeartbeatEventCallback, onDisConnectCallback HeartbeatEventCallback) (*Heartbeat, error) {
@@ -39,9 +38,7 @@ func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string
 	if pExists, _, err := conn.Exists(path); err != nil {
 		return nil, err
 	} else if !pExists {
-		if _, err := conn.CreateContainer(path, nil, zk.FlagTTL, zk.WorldACL(zk.PermAll)); err != nil {
-			return nil, err
-		}
+		_, _ = conn.CreateContainer(path, nil, zk.FlagTTL, zk.WorldACL(zk.PermAll))
 	}
 
 	hbPath := path + "/" + regData
@@ -72,8 +69,7 @@ func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string
 		mateSet := mapset.NewSetFromSlice(stringSlice2InterfaceSlice(oldChildren))
 		mateSet.Remove(regData)
 		oldChildren = interfaceSlice2StringSlice(mateSet.ToSlice())
-		originMates = make([]string, len(oldChildren))
-		copy(originMates, oldChildren)
+		originMates = make([]string, len(oldChildren)); copy(originMates, oldChildren)
 		mates = oldChildren
 		go func() {
 			for {
@@ -109,11 +105,11 @@ func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string
 	}
 
 	return &Heartbeat{
-		conn:        conn,
-		timeout:     timeout,
-		path:        newPath,
-		closeChan:   closeChan,
-		mates:       &mates,
+		conn: conn,
+		timeout: timeout,
+		path: newPath,
+		closeChan: closeChan,
+		mates: &mates,
 		originMates: &originMates,
 
 		ServiceName: serviceName,

@@ -8,6 +8,7 @@ import (
 	"net/rpc"
 	"os"
 	"path"
+	"strconv"
 	"sync"
 	"time"
 
@@ -48,13 +49,17 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error)
 	if err != nil {
 		logrus.Fatal("listen error:", err)
 	}
+
 	// Zookeeper connection
 	var wg sync.WaitGroup // To sync all the goroutines
 	wg.Add(util.MASTERCOUNT)
 	onConn := func (me string, who string) {
+		logrus.Println(me + " receive :" + who)
 		wg.Done()
 	}
 	onDisConn := func (me string, who string) {
+		logrus.Println(me + " receive disconn :" + who)
+		wg.Add(1)
 	}
 
 	hb,err := zkWrap.RegisterHeartbeat("master",util.MAXWAITINGTIME * time.Second,string(addr),onConn,onDisConn)
@@ -62,6 +67,7 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error)
 		return m,err
 	}
 	mate := len(hb.GetOriginMates())
+	logrus.Debugln(string(addr) +": has "+ strconv.Itoa(mate) + "mate")
 	for i:=0;i<mate;i++{
 		wg.Done()
 	}

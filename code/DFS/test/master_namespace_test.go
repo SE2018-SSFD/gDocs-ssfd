@@ -13,12 +13,23 @@ import (
 	"time"
 )
 func initMasterTest()(m *master.Master) {
+	logrus.SetLevel(logrus.DebugLevel)
 	//delete old ckp
 	util.DeleteFile("../log/checkpoint.dat")
 	//delete old log
 	util.DeleteFile("../log/log.dat")
-	logrus.SetLevel(logrus.DebugLevel)
-	m,err := master.InitMaster("127.0.0.1:1234", "../log")
+	_, err := os.Stat("ck")
+	if err == nil {
+		err := os.RemoveAll("ck")
+		if err != nil {
+			logrus.Fatalf("mkdir %v error\n", "ck")
+		}
+	}
+	err = os.Mkdir("ck", 0755)
+	if err != nil {
+		logrus.Fatalf("mkdir %v error\n", "ck")
+	}
+	m,err = master.InitMaster("127.0.0.1:1234", "../log")
 	if err!=nil{
 		os.Exit(1)
 	}
