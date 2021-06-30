@@ -138,8 +138,17 @@ type AppendArg struct {
 	Fd   int    `json:"fd"`
 	Data []byte `json:"data"`
 }
+
 type AppendRet struct {
 	BytesWritten int `json:"bytes_written"`
+}
+
+type CAppendArg struct {
+	Fd   int    `json:"fd"`
+	Data []byte `json:"data"`
+}
+type CAppendRet struct {
+	Offset int `json:"offset"`
 }
 type GetReplicasArg struct {
 	Path       DFSPath `json:"path"`
