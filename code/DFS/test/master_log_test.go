@@ -119,6 +119,13 @@ func multiPrepare(){
 }
 func TestLogAndCheckpointSingle(t *testing.T){
 	c,m,cs := initTestSingle()
+	defer func() {
+		m.Exit()
+		c.Exit()
+		for _,_cs := range cs{
+			_cs.Exit()
+		}
+	}()
 	//delete old ckp
 	util.DeleteFile("../log/checkpoint.dat")
 	//delete old log
@@ -211,11 +218,7 @@ func TestLogAndCheckpointSingle(t *testing.T){
 	err = m.ListRPC(util.ListArg{Path: "/"}, &listReply)
 	util.AssertNil(t,err)
 	util.AssertEqual(t,3,len(listReply.Files))
-	m.Exit()
-	c.Exit()
-	for _,_cs := range cs{
-		_cs.Exit()
-	}
+
 }
 func TestLogMultiMaster(t *testing.T){
 	c,mList,csList:=initTestMulti()

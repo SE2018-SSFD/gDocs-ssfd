@@ -24,6 +24,7 @@ type MasterLog struct {
 	Path   util.DFSPath
 	Size   int            // for setFileMetaRPC
 	Addrs  []util.Address // for GetReplicasRPC
+	Addr util.Address   // for register & unregister RPC
 }
 
 // AppendLog appends a log structure to persistent file

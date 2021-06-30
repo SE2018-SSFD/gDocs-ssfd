@@ -53,16 +53,18 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error)
 	// Zookeeper connection
 	var wg sync.WaitGroup // To sync all the goroutines
 	wg.Add(util.MASTERCOUNT)
-	onConn := func (me string, who string) {
-		logrus.Println(me + " receive :" + who)
+
+	onMasterConn := func (me string, who string) {
+		logrus.Infoln(me + " receive :" + who)
 		wg.Done()
 	}
-	onDisConn := func (me string, who string) {
-		logrus.Println(me + " receive disconn :" + who)
+	onMasterDisConn := func (me string, who string) {
+		logrus.Infoln(me + " receive disconn :" + who)
 		wg.Add(1)
 	}
 
-	hb,err := zkWrap.RegisterHeartbeat("master",util.MAXWAITINGTIME * time.Second,string(addr),onConn,onDisConn)
+	// Listening on other master
+	hb,err := zkWrap.RegisterHeartbeat("master",util.MAXWAITINGTIME * time.Second,string(addr),onMasterConn,onMasterDisConn)
 	if err!=nil{
 		return m,err
 	}
@@ -91,6 +93,36 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error)
 
 	// Wait until other masters are ready
 	err = implicitWait(util.MAXWAITINGTIME * time.Second,&wg)
+
+	// listening on chunkservers
+	//cb := func(el *zkWrap.Elector) {
+	//	onClientConn := func (me string, who string) {
+	//		var argG util.GetChunkStatesArgs
+	//		var retG util.GetChunkStatesReply
+	//		err = util.Call(who, "Master.GetFileMetaRPC", argG, &retG)
+	//		//TODO : check chunk states
+	//		err = m.RegisterServer(util.Address(who))
+	//		if err!=nil{
+	//			logrus.Fatal("Master addServer error : ", err)
+	//			return
+	//		}
+	//	}
+	//	onClientDisConn := func (me string, who string) {
+	//
+	//	}
+	//	hb,err = zkWrap.RegisterHeartbeat("addServers",util.MAXWAITINGTIME * time.Second,string(addr),onClientConn,onClientDisConn)
+	//	if err !=nil {
+	//		logrus.Fatal("Master addServer error : ", err)
+	//		return
+	//	}
+	//}
+	//_, err = zkWrap.NewElector("test", string(addr), cb)
+	//if err !=nil {
+	//	logrus.Fatal("Election error : ", err)
+	//	return nil,err
+	//}
+
+
 	if err==nil{
 		logrus.Infoln("master "+addr+": init success")
 	}
@@ -183,9 +215,21 @@ func (m*Master) Exit(){
 }
 
 func (m*Master) RegisterServer(addr util.Address)error{
-	err := m.css.RegisterServer(addr)
+	// Write ahead log
+	err := m.AppendLog(MasterLog{OpType: util.ADDSERVEROPS,Addr: addr})
+	if err != nil {
+		logrus.Warnf("RPC delete failed : %s", err)
+		return err
+	}
+	err = m.css.registerServer(addr)
 	return err
 }
+
+func (m*Master) UnregisterServer(addr util.Address)error{
+	err := m.css.unRegisterServer(addr)
+	return err
+}
+
 
 func (m *Master) GetStatusString() string {
 	return "Master address :" + string(m.addr) + ",metaPath :" + string(m.metaPath)

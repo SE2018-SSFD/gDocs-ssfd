@@ -298,7 +298,7 @@ func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
 
 // ConcurrentAppend to a file
 func (c *Client) ConcurrentAppend(w http.ResponseWriter, r *http.Request) {
-	var argG util.GetFileMetaArg
+	//var argG util.GetFileMetaArg
 	var retG util.GetFileMetaRet
 	var argC util.CAppendArg
 	var retC util.CAppendRet
@@ -558,6 +558,6 @@ func (c *Client) Scan(w http.ResponseWriter, r *http.Request) {
 
 // helper method for ConcurrentAppend
 func (c *Client) _ConcurrentAppend(index int, data []byte) (int, error) {
-	
+	return 0,nil
 }
 

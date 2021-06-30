@@ -62,7 +62,7 @@ func (s *ChunkServerStates) randomServers(times int) (addrs []util.Address,err e
 	return
 }
 
-func (s *ChunkServerStates) RegisterServer(addr util.Address) error {
+func (s *ChunkServerStates) registerServer(addr util.Address) error {
 	s.Lock()
 	defer s.Unlock()
 	_,exist := s.servers[addr]
@@ -75,7 +75,7 @@ func (s *ChunkServerStates) RegisterServer(addr util.Address) error {
 	return nil
 }
 
-func (s *ChunkServerStates) UnRegisterServer(addr util.Address) error {
+func (s *ChunkServerStates) unRegisterServer(addr util.Address) error {
 	s.Lock()
 	defer s.Unlock()
 	_,exist := s.servers[addr]
