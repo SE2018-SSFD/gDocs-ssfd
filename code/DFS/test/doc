@@ -1,0 +1,445 @@
+=== RUN   TestLogAndCheckpointSingle
+2021/06/30 09:08:08 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetStatusString" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RecoverLog" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RegisterServer" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Serve" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "TryRecover" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+time="2021-06-30T09:08:08+08:00" level=info msg="master 127.0.0.1:1234: init success"
+time="2021-06-30T09:08:08+08:00" level=info msg="No checkpoint, start master directly"
+time="2021-06-30T09:08:08+08:00" level=info msg="open ck/ck3000/checkpoint.dat: no such file or directory"
+time="2021-06-30T09:08:08+08:00" level=info msg="open ck/ck3000/log.dat: no such file or directory"
+2021/06/30 09:08:08 chunkserver 127.0.0.1:3000: init success
+2021/06/30 09:08:08 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Crash" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "CreateChunk" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetAddr" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetCPName" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetChunk" has 4 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetFileName" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetLogName" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "LoadLog" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: reply type of method "Printf" is not a pointer: "[]interface {}"
+2021/06/30 09:08:08 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RecoverChunkInfo" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RegisterNodes" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RemoveChunk" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "SetChunk" has 4 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "StartRPCServer" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+time="2021-06-30T09:08:08+08:00" level=info msg="open ck/ck3001/checkpoint.dat: no such file or directory"
+time="2021-06-30T09:08:08+08:00" level=info msg="open ck/ck3001/log.dat: no such file or directory"
+2021/06/30 09:08:08 chunkserver 127.0.0.1:3001: init success
+2021/06/30 09:08:08 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Crash" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "CreateChunk" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetAddr" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetCPName" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetChunk" has 4 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetFileName" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetLogName" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "LoadLog" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: reply type of method "Printf" is not a pointer: "[]interface {}"
+2021/06/30 09:08:08 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RecoverChunkInfo" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RegisterNodes" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RemoveChunk" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "SetChunk" has 4 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "StartRPCServer" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+time="2021-06-30T09:08:08+08:00" level=info msg="open ck/ck3002/checkpoint.dat: no such file or directory"
+time="2021-06-30T09:08:08+08:00" level=info msg="open ck/ck3002/log.dat: no such file or directory"
+2021/06/30 09:08:08 chunkserver 127.0.0.1:3002: init success
+2021/06/30 09:08:08 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Crash" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "CreateChunk" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetAddr" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetCPName" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetChunk" has 4 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetFileName" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetLogName" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "LoadLog" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: reply type of method "Printf" is not a pointer: "[]interface {}"
+2021/06/30 09:08:08 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RecoverChunkInfo" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RegisterNodes" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RemoveChunk" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "SetChunk" has 4 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "StartRPCServer" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+time="2021-06-30T09:08:08+08:00" level=info msg="open ck/ck3003/checkpoint.dat: no such file or directory"
+time="2021-06-30T09:08:08+08:00" level=info msg="open ck/ck3003/log.dat: no such file or directory"
+2021/06/30 09:08:08 chunkserver 127.0.0.1:3003: init success
+2021/06/30 09:08:08 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Crash" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "CreateChunk" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetAddr" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetCPName" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetChunk" has 4 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetFileName" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetLogName" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "LoadLog" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: reply type of method "Printf" is not a pointer: "[]interface {}"
+2021/06/30 09:08:08 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RecoverChunkInfo" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RegisterNodes" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RemoveChunk" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "SetChunk" has 4 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "StartRPCServer" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+time="2021-06-30T09:08:08+08:00" level=info msg="open ck/ck3004/checkpoint.dat: no such file or directory"
+time="2021-06-30T09:08:08+08:00" level=info msg="open ck/ck3004/log.dat: no such file or directory"
+2021/06/30 09:08:08 chunkserver 127.0.0.1:3004: init success
+2021/06/30 09:08:08 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Crash" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "CreateChunk" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetAddr" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetCPName" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetChunk" has 4 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetFileName" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "GetLogName" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "LoadLog" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: reply type of method "Printf" is not a pointer: "[]interface {}"
+2021/06/30 09:08:08 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RecoverChunkInfo" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RegisterNodes" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "RemoveChunk" has 2 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "SetChunk" has 4 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "StartRPCServer" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:08 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC create, File Path : /file1"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1000"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1000 /file1 0 []}"
+    master_log_test.go:80: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC create, File Path : /file2"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1000"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1000 /file2 0 []}"
+    master_log_test.go:82: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC create, File Path : /file3"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1000"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1000 /file3 0 []}"
+    master_log_test.go:84: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC mkdir, Dir Path : /dir1"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1001"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1001 /dir1 0 []}"
+    master_log_test.go:86: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC create, File Path : /dir1/file1"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1000"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1000 /dir1/file1 0 []}"
+    master_log_test.go:88: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC create, File Path : /dir1/file2"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1000"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1000 /dir1/file2 0 []}"
+    master_log_test.go:90: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC list, Dir Path : /"
+    master_log_test.go:92: AssertNil Succeed :
+    master_log_test.go:93: AssertEqual Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getFileMeta, File Path : /file1"
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC delete, Dir Path : /file1"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1002"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1002 /file1 0 []}"
+    master_log_test.go:95: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="Client open : assign 0"
+    master_log_test.go:97: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getFileMeta, File Path : /dir1/file2"
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 0"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1006"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1006 /dir1/file2 0 [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3002]}"
+time="2021-06-30T09:08:08+08:00" level=info msg=" CreateChunkAndReplica : new Handle 1\n"
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: create chunk 1
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3004: create chunk 1
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: create chunk 1
+time="2021-06-30T09:08:08+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 1 [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3002] {13848303726790771932 510888025 0xb9a200}}"
+time="2021-06-30T09:08:08+08:00" level=debug msg=" ChunkHandle : 1 Addresses : 127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3002\n"
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3004: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3004: store handle 1, len 64
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: store handle 1, len 64
+time="2021-06-30T09:08:08+08:00" level=debug msg=" Write 64 bytes to chunkserver 127.0.0.1:3000, bytes written 64\n"
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 1"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1006"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1006 /dir1/file2 0 [127.0.0.1:3002 127.0.0.1:3004 127.0.0.1:3000]}"
+time="2021-06-30T09:08:08+08:00" level=info msg=" CreateChunkAndReplica : new Handle 2\n"
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: create chunk 2
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3004: create chunk 2
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: create chunk 2
+time="2021-06-30T09:08:08+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 2 [127.0.0.1:3002 127.0.0.1:3004 127.0.0.1:3000] {13848303726802590909 522707012 0xb9a200}}"
+time="2021-06-30T09:08:08+08:00" level=debug msg=" ChunkHandle : 2 Addresses : 127.0.0.1:3002 127.0.0.1:3004 127.0.0.1:3000\n"
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3004: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3004: store handle 2, len 64
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: store handle 2, len 64
+time="2021-06-30T09:08:08+08:00" level=debug msg=" Write 64 bytes to chunkserver 127.0.0.1:3002, bytes written 128\n"
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 2"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1006"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1006 /dir1/file2 0 [127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3003]}"
+time="2021-06-30T09:08:08+08:00" level=info msg=" CreateChunkAndReplica : new Handle 3\n"
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: create chunk 3
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3001: create chunk 3
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3003: create chunk 3
+time="2021-06-30T09:08:08+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 3 [127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3003] {13848303726808383924 528500027 0xb9a200}}"
+time="2021-06-30T09:08:08+08:00" level=debug msg=" ChunkHandle : 3 Addresses : 127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3003\n"
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3001: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3003: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3003: store handle 3, len 64
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3001: store handle 3, len 64
+time="2021-06-30T09:08:08+08:00" level=debug msg=" Write 64 bytes to chunkserver 127.0.0.1:3000, bytes written 192\n"
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 3"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1006"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1006 /dir1/file2 0 [127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3004]}"
+time="2021-06-30T09:08:08+08:00" level=info msg=" CreateChunkAndReplica : new Handle 4\n"
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: create chunk 4
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3001: create chunk 4
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3004: create chunk 4
+time="2021-06-30T09:08:08+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 4 [127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3004] {13848303726813458301 533574394 0xb9a200}}"
+time="2021-06-30T09:08:08+08:00" level=debug msg=" ChunkHandle : 4 Addresses : 127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3004\n"
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3001: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3004: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3004: store handle 4, len 32
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3001: store handle 4, len 32
+time="2021-06-30T09:08:08+08:00" level=debug msg=" Write 32 bytes to chunkserver 127.0.0.1:3002, bytes written 224\n"
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC setFileMeta, File Path : /dir1/file2"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1005"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1005 /dir1/file2 224 []}"
+    master_log_test.go:102: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getFileMeta, File Path : /dir1/file2"
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 3"
+time="2021-06-30T09:08:08+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 4 [127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3004] {13848303726813458301 533574394 0xb9a200}}"
+time="2021-06-30T09:08:08+08:00" level=debug msg=" ChunkHandle : 4 Addresses : 127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3004\n"
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3001: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3004: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3001: store handle 4, len 63
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3004: store handle 4, len 63
+time="2021-06-30T09:08:08+08:00" level=debug msg=" Write 63 bytes to chunkserver 127.0.0.1:3002, bytes written 63\n"
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC setFileMeta, File Path : /dir1/file2"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1005"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1005 /dir1/file2 256 []}"
+    master_log_test.go:107: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getFileMeta, File Path : /dir1/file2"
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 2"
+time="2021-06-30T09:08:08+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 3 [127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3003] {13848303726808383924 528500027 0xb9a200}}"
+time="2021-06-30T09:08:08+08:00" level=debug msg=" ChunkHandle : 3 Addresses : 127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3003\n"
+time="2021-06-30T09:08:08+08:00" level=debug msg=" Read 1 bytes from chunkserver 127.0.0.1:3000, bytes read 1\n"
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 3"
+time="2021-06-30T09:08:08+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 4 [127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3004] {13848303726813458301 533574394 0xb9a200}}"
+time="2021-06-30T09:08:08+08:00" level=debug msg=" ChunkHandle : 4 Addresses : 127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3004\n"
+time="2021-06-30T09:08:08+08:00" level=debug msg=" Read 64 bytes from chunkserver 127.0.0.1:3002, bytes read 65\n"
+    master_log_test.go:111: AssertNil Succeed :
+    master_log_test.go:112: AssertEqual Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="Client close : free 0"
+    master_log_test.go:115: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="{[{127.0.0.1:3001 {2021-06-30 09:08:08.452094395 +0800 CST m=+0.005303628}} {127.0.0.1:3002 {2021-06-30 09:08:08.452216354 +0800 CST m=+0.005425567}} {127.0.0.1:3003 {2021-06-30 09:08:08.452401251 +0800 CST m=+0.005610484}} {127.0.0.1:3004 {2021-06-30 09:08:08.45264036 +0800 CST m=+0.005849573}} {127.0.0.1:3000 {2021-06-30 09:08:08.451959081 +0800 CST m=+0.005168324}}] {4 map[/dir1/file1:{0 []} /dir1/file2:{256 [{1 [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3002] 2021-06-30 09:08:08.957678812 +0800 CST m=+0.510888025} {2 [127.0.0.1:3002 127.0.0.1:3004 127.0.0.1:3000] 2021-06-30 09:08:08.969497789 +0800 CST m=+0.522707012} {3 [127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3003] 2021-06-30 09:08:08.975290804 +0800 CST m=+0.528500027} {4 [127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3004] 2021-06-30 09:08:08.980365181 +0800 CST m=+0.533574394}]} /file2:{0 []} /file3:{0 []} _delete_file1:{0 []}]} [{false map[]} {false map[]} {true map[file1:0 file2:1]} {false map[]} {false map[]} {false map[]} {true map[_delete_file1:3 dir1:2 file2:4 file3:5]}]}"
+    master_log_test.go:119: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC create, File Path : /dir1/file3"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1000"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1000 /dir1/file3 0 []}"
+    master_log_test.go:121: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="Client open : assign 0"
+    master_log_test.go:123: AssertNil Succeed :
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getFileMeta, File Path : /dir1/file3"
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getReplica, file path : /dir1/file3, chunk index : 0"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1006"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1006 /dir1/file3 0 [127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3000]}"
+time="2021-06-30T09:08:08+08:00" level=info msg=" CreateChunkAndReplica : new Handle 5\n"
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: create chunk 5
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3001: create chunk 5
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: create chunk 5
+time="2021-06-30T09:08:08+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 5 [127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3000] {13848303726826168869 546284962 0xb9a200}}"
+time="2021-06-30T09:08:08+08:00" level=debug msg=" ChunkHandle : 5 Addresses : 127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3000\n"
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3002: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3001: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: load data 
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3001: store handle 5, len 64
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: store handle 5, len 64
+time="2021-06-30T09:08:08+08:00" level=debug msg=" Write 64 bytes to chunkserver 127.0.0.1:3002, bytes written 64\n"
+time="2021-06-30T09:08:08+08:00" level=debug msg="RPC getReplica, file path : /dir1/file3, chunk index : 1"
+time="2021-06-30T09:08:08+08:00" level=debug msg="AppendLog : 1006"
+time="2021-06-30T09:08:08+08:00" level=info msg="{1006 /dir1/file3 0 [127.0.0.1:3000 127.0.0.1:3003 127.0.0.1:3004]}"
+time="2021-06-30T09:08:08+08:00" level=info msg=" CreateChunkAndReplica : new Handle 6\n"
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3000: create chunk 6
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3003: create chunk 6
+2021/06/30 09:08:08 ChunkServer 127.0.0.1:3004: create chunk 6
+time="2021-06-30T09:08:08+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 6 [127.0.0.1:3000 127.0.0.1:3003 127.0.0.1:3004] {13848303726831751800 551867893 0xb9a200}}"
+time="2021-06-30T09:08:08+08:00" level=debug msg=" ChunkHandle : 6 Addresses : 127.0.0.1:3000 127.0.0.1:3003 127.0.0.1:3004\n"
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3000: load data 
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3000: load data 
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3003: load data 
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3004: load data 
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3003: store handle 6, len 64
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3004: store handle 6, len 64
+time="2021-06-30T09:08:09+08:00" level=debug msg=" Write 64 bytes to chunkserver 127.0.0.1:3000, bytes written 128\n"
+time="2021-06-30T09:08:09+08:00" level=debug msg="RPC getReplica, file path : /dir1/file3, chunk index : 2"
+time="2021-06-30T09:08:09+08:00" level=debug msg="AppendLog : 1006"
+time="2021-06-30T09:08:09+08:00" level=info msg="{1006 /dir1/file3 0 [127.0.0.1:3001 127.0.0.1:3000 127.0.0.1:3002]}"
+time="2021-06-30T09:08:09+08:00" level=info msg=" CreateChunkAndReplica : new Handle 7\n"
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3001: create chunk 7
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3000: create chunk 7
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3002: create chunk 7
+time="2021-06-30T09:08:09+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 7 [127.0.0.1:3001 127.0.0.1:3000 127.0.0.1:3002] {13848303726909960643 556334952 0xb9a200}}"
+time="2021-06-30T09:08:09+08:00" level=debug msg=" ChunkHandle : 7 Addresses : 127.0.0.1:3001 127.0.0.1:3000 127.0.0.1:3002\n"
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3001: load data 
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3001: load data 
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3000: load data 
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3002: load data 
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3000: store handle 7, len 64
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3002: store handle 7, len 64
+time="2021-06-30T09:08:09+08:00" level=debug msg=" Write 64 bytes to chunkserver 127.0.0.1:3001, bytes written 192\n"
+time="2021-06-30T09:08:09+08:00" level=debug msg="RPC getReplica, file path : /dir1/file3, chunk index : 3"
+time="2021-06-30T09:08:09+08:00" level=debug msg="AppendLog : 1006"
+time="2021-06-30T09:08:09+08:00" level=info msg="{1006 /dir1/file3 0 [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3001]}"
+time="2021-06-30T09:08:09+08:00" level=info msg=" CreateChunkAndReplica : new Handle 8\n"
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3000: create chunk 8
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3004: create chunk 8
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3001: create chunk 8
+time="2021-06-30T09:08:09+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 8 [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3001] {13848303726916238457 562612736 0xb9a200}}"
+time="2021-06-30T09:08:09+08:00" level=debug msg=" ChunkHandle : 8 Addresses : 127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3001\n"
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3000: load data 
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3000: load data 
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3004: load data 
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3001: load data 
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3004: store handle 8, len 32
+2021/06/30 09:08:09 ChunkServer 127.0.0.1:3001: store handle 8, len 32
+time="2021-06-30T09:08:09+08:00" level=debug msg=" Write 32 bytes to chunkserver 127.0.0.1:3000, bytes written 224\n"
+time="2021-06-30T09:08:09+08:00" level=debug msg="RPC setFileMeta, File Path : /dir1/file3"
+time="2021-06-30T09:08:09+08:00" level=debug msg="AppendLog : 1005"
+time="2021-06-30T09:08:09+08:00" level=info msg="{1005 /dir1/file3 224 []}"
+    master_log_test.go:129: AssertNil Succeed :
+time="2021-06-30T09:08:09+08:00" level=debug msg="Client close : free 0"
+    master_log_test.go:131: AssertNil Succeed :
+time="2021-06-30T09:08:09+08:00" level=debug msg="Master Exit"
+2021/06/30 09:08:09 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "GetStatusString" has 1 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "RecoverLog" has 1 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "RegisterServer" has 2 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "Serve" has 1 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "TryRecover" has 1 input parameters; needs exactly three
+2021/06/30 09:08:09 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+time="2021-06-30T09:08:09+08:00" level=info msg="master 127.0.0.1:1234: init success"
+time="2021-06-30T09:08:09+08:00" level=info msg="Checkpoint found, start recover"
+time="2021-06-30T09:08:09+08:00" level=info msg="Master LoadCheckPoint success"
+time="2021-06-30T09:08:09+08:00" level=debug msg="RecoverLog : 1000"
+time="2021-06-30T09:08:09+08:00" level=debug msg="RecoverLog : 1006"
+time="2021-06-30T09:08:09+08:00" level=debug msg="RecoverLog : 1006"
+time="2021-06-30T09:08:09+08:00" level=debug msg="RecoverLog : 1006"
+time="2021-06-30T09:08:09+08:00" level=debug msg="RecoverLog : 1006"
+time="2021-06-30T09:08:09+08:00" level=debug msg="RecoverLog : 1005"
+    master_log_test.go:140: AssertNil Succeed :
+time="2021-06-30T09:08:09+08:00" level=debug msg="Client open : assign 0"
+    master_log_test.go:145: AssertNil Succeed :
+time="2021-06-30T09:08:09+08:00" level=debug msg="RPC getFileMeta, File Path : /dir1/file2"
+time="2021-06-30T09:08:09+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 2"
+time="2021-06-30T09:08:09+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 3 [127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3003] {975290804 63760612088 0xb9a200}}"
+time="2021-06-30T09:08:09+08:00" level=debug msg="Master shutdown!"
+time="2021-06-30T09:08:09+08:00" level=debug msg=" ChunkHandle : 3 Addresses : 127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3003\n"
+time="2021-06-30T09:08:09+08:00" level=debug msg=" Read 1 bytes from chunkserver 127.0.0.1:3000, bytes read 1\n"
+time="2021-06-30T09:08:09+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 3"
+time="2021-06-30T09:08:09+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 4 [127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3004] {980365181 63760612088 0xb9a200}}"
+time="2021-06-30T09:08:09+08:00" level=debug msg=" ChunkHandle : 4 Addresses : 127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3004\n"
+time="2021-06-30T09:08:09+08:00" level=debug msg=" Read 64 bytes from chunkserver 127.0.0.1:3002, bytes read 65\n"
+    master_log_test.go:147: AssertNil Succeed :
+    master_log_test.go:148: AssertEqual Succeed :
+time="2021-06-30T09:08:09+08:00" level=debug msg="Client close : free 0"
+    master_log_test.go:150: AssertNil Succeed :
+time="2021-06-30T09:08:09+08:00" level=debug msg="Client open : assign 0"
+    master_log_test.go:153: AssertNil Succeed :
+time="2021-06-30T09:08:09+08:00" level=debug msg="RPC getFileMeta, File Path : /dir1/file3"
+time="2021-06-30T09:08:09+08:00" level=debug msg="RPC getReplica, file path : /dir1/file3, chunk index : 1"
+time="2021-06-30T09:08:09+08:00" level=debug msg="targetchunk :  &{{{0 0} 0 0 0 0} 6 [127.0.0.1:3000 127.0.0.1:3003 127.0.0.1:3004] {13848303726923211294 569585573 0xb9a200}}"
+time="2021-06-30T09:08:09+08:00" level=debug msg=" ChunkHandle : 6 Addresses : 127.0.0.1:3000 127.0.0.1:3003 127.0.0.1:3004\n"
+time="2021-06-30T09:08:09+08:00" level=debug msg=" Read 20 bytes from chunkserver 127.0.0.1:3000, bytes read 20\n"
+    master_log_test.go:155: AssertNil Succeed :
+    master_log_test.go:156: AssertEqual Succeed :
+time="2021-06-30T09:08:09+08:00" level=debug msg="Client close : free 0"
+    master_log_test.go:158: AssertNil Succeed :
+time="2021-06-30T09:08:09+08:00" level=debug msg="RPC list, Dir Path : /"
+    master_log_test.go:162: AssertNil Succeed :
+    master_log_test.go:163: AssertEqual Succeed :
+time="2021-06-30T09:08:09+08:00" level=debug msg="Master Exit"
+time="2021-06-30T09:08:09+08:00" level=debug msg="Master shutdown!"
+time="2021-06-30T09:08:09+08:00" level=debug msg="Client server shutdown!\n"
+2021/06/30 09:08:09 ChunkServer: done
+time="2021-06-30T09:08:09+08:00" level=info msg="chunkserver 127.0.0.1:3000: store checkpoint success\n%!(EXTRA []interface {}=[])"
+2021/06/30 09:08:09 ChunkServer: done
+time="2021-06-30T09:08:09+08:00" level=info msg="chunkserver 127.0.0.1:3001: store checkpoint success\n%!(EXTRA []interface {}=[])"
+2021/06/30 09:08:09 ChunkServer: done
+time="2021-06-30T09:08:09+08:00" level=info msg="chunkserver 127.0.0.1:3002: store checkpoint success\n%!(EXTRA []interface {}=[])"
+time="2021-06-30T09:08:09+08:00" level=info msg="chunkserver 127.0.0.1:3003: store checkpoint success\n%!(EXTRA []interface {}=[])"
+time="2021-06-30T09:08:09+08:00" level=info msg="chunkserver 127.0.0.1:3004: store checkpoint success\n%!(EXTRA []interface {}=[])"
+time="2021-06-30T09:08:09+08:00" level=debug msg="Master Exit"
+--- FAIL: TestLogAndCheckpointSingle (0.58s)
+panic: close of closed channel [recovered]
+	panic: close of closed channel
+
+goroutine 5 [running]:
+testing.tRunner.func1.2(0x844020, 0x93e660)
+	/snap/go/current/src/testing/testing.go:1143 +0x332
+testing.tRunner.func1(0xc000001980)
+	/snap/go/current/src/testing/testing.go:1146 +0x4b6
+panic(0x844020, 0x93e660)
+	/snap/go/current/src/runtime/panic.go:965 +0x1b9
+DFS/master.(*Master).Exit(0xc00007c180)
+	/home/ubuntu/go/src/DFS/master/master.go:173 +0x98
+command-line-arguments.TestLogAndCheckpointSingle(0xc000001980)
+	/home/ubuntu/go/src/DFS/test/master_log_test.go:169 +0xff4
+testing.tRunner(0xc000001980, 0x8de3a8)
+	/snap/go/current/src/testing/testing.go:1193 +0xef
+created by testing.(*T).Run
+	/snap/go/current/src/testing/testing.go:1238 +0x2b3
+FAIL	command-line-arguments	0.587s
+FAIL

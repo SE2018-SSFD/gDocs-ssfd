@@ -178,6 +178,7 @@ func (m *Master) StoreCheckPoint() error {
 		Cs:m.cs.Serialize() ,
 		Namespace:m.ns.Serialize(),
 	}
+	logrus.Debugln(ckcp)
 	enc := gob.NewEncoder(fd)
 	err = enc.Encode(ckcp)
 	if err != nil {

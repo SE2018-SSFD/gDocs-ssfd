@@ -49,10 +49,25 @@ func InitTest2() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServe
 	return
 }
 
-
+//func TestLogMultiMaster(t *testing.T){
+//	masterList := make([]*master.Master,3)
+//	addrList := make([]string,3)
+//	addrList[0]=util.MASTER1ADDR
+//	addrList[1]=util.MASTER2ADDR
+//	addrList[2]=util.MASTER3ADDR
+//	for i:=0;i<3;i++{
+//		go func(order int) {
+//			m,err := master.InitMultiMaster(util.Address(addrList[order]), util.LinuxPath(os.Args[5+order]))
+//			if err!=nil{
+//				fmt.Println("Master Init Error :",err)
+//				os.Exit(1)
+//			}
+//			m.Serve()
+//		}(i)
+//	}
+//}
 func TestLogAndCheckpointSingle(t *testing.T){
-	_,m,_ := InitTest2()
-	defer m.Exit()
+	c,m,cs := InitTest2()
 	//delete old ckp
 	util.DeleteFile("../log/checkpoint.dat")
 	//delete old log
@@ -120,7 +135,8 @@ func TestLogAndCheckpointSingle(t *testing.T){
 	*/
 	m.Exit()
 	// restart master
-	m,_ = master.InitMaster(util.MASTER1ADDR, "../log")
+	m,err = master.InitMaster(util.MASTER1ADDR, "../log")
+	util.AssertNil(t,err)
 	go func(){m.Serve()}()
 
 	// Read 65 bytes near the /dir1/file2 chunk 3
@@ -144,4 +160,9 @@ func TestLogAndCheckpointSingle(t *testing.T){
 	err = m.ListRPC(util.ListArg{Path: "/"}, &listReply)
 	util.AssertNil(t,err)
 	util.AssertEqual(t,3,len(listReply.Files))
+	m.Exit()
+	c.Exit()
+	for _,_cs := range cs{
+		_cs.Exit()
+	}
 }

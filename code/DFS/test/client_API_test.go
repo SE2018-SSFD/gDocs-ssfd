@@ -28,11 +28,15 @@ func InitTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer
 
 	// Register some virtual chunkServers
 	_, err := os.Stat("ck")
-	if err != nil {
-		err := os.Mkdir("ck", 0755)
+	if err == nil {
+		err := os.RemoveAll("ck")
 		if err != nil {
 			logrus.Fatalf("mkdir %v error\n", "ck")
 		}
+	}
+	err = os.Mkdir("ck", 0755)
+	if err != nil {
+		logrus.Fatalf("mkdir %v error\n", "ck")
 	}
 	cs = make([]*chunkserver.ChunkServer, 5)
 	for index,port := range []int{3000,3001,3002,3003,3004}{

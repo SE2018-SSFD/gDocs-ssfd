@@ -27,6 +27,8 @@ func AssertEqual(t *testing.T, a, b interface{}) {
 		t.Fail()
 		t.Fatal("AssertEqual Failed :", a, b)
 	}
+	t.Logf("AssertEqual Succeed :")
+
 }
 func AssertGreater(t *testing.T, a, b interface{}) {
 	t.Helper()

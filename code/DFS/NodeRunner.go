@@ -5,6 +5,7 @@ import (
 	"DFS/client"
 	"DFS/master"
 	"DFS/util"
+	"DFS/util/zkWrap"
 	"fmt"
 	"os"
 
@@ -19,7 +20,7 @@ func main() {
 	setLoggingStrategy()
 	switch os.Args[1] {
 	case "master":
-		masterRun()
+		singleMasterRun()
 	case "multimaster":
 		multiMasterRun()
 	case "chunkServer":
@@ -58,8 +59,18 @@ func chunkServerRun() {
 	ch := make(chan bool)
 	<-ch
 }
-func masterRun(){
-
+func singleMasterRun(){
+	if len(os.Args) < 4 {
+		printUsage()
+		return
+	}
+	addr := os.Args[2]
+	dataPath := os.Args[3]
+	m,_ := master.InitMaster(util.Address(addr), util.LinuxPath(dataPath))
+	m.Serve()
+	// block on ch; make it a daemon
+	ch := make(chan bool)
+	<-ch
 }
 
 func multiMasterRun() {
@@ -67,10 +78,14 @@ func multiMasterRun() {
 		printUsage()
 		return
 	}
+	err := zkWrap.Chroot("/DFS")
+	if err != nil {
+		return 
+	}
 	//arg 2,3,4 are addresses of master;arg 5,6,7 are metadata paths of master
 	for i:=0;i<3;i++{
 		go func(order int) {
-			m,err := master.InitMaster(util.Address(os.Args[2+order]), util.LinuxPath(os.Args[5+order]))
+			m,err := master.InitMultiMaster(util.Address(os.Args[2+order]), util.LinuxPath(os.Args[5+order]))
 			if err!=nil{
 				fmt.Println("Master Init Error :",err)
 				os.Exit(1)

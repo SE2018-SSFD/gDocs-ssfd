@@ -211,18 +211,23 @@ func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
 
 	argF.Path = path
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
-	if !retF.Exist {
+	if err!=nil || !retF.Exist {
 		logrus.Fatalln("Client read failed :", err)
 		return
 	}
+
 	fileSize := retF.Size
 	if argR.Offset+argR.Len > fileSize {
-		err = fmt.Errorf("Client read failed : read offset + read len exceed file size\n")
+		err = fmt.Errorf("Client read failed : read offset + read len  %d exceed file size %d",argR.Offset+argR.Len,fileSize)
+		logrus.Debugln(err)
+
 		return
 	}
 
 	// Read to chunk
+
 	readBytes, buf, err := c._Read(path, argR.Offset, argR.Len, fileSize)
+
 	if err != nil {
 		logrus.Fatalln("Client read failed :", err)
 		w.WriteHeader(400)

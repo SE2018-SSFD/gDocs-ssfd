@@ -145,6 +145,7 @@ func (m *Master) Serve() {
 		for {
 			select {
 			case <-m.shutdown:
+				logrus.Debugln("Master shutdown!")
 				return
 			default:
 			}
@@ -164,8 +165,10 @@ func (m *Master) Serve() {
 	//os.Exit(1)
 }
 
+
 // Direct Exit without storing the metadata
 func (m*Master) Exit(){
+	logrus.Debugf("Master Exit")
 	err := m.L.Close()
 	close(m.shutdown)
 	if err != nil {

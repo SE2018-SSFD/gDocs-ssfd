@@ -83,6 +83,7 @@ func (s* ChunkStates) Deserialize(scss SerialChunkStates) error {
 		if err!=nil{
 			return err
 		}
+		s.file[path].size = state.Size
 		for _,chunk := range state.Chunks{
 			s.file[path].chunks = append(s.file[path].chunks,&chunkState{
 				Locations: chunk.Locations,
