@@ -1,6 +1,6 @@
 import React from 'react';
 import {Route, Redirect} from 'react-router-dom'
-import * as userService from "../services/userService"
+import * as userService from "../api/userService"
 
 export class LoginRoute extends React.Component{
     constructor(props) {
@@ -15,7 +15,7 @@ export class LoginRoute extends React.Component{
         if (data.success === true) {
             this.setState({isAuthed: true, hasAuthed: true});
         } else {
-            localStorage.removeItem('token');
+            // localStorage.removeItem('token');
             this.setState({isAuthed: false, hasAuthed: true});
         }
     };

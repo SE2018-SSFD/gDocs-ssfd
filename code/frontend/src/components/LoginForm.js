@@ -6,7 +6,7 @@ import {Button, Col, Input, Row} from 'antd';
 import React from 'react';
 import {Link} from 'react-router-dom';
 
-import {login} from '../services/userService';
+import {login} from '../api/userService';
 
 class LoginForm extends React.Component {
     constructor(props) {

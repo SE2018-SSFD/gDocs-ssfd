@@ -6,7 +6,7 @@ import {Button, Col, Input,Row} from 'antd';
 import React from 'react';
 import {Link} from 'react-router-dom';
 
-import {register} from '../services/userService';
+import {register} from '../api/userService';
 
 class RegisterForm extends React.Component {
     constructor(props) {

@@ -10,8 +10,6 @@ import '../css/login.css'
 class LoginView extends React.Component{
 
     componentDidMount(){
-        let user = localStorage.getItem("user");
-        this.setState({user:user});
     }
 
     render(){

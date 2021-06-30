@@ -1,6 +1,6 @@
 import React from 'react';
 import { Avatar, Dropdown, Menu} from 'antd';
-import * as userService from '../services/userService'
+import * as userService from '../api/userService'
 
 export class UserAvatar extends React.Component {
 

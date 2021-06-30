@@ -1,5 +1,6 @@
-let postRequest = (url, json, callback) => {
+import {message} from "antd";
 
+let postRequest = (url, json, callback) => {
     let opts = {
         method: "POST",
         body: JSON.stringify(json),
@@ -9,7 +10,7 @@ let postRequest = (url, json, callback) => {
         credentials: "include"
     };
 
-    fetch(url,opts)
+    fetch(url, opts)
         .then((response) => {
             return response.json()
         })
@@ -17,6 +18,7 @@ let postRequest = (url, json, callback) => {
             callback(data);
         })
         .catch((error) => {
+            message.error("请检查您的网络连接").then(r => {})
             console.log(error);
         });
 };

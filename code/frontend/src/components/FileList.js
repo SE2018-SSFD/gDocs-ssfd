@@ -11,7 +11,7 @@ const columns = [
             <div style={{display:"inline-flex"}}>
                 <img src={sheet} height={20} width={20} alt={"sheet"}/>
                 <Link to={{
-                    pathname: '/doc',
+                    pathname: '/sheet',
                     search: '?id=' + record.key
                 }}
                       target="_blank"
@@ -21,12 +21,12 @@ const columns = [
             </div>
     },
     {
-        title: '来自',
-        dataIndex: 'from',
+        title: '创建者',
+        dataIndex: 'owner',
     },
     {
-        title: '最近查看',
-        dataIndex: 'recentlyOpen',
+        title: '最近修改',
+        dataIndex: 'last_update',
     },
 ];
 
@@ -46,6 +46,7 @@ export class FileList extends React.Component {
 
         sheets.forEach((x) => {
             x.key = x.fid
+            x.last_update = new Date(x.UpdatedAt).toLocaleString()
         })
         return (
             <div>

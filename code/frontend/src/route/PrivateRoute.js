@@ -1,8 +1,9 @@
 import React from 'react';
-import {Route, Redirect} from 'react-router-dom'
-import {checkSession} from "../services/userService";
+import {Redirect, Route} from 'react-router-dom'
+import {checkSession} from "../api/userService";
 
-export default class PrivateRoute extends React.Component{
+export default class PrivateRoute extends React.Component {
+
     constructor(props) {
         super(props);
         this.state = {
@@ -15,7 +16,7 @@ export default class PrivateRoute extends React.Component{
         if (data.success === true) {
             this.setState({isAuthed: true, hasAuthed: true});
         } else {
-            localStorage.removeItem('token');
+            // localStorage.removeItem('token');
             this.setState({isAuthed: false, hasAuthed: true});
         }
     };
@@ -28,7 +29,7 @@ export default class PrivateRoute extends React.Component{
 
     render() {
 
-        const {component: Component, path="/",exact=false,strict=false} = this.props;
+        const {component: Component, path = "/", exact = false, strict = false} = this.props;
 
         if (!this.state.hasAuthed) {
             return null;
