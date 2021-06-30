@@ -83,7 +83,7 @@ func multiMasterRun() {
 		return 
 	}
 	//arg 2,3,4 are addresses of master;arg 5,6,7 are metadata paths of master
-	for i:=0;i<3;i++{
+	for i:=0;i<util.MASTERCOUNT;i++{
 		go func(order int) {
 			m,err := master.InitMultiMaster(util.Address(os.Args[2+order]), util.LinuxPath(os.Args[5+order]))
 			if err!=nil{

@@ -8,6 +8,7 @@ import (
 	"net/rpc"
 	"os"
 	"path"
+	"strconv"
 	"sync"
 	"time"
 
@@ -48,13 +49,17 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error)
 	if err != nil {
 		logrus.Fatal("listen error:", err)
 	}
+
 	// Zookeeper connection
 	var wg sync.WaitGroup // To sync all the goroutines
 	wg.Add(util.MASTERCOUNT)
 	onConn := func (me string, who string) {
+		logrus.Println(me + " receive :" + who)
 		wg.Done()
 	}
 	onDisConn := func (me string, who string) {
+		logrus.Println(me + " receive disconn :" + who)
+		wg.Add(1)
 	}
 
 	hb,err := zkWrap.RegisterHeartbeat("master",util.MAXWAITINGTIME * time.Second,string(addr),onConn,onDisConn)
@@ -62,6 +67,7 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master,error)
 		return m,err
 	}
 	mate := len(hb.GetOriginMates())
+	logrus.Debugln(string(addr) +": has "+ strconv.Itoa(mate) + "mate")
 	for i:=0;i<mate;i++{
 		wg.Done()
 	}
@@ -261,6 +267,26 @@ func (m *Master) ListRPC(args util.ListArg, reply *util.ListRet) (err error) {
 	reply.Files, err = m.ns.List(args.Path)
 	if err != nil {
 		logrus.Warnf("RPC list failed : %s", err)
+	}
+	return err
+}
+
+// ScanRPC is called by client to scan all file info of a dir
+func (m *Master) ScanRPC(args util.ScanArg, reply *util.ScanRet) (err error) {
+	logrus.Debugf("RPC list, Dir Path : %s", args.Path)
+	files, err := m.ns.List(args.Path)
+	if err != nil {
+		logrus.Warnf("RPC list failed : %s", err)
+	}
+	reply.FileInfos = make([]util.GetFileMetaRet,0)
+	for _,file:= range files{
+		var ret util.GetFileMetaRet
+		fullPath := path.Join(string(args.Path),file)
+		err := m.GetFileMetaRPC(util.GetFileMetaArg{Path: util.DFSPath(fullPath)}, &ret)
+		if err != nil {
+			return err
+		}
+		reply.FileInfos = append(reply.FileInfos,ret)
 	}
 	return err
 }

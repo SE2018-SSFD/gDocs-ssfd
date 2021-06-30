@@ -41,6 +41,9 @@ func (c *Client) Serve() {
 	mux.HandleFunc("/open", c.Open)
 	mux.HandleFunc("/close", c.Close)
 	mux.HandleFunc("/append", c.Append)
+	mux.HandleFunc("/cappend", c.ConcurrentAppend)
+	mux.HandleFunc("/list", c.List)
+	mux.HandleFunc("/scan", c.Scan)
 	mux.HandleFunc("/fileInfo", c.GetFileInfo)
 	c.s = &http.Server{
 		Addr:           util.CLIENTADDR,
@@ -293,6 +296,59 @@ func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// ConcurrentAppend to a file
+func (c *Client) ConcurrentAppend(w http.ResponseWriter, r *http.Request) {
+	var argG util.GetFileMetaArg
+	var retG util.GetFileMetaRet
+	var argC util.CAppendArg
+	var retC util.CAppendRet
+	// Decode the params
+	err := json.NewDecoder(r.Body).Decode(&argC)
+	if err != nil {
+		logrus.Fatalln("Client getFileInfo failed :", err)
+		w.WriteHeader(400)
+		return
+	}
+
+	// Get the file metadata and check
+	path := c.fdTable[argC.Fd]
+	if path == "" {
+		err = fmt.Errorf("Client read failed : fd %d is not opened\n", argC.Fd)
+		return
+	}
+	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", util.GetFileMetaArg{Path: path}, &retG)
+	if err!=nil{
+		logrus.Fatalln("Client concurrent append failed :", err)
+		w.WriteHeader(400)
+		return
+	}
+	if len(argC.Data)>util.MAXAPPENDSIZE{ // append size cannot exist half a chunk
+		logrus.Fatalln("Client concurrent append failed : append size is too large")
+		w.WriteHeader(400)
+		return
+	}
+	var offset int
+
+	chunkIndex := retG.Size / util.MAXCHUNKSIZE
+	end := false
+
+	// try append to chunk, pad it and retry on next chunk if normal failure
+	// until success or unexpected error
+	for !end {
+		// TODO :finish it
+		offset,err = c._ConcurrentAppend(chunkIndex,argC.Data)
+		if err==nil {
+			end = true
+		}		
+	}
+
+
+	retC.Offset = offset
+	msg, _ := json.Marshal(retC)
+	w.Write(msg)
+	return
+}
+
 // Append to a file
 func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 	var argA util.AppendArg
@@ -447,6 +503,7 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// GetFileInfo get one file information
 func (c *Client) GetFileInfo(w http.ResponseWriter, r *http.Request) {
 	var arg util.GetFileMetaArg
 	var ret util.GetFileMetaRet
@@ -458,6 +515,49 @@ func (c *Client) GetFileInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", arg, &ret)
+	if err!=nil{
+		logrus.Fatalln("Client getFileInfo failed :", err)
+		w.WriteHeader(400)
+		return
+	}
 	msg, _ := json.Marshal(ret)
 	w.Write(msg)
 }
+
+
+func (c *Client) List(w http.ResponseWriter, r *http.Request) {
+	var arg util.ListArg
+	var ret util.ListRet
+	// Decode the params
+	err := json.NewDecoder(r.Body).Decode(&arg)
+	if err != nil {
+		logrus.Fatalln("Client getFileInfo failed :", err)
+		w.WriteHeader(400)
+		return
+	}
+	err = util.Call(string(c.masterAddr), "Master.ListRPC", arg, &ret)
+	msg, _ := json.Marshal(ret)
+	w.Write(msg)
+}
+
+// Scan scan all files' information in a dir
+func (c *Client) Scan(w http.ResponseWriter, r *http.Request) {
+	var arg util.ScanArg
+	var ret util.ScanRet
+	// Decode the params
+	err := json.NewDecoder(r.Body).Decode(&arg)
+	if err != nil {
+		logrus.Fatalln("Client getFileInfo failed :", err)
+		w.WriteHeader(400)
+		return
+	}
+	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", arg, &ret)
+	msg, _ := json.Marshal(ret)
+	w.Write(msg)
+}
+
+// helper method for ConcurrentAppend
+func (c *Client) _ConcurrentAppend(index int, data []byte) (int, error) {
+	
+}
+

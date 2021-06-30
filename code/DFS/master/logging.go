@@ -13,24 +13,25 @@ import (
 
 type MasterCKP struct {
 	// manage the state of chunkserver node
-	Servers []serialChunkServerStates
-	Cs SerialChunkStates
+	Servers   []serialChunkServerStates
+	Cs        SerialChunkStates
 	Namespace []SerialTreeNode
 }
+
 // Warning : must be uppercase to be identified by JSON package
-type MasterLog struct{
+type MasterLog struct {
 	OpType OperationType
-	Path util.DFSPath
-	Size int // for setFileMetaRPC
-	Addrs []util.Address // for GetReplicasRPC
+	Path   util.DFSPath
+	Size   int            // for setFileMetaRPC
+	Addrs  []util.Address // for GetReplicasRPC
 }
 
 // AppendLog appends a log structure to persistent file
-func (m *Master) AppendLog(ml MasterLog)error{
+func (m *Master) AppendLog(ml MasterLog) error {
 	m.logLock.Lock()
 	defer m.logLock.Unlock()
 	logrus.Debugf("AppendLog : %d", ml.OpType)
-	filename := path.Join(string(m.metaPath),"log.dat")
+	filename := path.Join(string(m.metaPath), "log.dat")
 	fd, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
 	if err != nil {
 		logrus.Warnf("AppendLogError :%s\n", err)
@@ -41,7 +42,7 @@ func (m *Master) AppendLog(ml MasterLog)error{
 	logrus.Infoln(ml)
 	err = enc.Encode(ml)
 	if err != nil {
-		logrus.Warnf("AppendLogError :%s",err)
+		logrus.Warnf("AppendLogError :%s", err)
 		return err
 	}
 	return nil
@@ -52,7 +53,7 @@ func (m *Master) RecoverLog() error {
 	m.logLock.Lock()
 	defer m.logLock.Unlock()
 
-	filename := path.Join(string(m.metaPath),"log.dat")
+	filename := path.Join(string(m.metaPath), "log.dat")
 	fd, err := os.Open(filename)
 	if err != nil {
 		// logrus.Printf("chunkserver %v: open file error\n")
@@ -61,11 +62,11 @@ func (m *Master) RecoverLog() error {
 	defer fd.Close()
 	dec := json.NewDecoder(fd)
 
-	for dec.More(){
+	for dec.More() {
 		var log MasterLog
 		err = dec.Decode(&log)
 		if err != nil {
-			logrus.Warnf("RecoverLog Failed : Decode failed : %s",err)
+			logrus.Warnf("RecoverLog Failed : Decode failed : %s", err)
 			return err
 		}
 
@@ -104,22 +105,22 @@ func (m *Master) RecoverLog() error {
 		case util.GETREPLICASOPS:
 			// when this operation is in the log, there must be new chunk created
 			// increment handle
-			newHandle := m.cs.handle.curHandle+1
-			m.cs.handle.curHandle+=1
+			newHandle := m.cs.handle.curHandle + 1
+			m.cs.handle.curHandle += 1
 			// add chunk to file
 			newChunk := &chunkState{
-				Locations: make([]util.Address,0),
-				Handle: newHandle,
-				expire: time.Now(),
+				Locations: make([]util.Address, 0),
+				Handle:    newHandle,
+				expire:    time.Now(),
 			}
 			fs, exist := m.cs.file[log.Path]
 			if !exist {
 				err := fmt.Errorf("FileNotExistsError : the requested DFS path %s is non-existing", string(log.Path))
 				return err
 			}
-			fs.chunks = append(fs.chunks,newChunk)
-			for _ , addr := range log.Addrs{
-				newChunk.Locations = append(newChunk.Locations,addr)
+			fs.chunks = append(fs.chunks, newChunk)
+			for _, addr := range log.Addrs {
+				newChunk.Locations = append(newChunk.Locations, addr)
 			}
 		}
 
@@ -128,11 +129,11 @@ func (m *Master) RecoverLog() error {
 }
 
 // LoadCheckPoint loads master metadata from disk
-func (m *Master) LoadCheckPoint() error{
-	filename := path.Join(string(m.metaPath),"checkpoint.dat")
+func (m *Master) LoadCheckPoint() error {
+	filename := path.Join(string(m.metaPath), "checkpoint.dat")
 	fd, err := os.Open(filename)
 	if err != nil {
-		logrus.Printf("LoadCheckPoint failed : open file %v error\n",filename)
+		logrus.Printf("LoadCheckPoint failed : open file %v error\n", filename)
 		return err
 	}
 	var ckcp MasterCKP
@@ -166,27 +167,27 @@ func (m *Master) StoreCheckPoint() error {
 	m.RLock()
 	defer m.RUnlock()
 
-	filename := path.Join(string(m.metaPath),"checkpoint.dat")
-	fd, err := os.OpenFile(filename, os.O_WRONLY |os.O_CREATE, 0755)
+	filename := path.Join(string(m.metaPath), "checkpoint.dat")
+	fd, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
 		return err
 	}
 	defer fd.Close()
 	ckcp := MasterCKP{
 		// manage the state of chunkserver node
-		Servers:m.css.Serialize(),
-		Cs:m.cs.Serialize() ,
-		Namespace:m.ns.Serialize(),
+		Servers:   m.css.Serialize(),
+		Cs:        m.cs.Serialize(),
+		Namespace: m.ns.Serialize(),
 	}
 	logrus.Debugln(ckcp)
 	enc := gob.NewEncoder(fd)
 	err = enc.Encode(ckcp)
 	if err != nil {
-		logrus.Warnf("StoreCheckPointError : %s\n",err)
+		logrus.Warnf("StoreCheckPointError : %s\n", err)
 		return err
 	}
 	//TODO : truncate the log
-	filename = path.Join(string(m.metaPath),"log.dat")
+	filename = path.Join(string(m.metaPath), "log.dat")
 	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		logrus.Panic(err)
@@ -195,23 +196,23 @@ func (m *Master) StoreCheckPoint() error {
 	defer f.Close()
 	err = f.Truncate(0) //clear log
 	if err != nil {
-		logrus.Warnf("StoreCheckPointError : %s",err)
+		logrus.Warnf("StoreCheckPointError : %s", err)
 		return err
 	}
 	return nil
 }
 
-func (m *Master) TryRecover() error{
+func (m *Master) TryRecover() error {
 	// Check if a checkpoint exists
-	_,err := os.Stat(path.Join(string(m.metaPath),"checkpoint.dat"))
-	if os.IsNotExist(err){
+	_, err := os.Stat(path.Join(string(m.metaPath), "checkpoint.dat"))
+	if os.IsNotExist(err) {
 		logrus.Infof("No checkpoint, start master directly")
 		return nil
 	}
 	logrus.Infof("Checkpoint found, start recover")
 
 	err = m.LoadCheckPoint()
-	if err!=nil{
+	if err != nil {
 		return err
 	}
 	err = m.RecoverLog()

@@ -33,8 +33,10 @@ const (
 	//MAXCHUNKSIZE = 64 << 20 // 64MB
 	MAXCHUNKSIZE      = 64 // 64B
 	REPLICATIONTIMES  = 3
+	MAXAPPENDSIZE = MAXCHUNKSIZE/2
 	MAXFD             = 128
 	HEARTBEATDURATION = 200 * time.Millisecond
 	DELETEPREFIX = "_delete_"
+
 
 )

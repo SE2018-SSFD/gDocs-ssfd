@@ -34,8 +34,6 @@ func newNamespaceState() *NamespaceState {
 	return ns
 }
 
-
-
 // Mknod create a directory if isDir is true, else a file
 func (ns *NamespaceState) Mknod(path util.DFSPath, isDir bool) error {
 	parent, filename, err := util.ParsePath(path)
