@@ -2,6 +2,7 @@ package chunkserver
 
 import (
 	"DFS/util"
+	"DFS/util/zkWrap"
 	"fmt"
 	"log"
 	"net"
@@ -38,7 +39,8 @@ func (cs *ChunkServer) StartRPCServer() error {
 		log.Print("ChunkServer: done\n")
 	}()
 
-	// cs.RegisterNodes()
+	zkWrap.Chroot("/DFS")
+	cs.RegisterNodes()
 	// cs.Printf("Register zookeeper node\n")
 	//
 	// go func() {
