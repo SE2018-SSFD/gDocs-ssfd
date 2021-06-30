@@ -31,6 +31,7 @@ type SyncArgs struct {
 
 type SyncReply struct {
 	ErrorCode ErrorCode
+	Off       int //if append success, should return the accurate offset
 }
 
 type CreateChunkArgs struct {

@@ -394,13 +394,13 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 	// Write to file
 	// writtenBytes, err := c._Write(path, fileSize, argA.Data, fileSize)
 
-	writtenBytes, err := c._Append(path, argA.Data)
+	offset, err := c._Append(path, argA.Data)
 	if err != nil {
 		logrus.Fatalln("Client write failed :", err)
 		w.WriteHeader(400)
 		return
 	}
-	msg, _ := json.Marshal(writtenBytes)
+	msg, _ := json.Marshal(offset)
 	w.Write(msg)
 	w.WriteHeader(200)
 	return
@@ -631,7 +631,8 @@ func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error)
 		}
 		err = util.Call(string(argL.Addrs[0]), "ChunkServer.SyncRPC", argC, &retC)
 		if err == nil {
-			logrus.Debugf(" Append %d bytes to chunkserver %s\n", len(data), argL.Addrs[0])
+			offset = retC.Off
+			logrus.Debugf(" Append %d bytes to chunkserver %s, offset %d\n", len(data), argL.Addrs[0], retC.Off)
 			return
 		} else if retC.ErrorCode != util.NOSPACE {
 			//TODO: we should retry append
@@ -642,5 +643,5 @@ func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error)
 		// errorcode == nospace, try append to the next chunk
 		argR.ChunkIndex = retR.ChunkIndex + 1
 	}
-	return 0, nil
+	return
 }
