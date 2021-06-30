@@ -23,6 +23,7 @@ const (
 	SheetDupConnection		=	17
 	SheetIsInTrashBin		=	18
 	SheetWSRedirect			=	19
+	SheetWSDestination		=	20
 )
 
 var TokenTerm int64 = 30 * 60 // 30min

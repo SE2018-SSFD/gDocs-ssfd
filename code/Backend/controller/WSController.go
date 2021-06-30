@@ -4,6 +4,7 @@ import (
 	"backend/lib/wsWrap"
 	"backend/service"
 	"backend/utils"
+	"backend/utils/logger"
 	"github.com/kataras/iris/v12/context"
 	"strconv"
 )
@@ -53,6 +54,9 @@ func SheetBeforeUpgradeHandler() context.Handler {
 	return func(ctx *context.Context) {
 		fid := uint(ctx.URLParamUint64("fid"))
 		token := ctx.URLParam("token")
+		query := ctx.URLParamUint64("query")
+		logger.Error("123312")
+		logger.Debugf("[%s] [%s] [%s]", ctx.FullRequestURI(), ctx.Scheme(), ctx.String())
 		if success, msg, user, addr := service.SheetOnConnEstablished(token, fid); !success {
 			if addr != "" {
 				utils.SendResponse(ctx, success, msg, "ws://" + addr +
@@ -63,11 +67,16 @@ func SheetBeforeUpgradeHandler() context.Handler {
 				ctx.StopExecution()
 			}
 		} else {
-			ctx.Params().Save("ns", "sheet", false)
-			ctx.Params().Save("uid", user.Uid, false)
-			ctx.Params().Save("username", user.Username, false)
-			ctx.Params().Save("fid", fid, false)
-			ctx.Next()
+			if query != 0 {
+				utils.SendResponse(ctx, true, utils.SheetWSDestination, nil)
+				ctx.StopExecution()
+			} else {
+				ctx.Params().Save("ns", "sheet", false)
+				ctx.Params().Save("uid", user.Uid, false)
+				ctx.Params().Save("username", user.Username, false)
+				ctx.Params().Save("fid", fid, false)
+				ctx.Next()
+			}
 		}
 	}
 }
