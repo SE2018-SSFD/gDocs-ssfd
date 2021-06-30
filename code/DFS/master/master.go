@@ -271,6 +271,26 @@ func (m *Master) ListRPC(args util.ListArg, reply *util.ListRet) (err error) {
 	return err
 }
 
+// ScanRPC is called by client to scan all file info of a dir
+func (m *Master) ScanRPC(args util.ScanArg, reply *util.ScanRet) (err error) {
+	logrus.Debugf("RPC list, Dir Path : %s", args.Path)
+	files, err := m.ns.List(args.Path)
+	if err != nil {
+		logrus.Warnf("RPC list failed : %s", err)
+	}
+	reply.FileInfos = make([]util.GetFileMetaRet,0)
+	for _,file:= range files{
+		var ret util.GetFileMetaRet
+		fullPath := path.Join(string(args.Path),file)
+		err := m.GetFileMetaRPC(util.GetFileMetaArg{Path: util.DFSPath(fullPath)}, &ret)
+		if err != nil {
+			return err
+		}
+		reply.FileInfos = append(reply.FileInfos,ret)
+	}
+	return err
+}
+
 // GetFileMetaRPC retrieve the file metadata by path
 func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMetaRet) error {
 	logrus.Debugf("RPC getFileMeta, File Path : %s", args.Path)

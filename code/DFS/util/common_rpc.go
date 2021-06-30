@@ -120,6 +120,12 @@ type ListArg struct {
 type ListRet struct {
 	Files []string `json:"files"`
 }
+type ScanArg struct {
+	Path DFSPath `json:"path"`
+}
+type ScanRet struct {
+	FileInfos []GetFileMetaRet `json:"file_infos"`
+}
 type WriteArg struct {
 	Fd     int    `json:"fd"`
 	Offset int    `json:"offset"`

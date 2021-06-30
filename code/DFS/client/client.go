@@ -41,6 +41,8 @@ func (c *Client) Serve() {
 	mux.HandleFunc("/open", c.Open)
 	mux.HandleFunc("/close", c.Close)
 	mux.HandleFunc("/append", c.Append)
+	mux.HandleFunc("/list", c.List)
+	mux.HandleFunc("/scan", c.Scan)
 	mux.HandleFunc("/fileInfo", c.GetFileInfo)
 	c.s = &http.Server{
 		Addr:           util.CLIENTADDR,
@@ -447,9 +449,42 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// GetFileInfo get one file information
 func (c *Client) GetFileInfo(w http.ResponseWriter, r *http.Request) {
 	var arg util.GetFileMetaArg
 	var ret util.GetFileMetaRet
+	// Decode the params
+	err := json.NewDecoder(r.Body).Decode(&arg)
+	if err != nil {
+		logrus.Fatalln("Client getFileInfo failed :", err)
+		w.WriteHeader(400)
+		return
+	}
+	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", arg, &ret)
+	msg, _ := json.Marshal(ret)
+	w.Write(msg)
+}
+
+
+func (c *Client) List(w http.ResponseWriter, r *http.Request) {
+	var arg util.ListArg
+	var ret util.ListRet
+	// Decode the params
+	err := json.NewDecoder(r.Body).Decode(&arg)
+	if err != nil {
+		logrus.Fatalln("Client getFileInfo failed :", err)
+		w.WriteHeader(400)
+		return
+	}
+	err = util.Call(string(c.masterAddr), "Master.ListRPC", arg, &ret)
+	msg, _ := json.Marshal(ret)
+	w.Write(msg)
+}
+
+// Scan scan all files' information in a dir
+func (c *Client) Scan(w http.ResponseWriter, r *http.Request) {
+	var arg util.ScanArg
+	var ret util.ScanRet
 	// Decode the params
 	err := json.NewDecoder(r.Body).Decode(&arg)
 	if err != nil {
