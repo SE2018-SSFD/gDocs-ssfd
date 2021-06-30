@@ -23,12 +23,14 @@ type StoreDataReply struct {
 }
 
 type SyncArgs struct {
-	CID   CacheID
-	Off   int
-	Addrs []Address
+	CID      CacheID
+	Off      int
+	Addrs    []Address
+	IsAppend bool
 }
 
 type SyncReply struct {
+	ErrorCode ErrorCode
 }
 
 type CreateChunkArgs struct {
@@ -157,6 +159,8 @@ type GetReplicasArg struct {
 type GetReplicasRet struct {
 	ChunkHandle      Handle    `json:"chunk_handle"`
 	ChunkServerAddrs []Address `json:"chunk_server_addrs"`
+	// if args.ChunkIndex == -1, return the last chunk index
+	ChunkIndex int `json:"chunk_index"`
 }
 type GetFileMetaArg struct {
 	Path DFSPath `json:"path"`
@@ -164,7 +168,7 @@ type GetFileMetaArg struct {
 type GetFileMetaRet struct {
 	Exist bool `json:"exist"`
 	IsDir bool `json:"is_dir"`
-	Size  int  `json:"size"`
+	// Size  int  `json:"size"`
 }
 type SetFileMetaArg struct {
 	Path DFSPath `json:"path"`

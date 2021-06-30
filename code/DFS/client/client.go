@@ -41,7 +41,7 @@ func (c *Client) Serve() {
 	mux.HandleFunc("/open", c.Open)
 	mux.HandleFunc("/close", c.Close)
 	mux.HandleFunc("/append", c.Append)
-	mux.HandleFunc("/cappend", c.ConcurrentAppend)
+	// mux.HandleFunc("/cappend", c.ConcurrentAppend)
 	mux.HandleFunc("/list", c.List)
 	mux.HandleFunc("/scan", c.Scan)
 	mux.HandleFunc("/fileInfo", c.GetFileInfo)
@@ -154,7 +154,8 @@ func (c *Client) Close(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (c *Client) _Read(path util.DFSPath, offset int, len int, fileSize int) (readBytes int, buf []byte, err error) {
+// func (c *Client) _Read(path util.DFSPath, offset int, len int, fileSize int) (readBytes int, buf []byte, err error) {
+func (c *Client) _Read(path util.DFSPath, offset int, len int) (readBytes int, buf []byte, err error) {
 	var argR util.GetReplicasArg
 	var retR util.GetReplicasRet
 	var argRCK util.ReadChunkArgs
@@ -214,22 +215,25 @@ func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
 
 	argF.Path = path
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
-	if err!=nil || !retF.Exist {
+	if err != nil || !retF.Exist {
 		logrus.Fatalln("Client read failed :", err)
 		return
 	}
 
-	fileSize := retF.Size
-	if argR.Offset+argR.Len > fileSize {
-		err = fmt.Errorf("Client read failed : read offset + read len  %d exceed file size %d",argR.Offset+argR.Len,fileSize)
-		logrus.Debugln(err)
+	// fileSize := retF.Size
+	// if argR.Offset+argR.Len > fileSize {
+	// 	err = fmt.Errorf("Client read failed : read offset + read len  %d exceed file size %d",argR.Offset+argR.Len,fileSize)
+	// 	logrus.Debugln(err)
 
-		return
-	}
+	// 	return
+	// }
+
+	//TODO: check whether offset exceed filesize? (offset > chunknum * chunksize ?)
 
 	// Read to chunk
 
-	readBytes, buf, err := c._Read(path, argR.Offset, argR.Len, fileSize)
+	// readBytes, buf, err := c._Read(path, argR.Offset, argR.Len, fileSize)
+	readBytes, buf, err := c._Read(path, argR.Offset, argR.Len)
 
 	if err != nil {
 		logrus.Fatalln("Client read failed :", err)
@@ -246,8 +250,8 @@ func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
 
 // Delete a file.
 func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
-	var argR util.GetReplicasArg
-	var retR util.GetReplicasRet
+	// var argR util.GetReplicasArg
+	// var retR util.GetReplicasRet
 	var argF util.GetFileMetaArg
 	var retF util.GetFileMetaRet
 	var argD util.DeleteArg
@@ -278,76 +282,78 @@ func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// we don't need to delete chunk at once
+
 	// Delete the chunk one by one
 	// By default, the first entry int retR.ChunkServerAddr is the primary
-	chunkIndex := 0
-	for chunkIndex*util.MAXCHUNKSIZE < retF.Size {
-		argR.ChunkIndex = chunkIndex
-		err = util.Call(string(c.masterAddr), "Master.GetReplicasRPC", argR, &retR)
-		if err != nil {
-			logrus.Fatalln("Client delete failed :", err)
-			w.WriteHeader(400)
-			return
-		}
-		// TODO delete file in chunkServer
-		chunkIndex += 1
-	}
+	// chunkIndex := 0
+	// for chunkIndex*util.MAXCHUNKSIZE < retF.Size {
+	// 	argR.ChunkIndex = chunkIndex
+	// 	err = util.Call(string(c.masterAddr), "Master.GetReplicasRPC", argR, &retR)
+	// 	if err != nil {
+	// 		logrus.Fatalln("Client delete failed :", err)
+	// 		w.WriteHeader(400)
+	// 		return
+	// 	}
+	// 	// TODO delete file in chunkServer
+	// 	chunkIndex += 1
+	// }
+
 	w.WriteHeader(200)
 	return
 }
 
 // ConcurrentAppend to a file
-func (c *Client) ConcurrentAppend(w http.ResponseWriter, r *http.Request) {
-	//var argG util.GetFileMetaArg
-	var retG util.GetFileMetaRet
-	var argC util.CAppendArg
-	var retC util.CAppendRet
-	// Decode the params
-	err := json.NewDecoder(r.Body).Decode(&argC)
-	if err != nil {
-		logrus.Fatalln("Client getFileInfo failed :", err)
-		w.WriteHeader(400)
-		return
-	}
+// func (c *Client) ConcurrentAppend(w http.ResponseWriter, r *http.Request) {
+// 	//var argG util.GetFileMetaArg
+// 	var retG util.GetFileMetaRet
+// 	var argC util.CAppendArg
+// 	var retC util.CAppendRet
+// 	// Decode the params
+// 	err := json.NewDecoder(r.Body).Decode(&argC)
+// 	if err != nil {
+// 		logrus.Fatalln("Client getFileInfo failed :", err)
+// 		w.WriteHeader(400)
+// 		return
+// 	}
 
-	// Get the file metadata and check
-	path := c.fdTable[argC.Fd]
-	if path == "" {
-		err = fmt.Errorf("Client read failed : fd %d is not opened\n", argC.Fd)
-		return
-	}
-	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", util.GetFileMetaArg{Path: path}, &retG)
-	if err!=nil{
-		logrus.Fatalln("Client concurrent append failed :", err)
-		w.WriteHeader(400)
-		return
-	}
-	if len(argC.Data)>util.MAXAPPENDSIZE{ // append size cannot exist half a chunk
-		logrus.Fatalln("Client concurrent append failed : append size is too large")
-		w.WriteHeader(400)
-		return
-	}
-	var offset int
+// 	// Get the file metadata and check
+// 	path := c.fdTable[argC.Fd]
+// 	if path == "" {
+// 		err = fmt.Errorf("Client read failed : fd %d is not opened\n", argC.Fd)
+// 		return
+// 	}
+// 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", util.GetFileMetaArg{Path: path}, &retG)
+// 	if err != nil {
+// 		logrus.Fatalln("Client concurrent append failed :", err)
+// 		w.WriteHeader(400)
+// 		return
+// 	}
+// 	if len(argC.Data) > util.MAXAPPENDSIZE { // append size cannot exist half a chunk
+// 		logrus.Fatalln("Client concurrent append failed : append size is too large")
+// 		w.WriteHeader(400)
+// 		return
+// 	}
+// 	var offset int
 
-	chunkIndex := retG.Size / util.MAXCHUNKSIZE
-	end := false
+// 	chunkIndex := retG.Size / util.MAXCHUNKSIZE
+// 	end := false
 
-	// try append to chunk, pad it and retry on next chunk if normal failure
-	// until success or unexpected error
-	for !end {
-		// TODO :finish it
-		offset,err = c._ConcurrentAppend(chunkIndex,argC.Data)
-		if err==nil {
-			end = true
-		}		
-	}
+// 	// try append to chunk, pad it and retry on next chunk if normal failure
+// 	// until success or unexpected error
+// 	for !end {
+// 		// TODO :finish it
+// 		offset, err = c._ConcurrentAppend(chunkIndex, argC.Data)
+// 		if err == nil {
+// 			end = true
+// 		}
+// 	}
 
-
-	retC.Offset = offset
-	msg, _ := json.Marshal(retC)
-	w.Write(msg)
-	return
-}
+// 	retC.Offset = offset
+// 	msg, _ := json.Marshal(retC)
+// 	w.Write(msg)
+// 	return
+// }
 
 // Append to a file
 func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
@@ -363,22 +369,32 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//Check append length
+	if len(argA.Data) > util.MAXAPPENDSIZE { // append size cannot exist half a chunk
+		logrus.Fatalln("Client append failed : append size is too large")
+		w.WriteHeader(400)
+		return
+	}
+
 	// Get the file metadata and check
 	path := c.fdTable[argA.Fd]
 	if path == "" {
 		err = fmt.Errorf("Client write failed : fd %d is not opened\n", argA.Fd)
 		return
 	}
+
 	argF.Path = path
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
 	if !retF.Exist {
 		logrus.Fatalln("Client write failed :", err)
 		return
 	}
-	fileSize := retF.Size
+	// fileSize := retF.Size
 
 	// Write to file
-	writtenBytes, err := c._Write(path, fileSize, argA.Data, fileSize)
+	// writtenBytes, err := c._Write(path, fileSize, argA.Data, fileSize)
+
+	writtenBytes, err := c._Append(path, argA.Data)
 	if err != nil {
 		logrus.Fatalln("Client write failed :", err)
 		w.WriteHeader(400)
@@ -391,13 +407,13 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (c *Client) _Write(path util.DFSPath, offset int, data []byte, fileSize int) (writtenBytes int, err error) {
+func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenBytes int, err error) {
 	var argR util.GetReplicasArg
 	var retR util.GetReplicasRet
 	var argL util.LoadDataArgs
 	var retL util.LoadDataReply
-	var argS util.SetFileMetaArg
-	var retS util.SetFileMetaRet
+	// var argS util.SetFileMetaArg
+	// var retS util.SetFileMetaRet
 	var argC util.SyncArgs
 	var retC util.SyncReply
 
@@ -431,9 +447,10 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte, fileSize int
 			return
 		}
 		argC = util.SyncArgs{
-			CID:   cid,
-			Off:   (offset + writtenBytes) % util.MAXCHUNKSIZE,
-			Addrs: retR.ChunkServerAddrs[1:],
+			CID:      cid,
+			Off:      (offset + writtenBytes) % util.MAXCHUNKSIZE,
+			Addrs:    retR.ChunkServerAddrs[1:],
+			IsAppend: false,
 		}
 		err = util.Call(string(argL.Addrs[0]), "ChunkServer.SyncRPC", argC, &retC)
 		if err != nil {
@@ -444,17 +461,17 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte, fileSize int
 		logrus.Debugf(" Write %d bytes to chunkserver %s, bytes written %d\n", roundWrittenBytes, argL.Addrs[0], writtenBytes)
 	}
 	// Set new file metadata back to master
-	if offset+writtenBytes > fileSize {
-		fileSize = offset + writtenBytes
-	}
-	argS = util.SetFileMetaArg{
-		Path: path,
-		Size: fileSize,
-	}
-	err = util.Call(string(c.masterAddr), "Master.SetFileMetaRPC", argS, &retS)
-	if err != nil {
-		return
-	}
+	// if offset+writtenBytes > fileSize {
+	// 	fileSize = offset + writtenBytes
+	// }
+	// argS = util.SetFileMetaArg{
+	// 	Path: path,
+	// 	Size: fileSize,
+	// }
+	// err = util.Call(string(c.masterAddr), "Master.SetFileMetaRPC", argS, &retS)
+	// if err != nil {
+	// 	return
+	// }
 	return
 }
 
@@ -485,14 +502,16 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 		logrus.Fatalln("Client write failed :", err)
 		return
 	}
-	fileSize := retF.Size
-	if argW.Offset > fileSize {
-		err = fmt.Errorf("Client write failed : write offset exceed file size\n")
-		return
-	}
+	// fileSize := retF.Size
+	// if argW.Offset > fileSize {
+	// 	err = fmt.Errorf("Client write failed : write offset exceed file size\n")
+	// 	return
+	// }
 
 	// Write to chunk
-	writtenBytes, err := c._Write(path, argW.Offset, argW.Data, fileSize)
+	// writtenBytes, err := c._Write(path, argW.Offset, argW.Data, fileSize)
+	writtenBytes, err := c._Write(path, argW.Offset, argW.Data)
+
 	if err != nil {
 		logrus.Fatalln("Client write failed :", err)
 		w.WriteHeader(400)
@@ -515,7 +534,7 @@ func (c *Client) GetFileInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", arg, &ret)
-	if err!=nil{
+	if err != nil {
 		logrus.Fatalln("Client getFileInfo failed :", err)
 		w.WriteHeader(400)
 		return
@@ -523,7 +542,6 @@ func (c *Client) GetFileInfo(w http.ResponseWriter, r *http.Request) {
 	msg, _ := json.Marshal(ret)
 	w.Write(msg)
 }
-
 
 func (c *Client) List(w http.ResponseWriter, r *http.Request) {
 	var arg util.ListArg
@@ -558,6 +576,71 @@ func (c *Client) Scan(w http.ResponseWriter, r *http.Request) {
 
 // helper method for ConcurrentAppend
 func (c *Client) _ConcurrentAppend(index int, data []byte) (int, error) {
-	return 0,nil
+	return 0, nil
 }
 
+// helper method for Append
+func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error) {
+	var argR util.GetReplicasArg
+	var retR util.GetReplicasRet
+	var argL util.LoadDataArgs
+	var retL util.LoadDataReply
+	var argC util.SyncArgs
+	var retC util.SyncReply
+
+	// Write the chunk (may add chunks)
+	// By default, the first entry int retR.ChunkServerAddr is the primary
+	argR.Path = path
+
+	//TODO: 1.get the last chunk from master  (handle, address[])
+	//2.append data to chunkserver  (load + sync)
+	//3.if chunkserver says that chunk does not have enough room to store data, call getNextChunk in master (if have nextChunk,return newChunk;else, create a newChunk,return newChunk)
+	//4.redo 2
+	argR.ChunkIndex = -1
+	for {
+		err = util.Call(string(c.masterAddr), "Master.GetReplicasRPC", argR, &retR)
+		if err != nil {
+			return
+		}
+		logrus.Debugf(" ChunkHandle : %d Addresses : %s %s %s\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2])
+		// roundWrittenBytes := int(math.Min(float64(util.MAXCHUNKSIZE-(offset+writtenBytes)%util.MAXCHUNKSIZE), float64(len(data)-writtenBytes)))
+		var cid = util.CacheID{
+			Handle:     retR.ChunkHandle,
+			ClientAddr: c.clientAddr,
+		}
+		argL.CID = cid
+		argL.Data = data
+
+		// TODO: make it random , now is fixed order
+		argL.Addrs = retR.ChunkServerAddrs
+		//argL.Addrs = make([]util.Address,0)
+		//for _,index := range rand.Perm(len(retR.ChunkServerAddrs)){
+		//	argL.Addrs = append(argL.Addrs,retR.ChunkServerAddrs[index])
+		//}
+		// Send to Master now
+		err = util.Call(string(argL.Addrs[0]), "ChunkServer.LoadDataRPC", argL, &retL)
+		if err != nil {
+			logrus.Fatalln("Client write failed :", err)
+			return
+		}
+		argC = util.SyncArgs{
+			CID:      cid,
+			Off:      -1,
+			Addrs:    retR.ChunkServerAddrs[1:],
+			IsAppend: true,
+		}
+		err = util.Call(string(argL.Addrs[0]), "ChunkServer.SyncRPC", argC, &retC)
+		if err == nil {
+			logrus.Debugf(" Append %d bytes to chunkserver %s\n", len(data), argL.Addrs[0])
+			return
+		} else if retC.ErrorCode != util.NOSPACE {
+			//TODO: we should retry append
+			logrus.Fatalln("Client write failed :", err)
+			break
+		}
+
+		// errorcode == nospace, try append to the next chunk
+		argR.ChunkIndex = retR.ChunkIndex + 1
+	}
+	return 0, nil
+}
