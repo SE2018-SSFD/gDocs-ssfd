@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"
-	"path/filepath"
 	"strconv"
 	"sync"
 	"testing"
@@ -124,7 +123,7 @@ func multiPrepare(){
 			logrus.Fatalf("mkdir %v error\n", filename)
 		}
 	}
-	err := zkWrap.Chroot("/DFS")
+	err = zkWrap.Chroot("/DFS")
 	if err!=nil{
 		os.Exit(1)
 	}
