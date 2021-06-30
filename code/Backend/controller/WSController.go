@@ -4,7 +4,6 @@ import (
 	"backend/lib/wsWrap"
 	"backend/service"
 	"backend/utils"
-	"backend/utils/logger"
 	"github.com/kataras/iris/v12/context"
 	"strconv"
 )
@@ -55,8 +54,6 @@ func SheetBeforeUpgradeHandler() context.Handler {
 		fid := uint(ctx.URLParamUint64("fid"))
 		token := ctx.URLParam("token")
 		query := ctx.URLParamUint64("query")
-		logger.Error("123312")
-		logger.Debugf("[%s] [%s] [%s]", ctx.FullRequestURI(), ctx.Scheme(), ctx.String())
 		if success, msg, user, addr := service.SheetOnConnEstablished(token, fid); !success {
 			if addr != "" {
 				utils.SendResponse(ctx, success, msg, "ws://" + addr +
