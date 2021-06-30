@@ -40,6 +40,30 @@ func (cs *ChunkServer) SetChunk(handle util.Handle, off int, buf []byte) (int, e
 	return fd.WriteAt(buf, int64(off))
 }
 
+func (cs *ChunkServer) CreateAndSetChunk(handle util.Handle, off int, buf []byte) (int, error) {
+
+	if off+len(buf) > util.MAXCHUNKSIZE {
+		log.Panic("chunk size cannot be larger than maxchunksize\n")
+	}
+
+	filename := cs.GetFileName(handle)
+
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		logrus.Panic(err)
+		return 0, err
+	}
+
+	defer f.Close()
+	err = f.Truncate(util.MAXCHUNKSIZE)
+	if err != nil {
+		logrus.Panic(err)
+		return 0, err
+	}
+
+	return f.WriteAt(buf, int64(off))
+}
+
 func (cs *ChunkServer) RemoveChunk(handle util.Handle) error {
 	filename := cs.GetFileName(handle)
 	err := os.Remove(filename)

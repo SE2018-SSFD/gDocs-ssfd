@@ -67,7 +67,7 @@ func (cs *ChunkServer) GetChunkStatesRPC(args util.GetChunkStatesArgs, reply *ut
 	return nil
 }
 
-func (cs *ChunkServer) SetStaleRPC(args util.SetGarbageArgs, reply *util.SetGarbageReply) error {
+func (cs *ChunkServer) SetStaleRPC(args util.SetStaleArgs, reply *util.SetStaleReply) error {
 	cs.Lock()
 	for _, h := range args.Handles {
 		cs.chunks[h].isStale = true
@@ -247,7 +247,7 @@ func (cs *ChunkServer) SyncChunkRPC(args util.SyncChunkArgs, reply *util.SyncChu
 	cs.chunks[args.Handle].Lock()
 	cs.RUnlock()
 	defer cs.chunks[args.Handle].Unlock()
-	_, err := cs.SetChunk(args.Handle, 0, args.Data)
+	_, err := cs.CreateAndSetChunk(args.Handle, 0, args.Data)
 	if err != nil {
 		return err
 	}

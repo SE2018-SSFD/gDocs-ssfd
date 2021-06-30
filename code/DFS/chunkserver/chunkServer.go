@@ -51,6 +51,7 @@ type ChunkInfoLog struct {
 }
 
 type Mutation struct {
+	Checksum int32
 }
 
 func InitChunkServer(chunkAddr string, dataPath string, masterAddr string) *ChunkServer {
@@ -79,7 +80,6 @@ func InitChunkServer(chunkAddr string, dataPath string, masterAddr string) *Chun
 	return cs
 }
 
-//TODO: should set checkpoint
 func (cs *ChunkServer) Exit() {
 	err := cs.l.Close()
 	close(cs.shutdown)

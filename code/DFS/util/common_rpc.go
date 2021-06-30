@@ -80,11 +80,11 @@ type SyncChunkArgs struct {
 type SyncChunkReply struct {
 }
 
-type SetGarbageArgs struct {
+type SetStaleArgs struct {
 	Handles []Handle
 }
 
-type SetGarbageReply struct {
+type SetStaleReply struct {
 }
 
 // Master RPC structure
