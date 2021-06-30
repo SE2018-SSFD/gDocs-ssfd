@@ -38,9 +38,7 @@ func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string
 	if pExists, _, err := conn.Exists(path); err != nil {
 		return nil, err
 	} else if !pExists {
-		if _, err := conn.CreateContainer(path, nil, zk.FlagTTL, zk.WorldACL(zk.PermAll)); err != nil {
-			return nil, err
-		}
+		_, _ = conn.CreateContainer(path, nil, zk.FlagTTL, zk.WorldACL(zk.PermAll))
 	}
 
 	hbPath := path + "/" + regData
