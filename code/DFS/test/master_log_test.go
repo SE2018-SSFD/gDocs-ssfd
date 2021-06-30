@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"testing"
@@ -98,18 +99,29 @@ func prepare(){
 }
 func multiPrepare(){
 	logrus.SetLevel(logrus.DebugLevel)
+	_, err := os.Stat("ck")
+	if err == nil {
+		err := os.RemoveAll("ck")
+		if err != nil {
+			logrus.Fatalf("remove %v error\n", "ck")
+		}
+	}
+	err = os.Mkdir("ck", 0755)
+	if err != nil {
+		logrus.Fatalf("mkdir %v error\n", "ck")
+	}
 	for i:=0;i<3;i++{
 		filename := "log_"+strconv.Itoa(i+1)
 		_, err := os.Stat(filename)
 		if err == nil {
 			err := os.RemoveAll(filename)
 			if err != nil {
-				logrus.Fatalf("remove %v error\n", "ck")
+				logrus.Fatalf("remove %v error\n", filename)
 			}
 		}
 		err = os.Mkdir(filename, 0755)
 		if err != nil {
-			logrus.Fatalf("mkdir %v error\n", "ck")
+			logrus.Fatalf("mkdir %v error\n", filename)
 		}
 	}
 	err := zkWrap.Chroot("/DFS")
