@@ -16,6 +16,7 @@ const (
 	heartbeatRoot	= "/heartbeat"
 	lockRoot		= "/lock"
 	electionRoot	= "/election"
+	logRoot			= "/log"
 )
 
 func Chroot(path string) error {
