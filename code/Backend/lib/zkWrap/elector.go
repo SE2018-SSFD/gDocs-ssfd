@@ -7,6 +7,8 @@ import (
 
 type Elector struct {
 	elect			*leaderelection.Election
+	conn			*zk.Conn
+	closeChan		chan int
 
 	IsLeader		bool
 	IsRunning		bool
@@ -35,6 +37,7 @@ func NewElector(electionName string, me string, onElectedCallback ElectionCallba
 
 	elector := Elector{
 		elect: election,
+		conn: conn,
 
 		IsLeader: false,
 		IsRunning: true,
@@ -48,11 +51,10 @@ func NewElector(electionName string, me string, onElectedCallback ElectionCallba
 			case status, ok := <-election.Status():
 				if ok {
 					if status.Err != nil {
-						election.EndElection()
 						elector.IsLeader = false
 						elector.IsRunning = false
-					}
-					if status.Role == leaderelection.Leader {
+						return
+					} else if status.Role == leaderelection.Leader {
 						elector.IsLeader = true
 						onElectedCallback(&elector)
 					}
@@ -73,6 +75,12 @@ func (el *Elector) Resign() {
 
 func (el *Elector) StopElection() {
 	el.elect.EndElection()
+	el.IsLeader = false
+	el.IsRunning = false
+}
+
+func (el *Elector) Kill() {
+	el.conn.Close()
 	el.IsLeader = false
 	el.IsRunning = false
 }
