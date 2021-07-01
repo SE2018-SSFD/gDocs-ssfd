@@ -155,7 +155,6 @@ func TestElectionAndHeartbeat(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		c[i].PrintMasterAddr()
 	}
-
 	// now master0 crash,leader should change
 	m[0].Exit()
 	// m[0].

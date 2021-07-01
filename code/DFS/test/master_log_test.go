@@ -70,8 +70,6 @@ func initTestMulti() (c *client.Client,masterList []*master.Master,cs []*chunkse
 	for index,port := range []int{3000,3001,3002,3003,3004}{
 		addr := util.Address("127.0.0.1:" + strconv.Itoa(port))
 		cs[index] = chunkserver.InitChunkServer(string(addr), "ck/ck"+strconv.Itoa(port),  util.MASTER1ADDR)
-		_ = masterList[0].RegisterServer(addr)
-		//util.AssertNil(t,err)
 	}
 
 	return c,masterList,cs

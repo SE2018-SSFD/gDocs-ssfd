@@ -3,25 +3,56 @@ package master
 import (
 	"DFS/util"
 	"DFS/util/zkWrap"
-	"strings"
-
 	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 	//listening on chunkservers
-	if strings.Compare("client", who[:6]) == 0 {
+	if strings.Compare("chunkserver", who[:11]) == 0 {
 		//TODO: check and update chunk states
-		clientAddr := util.Address(who[6:])
-		logrus.Print("client %v exists", clientAddr)
+		clientAddr := util.Address(who[11:])
+		logrus.Infof("client %v exists", clientAddr)
+		// Get chunk states in chunkServer
+		var argG util.GetChunkStatesArgs
+		var retG util.GetChunkStatesReply
+		err := util.Call(string(clientAddr), "ChunkServer.GetChunkStatesRPC", argG, &retG)
+		m.RLock()
+		defer m.RUnlock()
+		staleHandles := make([]util.Handle, 0)
+		for _, chunk := range retG.ChunkStates {
+			ver, exist := m.cs.chunk[chunk.Handle]
+			if !exist || chunk.VerNum != ver {
+				if chunk.VerNum < ver {
+					logrus.Infof("chunk %v with version %v is outdated", chunk.Handle, chunk.VerNum)
+				} else {
+					logrus.Fatalf("chunk %v with version %v is unexpected! Check the implementation", chunk.Handle, chunk.VerNum)
+				}
+				staleHandles = append(staleHandles, chunk.Handle)
+			}
+		}
+		// SendBack stale chunk to chunkServer
+		var argS util.SetStaleArgs
+		var retS util.SetStaleReply
+		argS.Handles = staleHandles
+		err = util.Call(string(clientAddr), "ChunkServer.SetStaleRPC", argS, &retS)
+		if err != nil {
+			logrus.Fatal("Master addServer error : ", err)
+			return
+		}
+		err = m.RegisterServer(util.Address(who))
+		if err != nil {
+			logrus.Fatal("Master addServer error : ", err)
+			return
+		}
 	}
 }
 
 func (m *Master) onClusterHeartbeatDisConn(_ string, who string) {
-	if strings.Compare("client", who[:6]) == 0 {
+	if strings.Compare("chunkserver", who[:11]) == 0 {
 		//TODO: remove chunkserver state
-		clientAddr := util.Address(who[6:])
-		logrus.Print("client %v leaves", clientAddr)
+		clientAddr := util.Address(who[11:])
+		logrus.Print("chunkserver %v leaves", clientAddr)
 	}
 }
 
@@ -31,6 +62,7 @@ func (m *Master) onLeaderHeartbeatConn(_ string, who string) {
 func (m *Master) onLeaderHeartbeatDisConn(_ string, who string) {
 }
 
+// RegisterClusterNodes is called by main master to deal with chunkServer
 func (m *Master) RegisterClusterNodes() {
 	hb, err := zkWrap.RegisterHeartbeat(
 		"heartbeat",
@@ -76,10 +108,11 @@ func (m *Master) RegisterElectionNodes() {
 		logrus.Print("master " + m.addr + " become leader!")
 		m.RegisterClusterNodes()
 		m.RegisterLeaderNodes()
+
 	}
 	m.el, err = zkWrap.NewElector("MasterLeaderElection", string(m.addr), cb)
 	if err != nil {
-		logrus.Fatal("new elector error")
+		logrus.Fatal("new elector error : ",err)
 		return
 	}
 }

@@ -49,7 +49,7 @@ type ReadChunkArgs struct {
 type ReadChunkReply struct {
 	Len    int
 	Buf    []byte
-	VerNum int64
+	VerNum Version
 }
 
 type GetChunkStatesArgs struct {
@@ -76,7 +76,7 @@ type CloneChunkReply struct {
 
 type SyncChunkArgs struct {
 	Handle Handle
-	VerNum int64
+	VerNum Version
 	Data   []byte
 }
 

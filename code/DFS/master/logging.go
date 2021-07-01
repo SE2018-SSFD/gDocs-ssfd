@@ -8,7 +8,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"os"
 	"path"
-	"time"
 )
 
 type MasterCKP struct {
@@ -108,11 +107,11 @@ func (m *Master) RecoverLog() error {
 			// increment handle
 			newHandle := m.cs.handle.curHandle + 1
 			m.cs.handle.curHandle += 1
+			m.cs.chunk[newHandle] = util.INITIALVERSION
 			// add chunk to file
 			newChunk := &chunkState{
 				Locations: make([]util.Address, 0),
 				Handle:    newHandle,
-				expire:    time.Now(),
 			}
 			fs, exist := m.cs.file[log.Path]
 			if !exist {

@@ -26,7 +26,7 @@ type ChunkServer struct {
 
 type ChunkInfo struct {
 	sync.RWMutex
-	verNum    int64 //version number
+	verNum    util.Version //version number
 	mutations map[int64]*Mutation
 	isStale   bool
 	// checksum  int64
@@ -41,12 +41,12 @@ const (
 
 type ChunkInfoCP struct {
 	Handle util.Handle
-	VerNum int64
+	VerNum util.Version
 }
 
 type ChunkInfoLog struct {
 	Handle    util.Handle
-	VerNum    int64
+	VerNum    util.Version
 	Operation OperationType
 }
 

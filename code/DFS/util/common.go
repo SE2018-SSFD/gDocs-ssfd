@@ -7,6 +7,7 @@ type Handle int64
 type DFSPath string
 type LinuxPath string
 type Address string
+type Version int64
 
 const (
 	MASTERCOUNT    = 3
@@ -20,13 +21,14 @@ const (
 	GETREPLICASOPS = 1006
 	ADDSERVEROPS   = 1007
 	DELSERVEROPS   = 1008
+	INITIALVERSION    =  1
 )
 
 // ChunkServer
 
 type ChunkState struct {
 	Handle Handle
-	VerNum int64
+	VerNum Version
 	//CheckSum int64
 }
 

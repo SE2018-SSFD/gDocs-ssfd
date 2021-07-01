@@ -99,35 +99,6 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error
 
 	//zookeeper election
 	m.RegisterElectionNodes()
-
-	// listening on chunkservers
-	//cb := func(el *zkWrap.Elector) {
-	//	onClientConn := func (me string, who string) {
-	//		var argG util.GetChunkStatesArgs
-	//		var retG util.GetChunkStatesReply
-	//		err = util.Call(who, "Master.GetFileMetaRPC", argG, &retG)
-	//		//TODO : check chunk states
-	//		err = m.RegisterServer(util.Address(who))
-	//		if err!=nil{
-	//			logrus.Fatal("Master addServer error : ", err)
-	//			return
-	//		}
-	//	}
-	//	onClientDisConn := func (me string, who string) {
-	//
-	//	}
-	//	hb,err = zkWrap.RegisterHeartbeat("addServers",util.MAXWAITINGTIME * time.Second,string(addr),onClientConn,onClientDisConn)
-	//	if err !=nil {
-	//		logrus.Fatal("Master addServer error : ", err)
-	//		return
-	//	}
-	//}
-	//_, err = zkWrap.NewElector("test", string(addr), cb)
-	//if err !=nil {
-	//	logrus.Fatal("Election error : ", err)
-	//	return nil,err
-	//}
-
 	if err == nil {
 		logrus.Infoln("master " + addr + ": init success")
 	}
@@ -211,8 +182,8 @@ func (m *Master) Exit() {
 	logrus.Debugf("Master Exit")
 	err := m.L.Close()
 	close(m.shutdown)
-	// stop election
-	m.el.StopElection()
+	// stop election (resign)
+	//m.el.StopElection()
 	if err != nil {
 		return
 	}

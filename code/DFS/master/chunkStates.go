@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"sync"
-	"time"
 )
 /* The state of all chunks, maintained by the master */
 /* Lock order : chunkstates > fileState > chunkState > handleState*/
 type ChunkStates struct {
 	sync.RWMutex
 	file  map[util.DFSPath]*fileState
+	chunk map[util.Handle]util.Version
 	handle *handleState
 }
 type fileState struct{
@@ -23,7 +23,6 @@ type chunkState struct {
 	sync.RWMutex
 	Handle util.Handle
 	Locations []util.Address // set of replica locations
-	expire   time.Time           // lease expire time
 }
 type handleState struct {
 	sync.RWMutex
@@ -36,11 +35,11 @@ type serialfileState struct{
 type SerialChunkStates struct{
 	CurHandle util.Handle
 	File  map[util.DFSPath]serialfileState
+	Chunk map[util.Handle]util.Version
 }
 type SerialChunkState struct{
 	Handle util.Handle
 	Locations []util.Address // set of replica locations
-	Expire   time.Time           // lease expire time
 }
 
 // Serialize a chunkstates
@@ -50,6 +49,10 @@ func (s* ChunkStates) Serialize() SerialChunkStates {
 	scss := SerialChunkStates{
 		CurHandle: -1,
 		File: make(map[util.DFSPath]serialfileState),
+		Chunk: make(map[util.Handle]util.Version),
+	}
+	for handle,verNum := range s.chunk{
+		scss.Chunk[handle]=verNum
 	}
 	for path,state := range s.file{
 		s.file[path].RLock()
@@ -59,7 +62,6 @@ func (s* ChunkStates) Serialize() SerialChunkStates {
 			chunks = append(chunks,SerialChunkState{
 				Locations: chunk.Locations,
 				Handle: chunk.Handle,
-				Expire: chunk.expire,
 			} )
 			state.chunks[index].RUnlock()
 		}
@@ -78,6 +80,14 @@ func (s* ChunkStates) Serialize() SerialChunkStates {
 // Deserialize into chunkstates
 // Master need not take any lock because it is single-threaded
 func (s* ChunkStates) Deserialize(scss SerialChunkStates) error {
+	// clear remaining states
+	s.file = make(map[util.DFSPath]*fileState)
+	s.chunk = make(map[util.Handle]util.Version)
+
+	// recover original states
+	for handle,verNum := range scss.Chunk{
+		s.chunk[handle]=verNum
+	}
 	for path,state := range scss.File{
 		err := s.NewFile(path)
 		if err!=nil{
@@ -88,7 +98,6 @@ func (s* ChunkStates) Deserialize(scss SerialChunkStates) error {
 			s.file[path].chunks = append(s.file[path].chunks,&chunkState{
 				Locations: chunk.Locations,
 				Handle: chunk.Handle,
-				expire: chunk.Expire,
 			} )
 		}
 	}
@@ -109,15 +118,16 @@ func (s* ChunkStates) CreateChunkAndReplica(fs *fileState,addrs []util.Address) 
 	newHandle := s.handle.curHandle+1
 	logrus.Infof(" CreateChunkAndReplica : new Handle %d\n",newHandle)
 	s.handle.curHandle+=1
+	s.chunk[newHandle] = util.INITIALVERSION
 	s.handle.Unlock()
 
 	// add chunk to file
 	newChunk = &chunkState{
 		Locations: make([]util.Address,0),
 		Handle: newHandle,
-		expire: time.Now(),
 	}
 	fs.chunks = append(fs.chunks,newChunk)
+
 	newChunk.Lock()
 	defer newChunk.Unlock()
 	fs.Unlock()
@@ -138,6 +148,7 @@ func newChunkStates()*ChunkStates{
 		handle: &handleState{
 			curHandle: 0,
 		},
+		chunk: make(map[util.Handle]util.Version,0),
 	}
 	return cs
 }
