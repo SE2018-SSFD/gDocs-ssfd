@@ -7,6 +7,7 @@ import (
 
 type Elector struct {
 	elect *leaderelection.Election
+	conn  *zk.Conn
 
 	IsLeader     bool
 	IsRunning    bool
@@ -39,6 +40,7 @@ func NewElector(electionName string, me string, onElectedCallback ElectionCallba
 
 	elector := Elector{
 		elect: election,
+		conn:  conn,
 
 		IsLeader:     false,
 		IsRunning:    true,
@@ -76,7 +78,8 @@ func (el *Elector) Resign() {
 }
 
 func (el *Elector) StopElection() {
-	el.elect.EndElection()
+	// el.elect.EndElection()
+	el.conn.Close()
 	el.IsLeader = false
 	el.IsRunning = false
 }
