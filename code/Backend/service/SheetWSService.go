@@ -104,7 +104,23 @@ func SheetOnDisConn(uid uint, username string, fid uint) {
 		group.userN -= 1
 		if group.userN == 0 {
 			logger.Debugf("[%d] delete group", fid)
+			// delete group entry
 			sheetGroup.Delete(fid)
+
+			// persist in dfs
+			if !config.Get().WriteThrough {
+				if memSheet := getSheetCache().Get(fid); memSheet != nil {
+					commitSheetsWithCache([]uint{fid}, []*cache.MemSheet{memSheet})
+				} else {
+					logger.Warnf("[fid:%d] Recovering from log", fid)
+					sheet := dao.GetSheetByFid(fid)
+					if memSheet = recoverSheetFromLog(&sheet); memSheet == nil {
+						logger.Errorf("[fid:%d] Recover from log fails!", fid)
+						return
+					}
+					commitSheetsWithCache([]uint{fid}, []*cache.MemSheet{memSheet})
+				}
+			}
 		}
 	}
 }
