@@ -30,38 +30,25 @@ func Chroot(path string) error {
 		return err
 	}
 
-	if rootExists, _, err := conn.Exists(path); err != nil {
+	if err := createContainerIfNotExist(conn, path); err != nil {
 		return err
-	} else if !rootExists {
-		if _, err := conn.CreateContainer(path, nil, zk.FlagTTL, zk.WorldACL(zk.PermAll)); err != nil {
-			return err
-		}
 	}
 
-	if lockRootExists, _, err := conn.Exists(path + lockRoot); err != nil {
+	if err := createContainerIfNotExist(conn, path + lockRoot); err != nil {
 		return err
-	} else if !lockRootExists {
-		if _, err := conn.CreateContainer(path + lockRoot, nil, zk.FlagTTL, zk.WorldACL(zk.PermAll)); err != nil {
-			return err
-		}
 	}
 
-	if heartbeatRootExists, _, err := conn.Exists(path + heartbeatRoot); err != nil {
+	if err := createContainerIfNotExist(conn, path + heartbeatRoot); err != nil {
 		return err
-	} else if !heartbeatRootExists {
-		if _, err := conn.CreateContainer(path + heartbeatRoot, nil, zk.FlagTTL, zk.WorldACL(zk.PermAll)); err != nil {
-			return err
-		}
 	}
 
-	if electionRootExists, _, err := conn.Exists(path + electionRoot); err != nil {
+	if err := createContainerIfNotExist(conn, path + electionRoot); err != nil {
 		return err
-	} else if !electionRootExists {
-		if _, err := conn.CreateContainer(path + electionRoot, nil, zk.FlagTTL, zk.WorldACL(zk.PermAll)); err != nil {
-			return err
-		}
 	}
 
+	if err := createContainerIfNotExist(conn, path + logRoot); err != nil {
+		return err
+	}
 
 	root = path
 

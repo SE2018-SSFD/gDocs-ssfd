@@ -24,12 +24,8 @@ func NewElector(electionName string, me string, onElectedCallback ElectionCallba
 
 	path := pathWithChroot(electionRoot + "/" + electionName)
 
-	if pExists, _, err := conn.Exists(path); err != nil {
+	if err := createContainerIfNotExist(conn, path); err != nil {
 		return nil, err
-	} else if !pExists {
-		if _, err := conn.CreateContainer(path, nil, zk.FlagTTL, zk.WorldACL(zk.PermAll)); err != nil {
-			return nil, err
-		}
 	}
 
 	election, err := leaderelection.NewElection(conn, path, me)
