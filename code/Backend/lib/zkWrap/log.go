@@ -1,7 +1,6 @@
 package zkWrap
 
 import (
-	"backend/utils/logger"
 	mapset "github.com/deckarep/golang-set"
 	"github.com/go-zookeeper/zk"
 	"github.com/pkg/errors"
@@ -88,8 +87,6 @@ func NewLogRoom(serviceName string, onNewChannelCallback LogOnNewChannelCallback
 						curChildren, stat, evenChan, err = conn.ChildrenW(path)
 						if err == zk.ErrNoNode {
 							return
-						} else if err != nil {
-							logger.Errorf("%+v", errors.WithStack(err))
 						}
 						curCidSet := mapset.NewSetFromSlice(stringSlice2InterfaceSlice(curChildren))
 						diffCidSet := curCidSet.Difference(lr.cidSet)
@@ -98,7 +95,6 @@ func NewLogRoom(serviceName string, onNewChannelCallback LogOnNewChannelCallback
 							cid := name2id("logName", chanName.(string))
 							if lr.GetLogChannel(cid) == nil {
 								if err := lr.followLogChannel(cid); err != nil {
-									logger.Errorf("%+v", errors.WithStack(err))
 									return
 								}
 							}
@@ -187,7 +183,6 @@ func name2id(prefix string, name string) (id int) {
 	if lid64, err := strconv.ParseInt(name[len(prefix):], 10, 64); err == nil {
 		return int(lid64)
 	} else {
-		logger.Errorf("[%s] Cannot parse logName to lid!")
 		return 0
 	}
 }
@@ -248,8 +243,6 @@ func NewLog(serviceName string, onAppendCallback LogOnAppendCallback) (l *Log, e
 						curLogNames, _, evenChan, err = conn.ChildrenW(path)
 						if err == zk.ErrNoNode {
 							return
-						} else if err != nil {
-							logger.Errorf("%+v", errors.WithStack(err))
 						}
 						curLidSet := mapset.NewSetFromSlice(stringSlice2InterfaceSlice(curLogNames))
 						newLogs := curLidSet.Difference(retLog.lidSet)
@@ -265,8 +258,6 @@ func NewLog(serviceName string, onAppendCallback LogOnAppendCallback) (l *Log, e
 									})
 									break
 								} else {
-									logger.Errorf("[%s] Log node getting failed!", logPath)
-									logger.Errorf("%+v", errors.WithStack(err))
 									continue
 								}
 							}
@@ -301,20 +292,16 @@ func (l *Log) DeleteAll() (err error) {
 				if exist, stat, err := l.conn.Exists(logPath); err == nil {
 					if exist {
 						if err := l.conn.Delete(logPath, stat.Version); err == zk.ErrNoNode {
-							logger.Error("[%s (delete)] Child is deleted before deleted by log.DeleteAll()")
 							continue
 						} else if err != nil {
-							logger.Errorf("%+v", errors.WithStack(err))
 							continue
 						} else {
 							break
 						}
 					} else {
-						logger.Error("[%s (exist)] Child is deleted before deleted by log.DeleteAll()")
 						break
 					}
 				} else {
-					logger.Errorf("[%+v] l.conn.Exists fails", errors.WithStack(err))
 					continue
 				}
 			}

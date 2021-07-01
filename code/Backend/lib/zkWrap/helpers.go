@@ -1,7 +1,6 @@
 package zkWrap
 
 import (
-	"backend/utils/logger"
 	"github.com/go-zookeeper/zk"
 	"github.com/pkg/errors"
 	"sync"
@@ -37,10 +36,8 @@ func createContainerIfNotExist(conn *zk.Conn, path string) (err error) {
 func deleteNodeOne(conn *zk.Conn, path string, version int32) (err error) {
 	for {
 		if err := conn.Delete(path, version); err != nil && err == zk.ErrNoNode {
-			logger.Errorf("[%s] node does not exist when deleting node", path)
 			return err
 		} else if err != nil {
-			logger.Errorf("[%s] [%v] deleting node failed", path, err)
 			continue
 		} else {
 			println(path)
@@ -54,10 +51,8 @@ func deleteNodeAll(conn *zk.Conn, path string, delSelf bool) (err error) {
 	wg := sync.WaitGroup{}
 	for {
 		if children, stat, err := conn.Children(path); err != nil && err == zk.ErrNoNode {
-			logger.Errorf("[%s] deleteNodeAll path does not exist when getting child", path)
 			return err
 		} else if err != nil {
-			logger.Errorf("[%s] [%v] deleteNodeAll getting children of path failed", path, err)
 			continue
 		} else {
 			wg.Add(len(children))
