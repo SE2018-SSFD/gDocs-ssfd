@@ -212,7 +212,6 @@ func (m *Master) Exit() {
 	err := m.L.Close()
 	close(m.shutdown)
 	// stop election
-	// m.el.Resign()
 	m.el.StopElection()
 	if err != nil {
 		return
