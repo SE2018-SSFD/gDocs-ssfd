@@ -54,11 +54,9 @@ func NewElector(electionName string, me string, onElectedCallback ElectionCallba
 			case status, ok := <-election.Status():
 				if ok {
 					if status.Err != nil {
-						election.EndElection()
 						elector.IsLeader = false
 						elector.IsRunning = false
-					}
-					if status.Role == leaderelection.Leader {
+					} else if status.Role == leaderelection.Leader {
 						elector.IsLeader = true
 						onElectedCallback(&elector)
 					}
