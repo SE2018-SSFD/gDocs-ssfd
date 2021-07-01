@@ -202,14 +202,30 @@ func recoverSheetFromLog(sheet *model.Sheet) (memSheet *cache.MemSheet) {
 	// TODO: !!! return error !!!
 	fid := sheet.Fid
 	curCid := uint(sheet.CheckPointNum)
+	chkpPath := gdocFS.GetCheckPointPath("sheet", fid, curCid)
 	logPath := gdocFS.GetLogPath("sheet", fid, curCid + 1)
 
 	// TODO: determine whether sheet is from crashed server and call SheetFSCheck
 	// SheetFSCheck(fid, isFromCrashServer)
 
-	if content, err := dao.FileGetAll(logPath); err == nil {
-		if logs, err := gdocFS.PickleSheetLogsFromContent(content); err == nil {
-			memSheet = cache.NewMemSheet(minRows, minCols)
+	if logContent, err := dao.FileGetAll(logPath); err == nil {
+		if logs, err := gdocFS.PickleSheetLogsFromContent(logContent); err == nil {
+			if curCid == 0 {	// no checkpoint
+				memSheet = cache.NewMemSheet(minRows, minCols)
+			} else {			// load latest checkpoint
+				if chkpContent, err := dao.FileGetAll(chkpPath); err == nil {
+					if chkp, err := gdocFS.PickleCheckPointFromContent(chkpContent); err == nil {
+						memSheet = cache.NewMemSheetFromStringSlice(chkp.Content, chkp.Columns)
+					} else {
+						logger.Errorf("[fid: %d] Sheet checkpoint cannot be pickled")
+						return nil
+					}
+				} else {
+					logger.Errorf("[%s] Checkpoint file read fails!", chkpPath)
+					return nil
+				}
+			}
+
 			for li := 0; li < len(logs); li += 1 {
 				log := &logs[li]
 				memSheet.Set(log.Row, log.Col, log.New)
