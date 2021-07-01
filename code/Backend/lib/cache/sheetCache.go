@@ -120,6 +120,12 @@ func NewMemSheet(initRow int, initCol int) *MemSheet {
 	}
 }
 
+func NewMemSheetFromStringSlice(ss []string, columns int) *MemSheet {
+	return &MemSheet{
+		cells: NewCellNetFromStringSlice(ss, columns),
+	}
+}
+
 func (ms *MemSheet) Set(row int, col int, content string) {
 	if row < 0 || col < 0 {
 		panic("row or column index is negative")
