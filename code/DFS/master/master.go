@@ -25,9 +25,12 @@ type Master struct {
 	// manage the state of chunkserver node
 	css *ChunkServerStates
 	// manage the state of chunk
-	cs       *ChunkStates
-	ns       *NamespaceState
-	shutdown chan interface{}
+	cs               *ChunkStates
+	ns               *NamespaceState
+	shutdown         chan interface{}
+	clusterHeartbeat *zkWrap.Heartbeat //this heartbeat contains one master and some chunkservers, when master become leader, join this heartbeat
+	leaderHeartbeat  *zkWrap.Heartbeat //this heartbeat contains one master and some clients, when master become leader, join this heartbeat
+	el               *zkWrap.Elector   // use for leader election
 }
 
 type OperationType int32
@@ -92,7 +95,10 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error
 	}
 
 	// Wait until other masters are ready
-	err = implicitWait(util.MAXWAITINGTIME*time.Second, &wg)
+	// err = implicitWait(util.MAXWAITINGTIME*time.Second, &wg)
+
+	//zookeeper election
+	m.RegisterElectionNodes()
 
 	// listening on chunkservers
 	//cb := func(el *zkWrap.Elector) {
@@ -205,6 +211,9 @@ func (m *Master) Exit() {
 	logrus.Debugf("Master Exit")
 	err := m.L.Close()
 	close(m.shutdown)
+	// stop election
+	m.el.Resign()
+	m.el.StopElection()
 	if err != nil {
 		return
 	}

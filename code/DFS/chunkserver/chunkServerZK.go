@@ -1,8 +1,8 @@
 package chunkserver
 
 import (
+	"DFS/util"
 	"DFS/util/zkWrap"
-	"time"
 )
 
 func onHeartbeatConn(_ string, who string) {
@@ -15,9 +15,9 @@ func onHeartbeatDisConn(_ string, who string) {
 
 func (cs *ChunkServer) RegisterNodes() {
 	hb, err := zkWrap.RegisterHeartbeat(
-		"chunkserver",
-		15*time.Second,
-		cs.addr,
+		"heartbeat",
+		util.HEARTBEATDURATION,
+		"chunkserver"+cs.addr,
 		onHeartbeatConn,
 		onHeartbeatDisConn,
 	)

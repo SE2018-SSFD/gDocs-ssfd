@@ -6,18 +6,18 @@ import (
 )
 
 type Elector struct {
-	elect			*leaderelection.Election
+	elect *leaderelection.Election
 
-	IsLeader		bool
-	IsRunning		bool
-	ElectionName	string
-	Me				string
+	IsLeader     bool
+	IsRunning    bool
+	ElectionName string
+	Me           string
 }
 
 type ElectionCallback func(*Elector)
 
 func NewElector(electionName string, me string, onElectedCallback ElectionCallback) (*Elector, error) {
-	conn, _, err := zk.Connect(hosts, sessionTimeout)
+	conn, _, err := zk.Connect(hosts, sessionTimeout/3)
 	if err != nil {
 		return nil, err
 	}
@@ -40,10 +40,10 @@ func NewElector(electionName string, me string, onElectedCallback ElectionCallba
 	elector := Elector{
 		elect: election,
 
-		IsLeader: false,
-		IsRunning: true,
+		IsLeader:     false,
+		IsRunning:    true,
 		ElectionName: electionName,
-		Me: me,
+		Me:           me,
 	}
 	go election.ElectLeader()
 	go func() {

@@ -2,6 +2,7 @@ package client
 
 import (
 	"DFS/util"
+	"DFS/util/zkWrap"
 	json "encoding/json"
 	"fmt"
 	"io"
@@ -14,10 +15,11 @@ import (
 )
 
 type Client struct {
-	clientAddr util.Address
-	masterAddr util.Address
-	fdTable    map[int]util.DFSPath
-	s          *http.Server
+	clientAddr      util.Address
+	masterAddr      util.Address
+	fdTable         map[int]util.DFSPath
+	s               *http.Server
+	LeaderHeartbeat *zkWrap.Heartbeat // only one master(leader) and some clients in this room
 	//TODO:add lease
 }
 
@@ -25,9 +27,12 @@ type Client struct {
 func InitClient(clientAddr util.Address, masterAddr util.Address) *Client {
 	c := &Client{
 		clientAddr: clientAddr,
-		masterAddr: masterAddr,
+		masterAddr: masterAddr, //TODO: we should not use this arg
 		fdTable:    make(map[int]util.DFSPath),
 	}
+	//to find master leader
+	zkWrap.Chroot("/DFS")
+	c.RegisterNodes()
 	return c
 }
 
