@@ -56,6 +56,20 @@ func RecoverSheet(ctx iris.Context) {
 	utils.SendResponse(ctx, success, msg, nil)
 }
 
+func CommitSheet(ctx iris.Context) {
+	var params utils.CommitSheetParams
+	if !utils.GetContextParams(ctx, &params) {
+		return
+	}
+
+	success, msg, data, addr := service.CommitSheet(params)
+	if addr != "" {
+		utils.RequestRedirectTo(ctx, "http://", addr, "/commitsheet")
+	} else {
+		utils.SendResponse(ctx, success, msg, data)
+	}
+}
+
 func GetSheetCheckPoint(ctx iris.Context) {
 	var params utils.GetSheetCheckPointParams
 	if !utils.GetContextParams(ctx, &params) {

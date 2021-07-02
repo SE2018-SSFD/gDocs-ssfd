@@ -30,6 +30,8 @@ const (
 	SheetLogDoNotExist		=	24
 	SheetRecoverSuccess		=	25
 	SheetAlreadyRecovered	=	26
+	SheetNotInCache			=	27
+	SheetCommitSuccess		=	28
 )
 
 var TokenTerm int64 = 30 * 60 // 30min
@@ -99,8 +101,9 @@ type RecoverSheetParams struct {
 	Fid			uint		`json:"fid"`
 }
 
-type GetSheetBinParams struct {
+type CommitSheetParams struct {
 	Token		string		`json:"token"`
+	Fid			uint		`json:"fid"`
 }
 
 type GetSheetCheckPointParams struct {

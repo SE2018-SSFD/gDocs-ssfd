@@ -127,37 +127,46 @@ func appendOneSheetLog(fid uint, lid uint, log *gdocFS.SheetLogPickle) {
 	}
 }
 
+func commitOneSheetWithCache(fid uint, memSheet *cache.MemSheet) (cid uint) {
+	memSheet.Lock()
+
+	// update model Sheet
+	sheet := dao.GetSheetByFid(fid)
+	curCid := sheet.CheckPointNum
+	sheet.CheckPointNum = curCid + 1
+	dao.SetSheet(sheet)
+
+	// write checkpoint to curCid+1
+	cid = uint(curCid + 1)
+	rows, cols := memSheet.Shape()
+	if err := sheetCreatePickledCheckPointInDfs(fid, cid, &gdocFS.SheetCheckPointPickle{
+		Cid: cid,
+		Timestamp: time.Now(),
+		Rows: rows,
+		Columns: cols,
+		Content: memSheet.ToStringSlice(),
+	}); err != nil {
+		logger.Errorf("%+v", err)
+	}
+
+	// write commit entry to log with lid=curCid+1
+	lid := uint(curCid + 1)
+	appendOneSheetLog(fid, lid, &logCommitEntry)
+
+	// create log with lid=curCid+2
+	if err := sheetCreateLogFile(fid, lid + 1); err != nil {
+		logger.Errorf("%+v", err)
+	}
+
+	memSheet.Unlock()
+
+	return cid
+}
+
 func commitSheetsWithCache(fids []uint, memSheets []*cache.MemSheet) {
 	for ei := 0; ei < len(fids); ei += 1 {
 		fid, memSheet := fids[ei], memSheets[ei]
-
-		// update model Sheet
-		sheet := dao.GetSheetByFid(fid)
-		curCid := sheet.CheckPointNum
-		sheet.CheckPointNum = curCid + 1
-		dao.SetSheet(sheet)
-
-		// write checkpoint to curCid+1
-		cid := uint(curCid + 1)
-		rows, cols := memSheet.Shape()
-		if err := sheetCreatePickledCheckPointInDfs(fid, cid, &gdocFS.SheetCheckPointPickle{
-			Cid: cid,
-			Timestamp: time.Now(),
-			Rows: rows,
-			Columns: cols,
-			Content: memSheet.ToStringSlice(),
-		}); err != nil {
-			logger.Errorf("%+v", err)
-		}
-
-		// write commit entry to log with lid=curCid+1
-		lid := uint(curCid + 1)
-		appendOneSheetLog(fid, lid, &logCommitEntry)
-
-		// create log with lid=curCid+2
-		if err := sheetCreateLogFile(fid, lid + 1); err != nil {
-			logger.Errorf("%+v", err)
-		}
+		commitOneSheetWithCache(fid, memSheet)
 	}
 }
 

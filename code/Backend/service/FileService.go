@@ -207,6 +207,36 @@ func RecoverSheet(params utils.RecoverSheetParams) (success bool, msg int) {
 	return success, msg
 }
 
+func CommitSheet(params utils.CommitSheetParams) (success bool, msg int, data uint, redirect string) {
+	uid := CheckToken(params.Token)
+	if uid != 0 {
+		ownedFids := dao.GetSheetFidsByUid(uid)
+		if !utils.UintListContains(ownedFids, params.Fid) {
+			success, msg, data, redirect = false, utils.SheetNoPermission, 0, ""
+		} else {
+			sheet := dao.GetSheetByFid(params.Fid)
+			if sheet.IsDeleted {
+				success, msg, data, redirect = false, utils.SheetIsInTrashBin, 0, ""
+			} else {
+				if addr, isMine := cluster.FileBelongsTo(sheet.Name, sheet.Fid); !isMine {
+					return false, msg, data, addr
+				}
+				memSheet := getSheetCache().Get(sheet.Fid)
+				if memSheet == nil {
+					return false, utils.SheetNotInCache, 0, ""
+				} else {
+					cid := commitOneSheetWithCache(sheet.Fid, memSheet)
+					return true, utils.SheetCommitSuccess, cid, ""
+				}
+			}
+		}
+	} else {
+		success, msg, data, redirect = false, utils.InvalidToken, 0, ""
+	}
+
+	return success, msg, data, redirect
+}
+
 func GetSheetCheckPoint(params utils.GetSheetCheckPointParams) (success bool, msg int, data *gdocFS.SheetCheckPointPickle) {
 	uid := CheckToken(params.Token)
 	if uid != 0 {
