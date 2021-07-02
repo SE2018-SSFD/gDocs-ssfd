@@ -112,6 +112,7 @@ func (net *CellNet) ToStringSlice() (ss []string) {
 // In-memory sheet
 type MemSheet struct {
 	cells		*CellNet
+	monoLock	sync.RWMutex
 }
 
 func NewMemSheet(initRow int, initCol int) *MemSheet {
@@ -127,17 +128,32 @@ func NewMemSheetFromStringSlice(ss []string, columns int) *MemSheet {
 }
 
 func (ms *MemSheet) Set(row int, col int, content string) {
+	ms.monoLock.RLock()
+
 	if row < 0 || col < 0 {
 		panic("row or column index is negative")
 	}
 	ms.cells.Set(row, col, content)
+
+	ms.monoLock.RUnlock()
 }
 
-func (ms *MemSheet) Get(row int, col int) string {
+func (ms *MemSheet) Get(row int, col int) (content string) {
 	if row < 0 || col < 0 {
 		panic("row or column index is negative")
 	}
-	return ms.cells.Get(row, col)
+
+	content = ms.cells.Get(row, col)
+
+	return content
+}
+
+func (ms *MemSheet) Lock() {
+	ms.monoLock.Lock()
+}
+
+func (ms *MemSheet) Unlock() {
+	ms.monoLock.Unlock()
 }
 
 func (ms *MemSheet) GetSize() int64 {
