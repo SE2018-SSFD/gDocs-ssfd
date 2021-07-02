@@ -18,9 +18,10 @@ func InitDBConn() {
 		panic("Failed when connecting to DB " + uri)
 	}
 
-	_ = db.AutoMigrate(&model.UserAuth{})
-	_ = db.AutoMigrate(&model.User{})
-	_ = db.AutoMigrate(&model.Sheet{})
+	utf8DB := db.Set("gorm:table_options","DEFAULT CHARSET=utf8mb4")
+	_ = utf8DB.AutoMigrate(&model.UserAuth{})
+	_ = utf8DB.AutoMigrate(&model.User{})
+	_ = utf8DB.AutoMigrate(&model.Sheet{})
 
 	if utils.IsTest {
 		testPrepare()
