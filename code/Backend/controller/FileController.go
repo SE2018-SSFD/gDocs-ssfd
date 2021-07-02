@@ -45,6 +45,17 @@ func DeleteSheet(ctx iris.Context) {
 	}
 }
 
+func RecoverSheet(ctx iris.Context) {
+	var params utils.RecoverSheetParams
+	if !utils.GetContextParams(ctx, &params) {
+		return
+	}
+
+	success, msg:= service.RecoverSheet(params)
+
+	utils.SendResponse(ctx, success, msg, nil)
+}
+
 func GetSheetCheckPoint(ctx iris.Context) {
 	var params utils.GetSheetCheckPointParams
 	if !utils.GetContextParams(ctx, &params) {

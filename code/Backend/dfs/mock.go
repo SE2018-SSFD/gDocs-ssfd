@@ -44,7 +44,7 @@ func mockCreate(path string) (int, error) {
 }
 
 func mockDelete(path string) error {
-	err := os.Remove(root + path)
+	err := os.RemoveAll(root + path)
 	return err
 }
 

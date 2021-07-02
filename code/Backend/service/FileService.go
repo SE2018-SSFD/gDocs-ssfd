@@ -149,7 +149,11 @@ func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int, redirec
 						sheet.IsDeleted = true
 						dao.SetSheet(sheet)
 					} else {
-						// TODO: delete in dfs
+						sheetRoot := gdocFS.GetRootPath("sheet", sheet.Fid)
+						dao.DeleteSheet(sheet.Fid)
+						if err := dao.RemoveAll(sheetRoot); err != nil {
+							panic(err)
+						}
 					}
 				} else {
 					if addr, isMine := cluster.FileBelongsTo(sheet.Name, sheet.Fid); !isMine {
@@ -161,7 +165,11 @@ func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int, redirec
 						dao.SetSheet(sheet)
 						getSheetCache().Del(sheet.Fid)
 					} else {
-						// TODO: delete in dfs
+						sheetRoot := gdocFS.GetRootPath("sheet", sheet.Fid)
+						dao.DeleteSheet(sheet.Fid)
+						if err := dao.RemoveAll(sheetRoot); err != nil {
+							panic(err)
+						}
 					}
 				}
 
@@ -173,6 +181,30 @@ func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int, redirec
 	}
 
 	return success, msg, redirect
+}
+
+func RecoverSheet(params utils.RecoverSheetParams) (success bool, msg int) {
+	uid := CheckToken(params.Token)
+	if uid != 0 {
+		ownedFids := dao.GetSheetFidsByUid(uid)
+		if !utils.UintListContains(ownedFids, params.Fid) {
+			success, msg = false, utils.SheetNoPermission
+		} else {
+			sheet := dao.GetSheetByFid(params.Fid)
+			if sheet.IsDeleted {
+				sheet.IsDeleted = false
+				dao.SetSheet(sheet)
+
+				success, msg = true, utils.SheetRecoverSuccess
+			} else {
+				success, msg = false, utils.SheetAlreadyRecovered
+			}
+		}
+	} else {
+		success, msg = false, utils.InvalidToken
+	}
+
+	return success, msg
 }
 
 func GetSheetCheckPoint(params utils.GetSheetCheckPointParams) (success bool, msg int, data *gdocFS.SheetCheckPointPickle) {

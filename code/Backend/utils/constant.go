@@ -28,6 +28,8 @@ const (
 	SheetChkpDoNotExist		=	22
 	SheetGetLogSuccess		=	23
 	SheetLogDoNotExist		=	24
+	SheetRecoverSuccess		=	25
+	SheetAlreadyRecovered	=	26
 )
 
 var TokenTerm int64 = 30 * 60 // 30min
@@ -90,6 +92,15 @@ type GetSheetCheckPoint struct {
 type DeleteSheetParams struct {
 	Token		string		`json:"token"`
 	Fid			uint		`json:"fid"`
+}
+
+type RecoverSheetParams struct {
+	Token		string		`json:"token"`
+	Fid			uint		`json:"fid"`
+}
+
+type GetSheetBinParams struct {
+	Token		string		`json:"token"`
 }
 
 type GetSheetCheckPointParams struct {
