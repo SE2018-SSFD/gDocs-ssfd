@@ -386,3 +386,21 @@ func TestReReplicate(t *testing.T) {
 	chunkServerExit(cs)
 	Clear()
 }
+
+// func TestConcurrentAppend(t *testing.T) {
+// 	filename := "test.txt"
+// 	data := "123456"
+// 	buf := []byte(data)
+// 	fd, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
+// 	fd.WriteAt(buf, int64(5))
+// 	if err != nil {
+// 		logrus.Print(err)
+// 	}
+// 	var buf2 []byte = make([]byte, 10)
+// 	n, err := fd.ReadAt(buf2, 0)
+// 	logrus.Print(n)
+// 	if err != nil {
+// 		logrus.Print(err)
+// 	}
+// 	logrus.Print(buf2)
+// }

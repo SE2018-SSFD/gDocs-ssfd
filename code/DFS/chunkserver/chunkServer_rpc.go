@@ -121,10 +121,6 @@ func (cs *ChunkServer) ReadChunkRPC(args util.ReadChunkArgs, reply *util.ReadChu
 	return nil
 }
 
-func (cs *ChunkServer) HeartBeatRPC(args util.HeartBeatArgs, reply *util.HeartBeatReply) error {
-	return nil
-}
-
 func (cs *ChunkServer) CreateChunkRPC(args util.CreateChunkArgs, reply *util.CreateChunkReply) error {
 	log.Printf("ChunkServer %v: create chunk %v\n", cs.addr, args.Handle)
 	cs.Lock()
@@ -157,7 +153,15 @@ func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error 
 	cs.RUnlock()
 	defer ck.Unlock()
 
-	cs.SetChunk(args.CID.Handle, args.Off, data)
+	if args.IsAppend {
+		_, err := cs.AppendChunk(args.CID.Handle, data)
+		if err != nil {
+
+		}
+	} else {
+		cs.SetChunk(args.CID.Handle, args.Off, data)
+	}
+
 	ch := make(chan error)
 	for _, secondaryAddr := range args.Addrs {
 		go func(addr util.Address) {

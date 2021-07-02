@@ -6,31 +6,28 @@ import (
 )
 
 type Elector struct {
-	elect *leaderelection.Election
-	conn  *zk.Conn
+	elect			*leaderelection.Election
+	conn			*zk.Conn
+	closeChan		chan int
 
-	IsLeader     bool
-	IsRunning    bool
-	ElectionName string
-	Me           string
+	IsLeader		bool
+	IsRunning		bool
+	ElectionName	string
+	Me				string
 }
 
 type ElectionCallback func(*Elector)
 
 func NewElector(electionName string, me string, onElectedCallback ElectionCallback) (*Elector, error) {
-	conn, _, err := zk.Connect(hosts, sessionTimeout/3)
+	conn, _, err := zk.Connect(hosts, sessionTimeout)
 	if err != nil {
 		return nil, err
 	}
 
 	path := pathWithChroot(electionRoot + "/" + electionName)
 
-	if pExists, _, err := conn.Exists(path); err != nil {
+	if err := createContainerIfNotExist(conn, path); err != nil {
 		return nil, err
-	} else if !pExists {
-		if _, err := conn.CreateContainer(path, nil, zk.FlagTTL, zk.WorldACL(zk.PermAll)); err != nil {
-			return nil, err
-		}
 	}
 
 	election, err := leaderelection.NewElection(conn, path, me)
@@ -40,12 +37,12 @@ func NewElector(electionName string, me string, onElectedCallback ElectionCallba
 
 	elector := Elector{
 		elect: election,
-		conn:  conn,
+		conn: conn,
 
-		IsLeader:     false,
-		IsRunning:    true,
+		IsLeader: false,
+		IsRunning: true,
 		ElectionName: electionName,
-		Me:           me,
+		Me: me,
 	}
 	go election.ElectLeader()
 	go func() {
@@ -56,6 +53,7 @@ func NewElector(electionName string, me string, onElectedCallback ElectionCallba
 					if status.Err != nil {
 						elector.IsLeader = false
 						elector.IsRunning = false
+						return
 					} else if status.Role == leaderelection.Leader {
 						elector.IsLeader = true
 						onElectedCallback(&elector)
@@ -76,7 +74,12 @@ func (el *Elector) Resign() {
 }
 
 func (el *Elector) StopElection() {
-	// el.elect.EndElection()
+	el.elect.EndElection()
+	el.IsLeader = false
+	el.IsRunning = false
+}
+
+func (el *Elector) Kill() {
 	el.conn.Close()
 	el.IsLeader = false
 	el.IsRunning = false
