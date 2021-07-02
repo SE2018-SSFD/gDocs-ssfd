@@ -31,6 +31,7 @@ func SendResponse(ctx iris.Context, success bool, msg int, data interface{}) {
 }
 
 func RequestRedirectTo(ctx iris.Context, protocol string, addr string, api string) {
+	ctx.Header("Access-Control-Allow-Origin", "*")
 	ctx.Header("Location", protocol + addr + api)
 	ctx.StopWithStatus(iris.StatusTemporaryRedirect)
 }
