@@ -22,6 +22,7 @@ const (
 	ADDSERVEROPS   = 1007
 	DELSERVEROPS   = 1008
 	INITIALVERSION    =  1
+	HERETRYTIMES = 3
 )
 
 // ChunkServer

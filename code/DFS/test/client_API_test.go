@@ -149,17 +149,16 @@ func TestReadWrite(t *testing.T) {
 
 // Test multiple clients read & write operations with multiple masters
 func TestReadWriteMulti(t *testing.T){
-	cList,m,csList := InitMultiTest()
+	c,m,csList := InitTest()
 	defer func() {
 		m.Exit()
-		for _,c := range cList{
-			c.Exit()
-		}
+		c.Exit()
 		for _,cs := range csList{
 			cs.Exit()
 		}
 	}()
-	fdList := make([]int,0)
+	fdList := make([]int,4)
+
 	for i:=0;i<4;i++{
 		path := "/file"+strconv.Itoa(i+1)
 		err := util.HTTPCreate(util.CLIENTADDR,path)
@@ -219,15 +218,15 @@ func TestReadWriteMulti(t *testing.T){
 		go func(index int) {
 			offset := index*(util.MAXCHUNKSIZE*1.5)
 			data = []byte(util.MakeInt(index,util.MAXCHUNKSIZE*1.5))
-			err = util.HTTPWrite(util.CLIENTADDR,fdList[0],offset,data)
+			err = util.HTTPWrite(util.CLIENTADDR,fdList[1],offset,data)
 			util.AssertNil(t,err)
 			wg.Done()
 		}(i)
 	}
 	wg.Wait()
 	for i:=0;i<4;i++ {
-		offset := i*util.MAXCHUNKSIZE
-		result,err := util.HTTPRead(util.CLIENTADDR,fdList[0],offset,util.MAXCHUNKSIZE*1.5)
+		offset := i*(util.MAXCHUNKSIZE*1.5)
+		result,err := util.HTTPRead(util.CLIENTADDR,fdList[1],offset,util.MAXCHUNKSIZE*1.5)
 		util.AssertNil(t,err)
 		util.AssertEqual(t,string(result.Data),util.MakeInt(i,util.MAXCHUNKSIZE*1.5))
 	}
