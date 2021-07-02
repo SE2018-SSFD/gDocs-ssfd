@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"net/rpc"
+	"strconv"
 	"strings"
 )
 
@@ -47,13 +48,22 @@ func CallAll(dst []Address, rpcname string, args interface{}) error {
 // MakeString make ordered string from a-z repeating size times
 func MakeString(size int) string {
 	str := ""
-	for i:=0;i<size;i++{
+	for i := 0; i < size; i++ {
 		str += string(rune('a' + i%26))
 	}
 	return str
 }
 
-// parsePath is a helper method to parse a path string into parent and file
+// MakeInt make digit string repeating size times
+func MakeInt(digit int, size int) string {
+	str := ""
+	for i := 0; i < size; i++ {
+		str += strconv.Itoa(digit)
+	}
+	return str
+}
+
+// ParsePath is a helper method to parse a path string into parent and file
 func ParsePath(path DFSPath) (parent DFSPath, filename string, err error) {
 	// Check invalid path
 	if !CheckValidPath(path) {
@@ -66,7 +76,7 @@ func ParsePath(path DFSPath) (parent DFSPath, filename string, err error) {
 	return
 }
 
-// checkValidPath check if a DFS path is valid
+// CheckValidPath check if a DFS path is valid
 func CheckValidPath(path DFSPath) bool {
 	if len(path) == 0 || path[0] != '/' || path[len(path)-1] == '/' {
 		return false

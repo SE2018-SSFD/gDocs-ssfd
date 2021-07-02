@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"os"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 )
@@ -60,8 +61,8 @@ func InitMultiTest() (cList []*client.Client,m *master.Master,csList []*chunkser
 	go func(){m.Serve()}()
 	//Init five clients
 
-	cList = make([]*client.Client, 5)
-	for index, port := range []int{1333, 1334, 1335, 1336, 1337} {
+	cList = make([]*client.Client, 4)
+	for index, port := range []int{1333, 1334, 1335, 1336} {
 		go func(order int, p int) {
 			addr := util.Address("127.0.0.1:" + strconv.Itoa(p))
 			cList[order] = client.InitClient(addr, util.Address(""))
@@ -158,6 +159,81 @@ func TestReadWriteMulti(t *testing.T){
 			cs.Exit()
 		}
 	}()
+	fdList := make([]int,0)
+	for i:=0;i<4;i++{
+		path := "/file"+strconv.Itoa(i+1)
+		err := util.HTTPCreate(util.CLIENTADDR,path)
+		util.AssertNil(t,err)
+		fdList[i],err = util.HTTPOpen(util.CLIENTADDR,path)
+		util.AssertNil(t,err)
+	}
+
+	// 4 clients write to different file
+	var wg sync.WaitGroup
+	wg.Add(4)
+	for i:=0;i<4;i++ {
+		go func(index int) {
+			offset := 0
+			data := []byte(util.MakeInt(index,2*util.MAXCHUNKSIZE))
+			err := util.HTTPWrite(util.CLIENTADDR,fdList[index],offset, data)
+			util.AssertNil(t,err)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+	for i:=0;i<4;i++ {
+		offset := 0
+		result,err := util.HTTPRead(util.CLIENTADDR,fdList[i],offset,2*util.MAXCHUNKSIZE)
+		util.AssertNil(t,err)
+		util.AssertEqual(t,string(result.Data),util.MakeInt(i,2*util.MAXCHUNKSIZE))
+	}
+
+	// 4 clients write to same file (independent chunk)
+	wg.Add(4)
+	data := make([]byte,4*util.MAXCHUNKSIZE)
+	err := util.HTTPWrite(util.CLIENTADDR,fdList[0],0, data)
+	util.AssertNil(t,err)
+	for i:=0;i<4;i++ {
+		go func(index int) {
+			offset := index*util.MAXCHUNKSIZE
+			data = []byte(util.MakeInt(index,util.MAXCHUNKSIZE))
+			err = util.HTTPWrite(util.CLIENTADDR,fdList[0],offset,data)
+			util.AssertNil(t,err)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+	for i:=0;i<4;i++ {
+		offset := i*util.MAXCHUNKSIZE
+		result,err := util.HTTPRead(util.CLIENTADDR,fdList[0],offset,util.MAXCHUNKSIZE)
+		util.AssertNil(t,err)
+		util.AssertEqual(t,string(result.Data),util.MakeInt(i,util.MAXCHUNKSIZE))
+	}
+
+	// 4 clients write to same file (cross chunk)
+	wg.Add(4)
+	data = make([]byte,6*util.MAXCHUNKSIZE)
+	err = util.HTTPWrite(util.CLIENTADDR,fdList[1],0, data)
+	util.AssertNil(t,err)
+	for i:=0;i<4;i++ {
+		go func(index int) {
+			offset := index*(util.MAXCHUNKSIZE*1.5)
+			data = []byte(util.MakeInt(index,util.MAXCHUNKSIZE*1.5))
+			err = util.HTTPWrite(util.CLIENTADDR,fdList[0],offset,data)
+			util.AssertNil(t,err)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+	for i:=0;i<4;i++ {
+		offset := i*util.MAXCHUNKSIZE
+		result,err := util.HTTPRead(util.CLIENTADDR,fdList[0],offset,util.MAXCHUNKSIZE*1.5)
+		util.AssertNil(t,err)
+		util.AssertEqual(t,string(result.Data),util.MakeInt(i,util.MAXCHUNKSIZE*1.5))
+	}
+
+
+
 
 }
 
