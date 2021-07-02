@@ -52,36 +52,25 @@ export const logout = () => {
 export const checkSession = (callback) => {
     const url = HTTP_URL + 'getuser';
     const token = JSON.parse(localStorage.getItem("token"));
-    // console.log(token);
-    // if (token === null) {
-    //     const data = {
-    //         success: false,
-    //     }
-    //     callback(data)
-    // } else {
+    if (token === null) {
+        const data = {
+            success: false,
+        }
+        callback(data)
+    } else {
         const data = {
             token: token
         };
         postRequest(url, data, callback);
-    // }
+    }
 };
 
-export const getUser = () => {
+export const getUser = (callback) => {
     const url = HTTP_URL + 'getuser';
     const token = JSON.parse(localStorage.getItem('token'));
     const post_data = {
         token: token
     };
-    const callback = (data) => {
-        let msg_word = MSG_WORDS[data.msg];
-        if (data.success === true) {
-            localStorage.setItem('sheets', JSON.stringify(data.data.sheets));
-            localStorage.setItem('username', JSON.stringify(data.data.username));
-        } else {
-            message.error(msg_word).then(() => {
-            });
-        }
-    }
     postRequest(url, post_data, callback);
 }
 

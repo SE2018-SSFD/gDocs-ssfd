@@ -3,7 +3,7 @@ import {withRouter} from "react-router-dom";
 import '../css/home.css'
 import logo from '../assets/logo.png'
 
-import {Button, Col, Divider, Image, Input, Layout, Menu, Row, Space} from 'antd';
+import {Button, Col, Image, Input, Layout, Menu, message, Row, Space} from 'antd';
 import {
     AppstoreAddOutlined,
     BellOutlined,
@@ -19,6 +19,7 @@ import {
 import {FileList} from "../components/FileList";
 import {newSheet} from "../api/sheetService";
 import {UserAvatar} from "../components/UserAvatar";
+import {MSG_WORDS} from "../api/common";
 import {getUser} from "../api/userService";
 
 const {Header, Content, Footer, Sider} = Layout;
@@ -63,9 +64,7 @@ class HomeSider extends React.Component {
     }
 
     handleClick = (e) => {
-        console.log(e);
         this.menuCallback(e.key);
-
         this.setState({current: e.key});
     }
 
@@ -112,7 +111,7 @@ class HomeSider extends React.Component {
                     <Menu.Item key="ShareMe" icon={<FolderOutlined/>}>与我共享</Menu.Item>
                     <Menu.Item key="Introduce" icon={<FolderOutlined/>}>Hi, 欢迎使用SSFDoc</Menu.Item>
                 </SubMenu>
-                <Divider/>
+                {/*<hr size="3px" color="#E6E7E8"/>*/}
                 <Menu.Item key="Template" icon={<AppstoreAddOutlined/>}>模板</Menu.Item>
                 <Menu.Item key="Recycle" icon={<DeleteOutlined/>}>回收站</Menu.Item>
             </Menu>
@@ -132,7 +131,7 @@ class HomeContent extends React.Component {
                 </Menu.Item>
             </Menu>
             <div className="site-layout-background" style={{padding: 24, minHeight: 360}}>
-                <FileList/>
+                <FileList content={this.props.content}/>
             </div>
         </Content>;
     }
@@ -147,7 +146,7 @@ class RecycleContent extends React.Component {
                 </h1>
             </div>
             <div className="site-layout-background" style={{padding: 24, minHeight: 360}}>
-                <FileList/>
+                <FileList content={this.props.content}/>
             </div>
         </Content>;
     }
@@ -167,12 +166,38 @@ class HomeView extends React.Component {
         super(props);
         this.state = {
             curSection: 0,
+            file:[],
+            deletedFile:[],
         }
     }
 
     componentDidMount() {
+        const callback = (data) => {
+            let msg_word = MSG_WORDS[data.msg];
+            if (data.success === true) {
+                localStorage.setItem('sheets', JSON.stringify(data.data.sheets));
+                localStorage.setItem('username', JSON.stringify(data.data.username));
+            } else {
+                message.error(msg_word).then(() => {
+                });
+            }
+            let sheets = data.data.sheets;
+            let file = [];
+            let deletedFile = [];
+            sheets.forEach((v, i) => {
+                if (v.isDeleted === true) {
+                    deletedFile.push(v);
+                } else {
+                    file.push(v);
+                }
+            })
+            this.setState({
+                file:file,
+                deletedFile:deletedFile
+            })
 
-        getUser();
+        }
+        getUser(callback);
     }
 
     menuCallback = (key) => {
@@ -191,12 +216,12 @@ class HomeView extends React.Component {
     };
 
     render() {
-        const curSection = this.state.curSection;
+        const {curSection,file,deletedFile} = this.state;
         const content =
             curSection === 0 ? (
-                <HomeContent/>
+                <HomeContent content={file}/>
             ) : curSection === 1 ? (
-                <RecycleContent/>
+                <RecycleContent content={deletedFile}/>
             ) : (
                 <></>
             );
