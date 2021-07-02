@@ -3,6 +3,7 @@ package zkWrap
 import (
 	"github.com/Rossil2012/go-leaderelection"
 	"github.com/go-zookeeper/zk"
+	"github.com/pkg/errors"
 )
 
 type Elector struct {
@@ -21,18 +22,18 @@ type ElectionCallback func(*Elector)
 func NewElector(electionName string, me string, onElectedCallback ElectionCallback) (*Elector, error) {
 	conn, _, err := zk.Connect(hosts, sessionTimeout)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	path := pathWithChroot(electionRoot + "/" + electionName)
 
 	if err := createContainerIfNotExist(conn, path); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	election, err := leaderelection.NewElection(conn, path, me)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	elector := Elector{

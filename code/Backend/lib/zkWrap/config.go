@@ -3,6 +3,7 @@ package zkWrap
 import (
 	"backend/utils/config"
 	"github.com/go-zookeeper/zk"
+	"github.com/pkg/errors"
 	"strings"
 	"time"
 )
@@ -28,27 +29,27 @@ func Chroot(path string) error {
 
 	conn, _, err := zk.Connect(hosts, sessionTimeout)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	if err := createContainerIfNotExist(conn, path); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	if err := createContainerIfNotExist(conn, path + lockRoot); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	if err := createContainerIfNotExist(conn, path + heartbeatRoot); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	if err := createContainerIfNotExist(conn, path + electionRoot); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	if err := createContainerIfNotExist(conn, path + logRoot); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	root = path

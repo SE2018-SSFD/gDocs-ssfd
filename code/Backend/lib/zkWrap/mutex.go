@@ -1,8 +1,8 @@
 package zkWrap
 
 import (
-	"errors"
 	"github.com/go-zookeeper/zk"
+	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -14,12 +14,12 @@ type Mutex struct {
 
 func NewMutex(lockName string) (*Mutex, error) {
 	if strings.ContainsRune(lockName, '/') {
-		return nil, errors.New("zkWrap: lock name cannot contain rune /")
+		return nil, errors.WithStack(BackSlashErr)
 	}
 
 	conn, _, err := zk.Connect(hosts, sessionTimeout)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	println(pathWithChroot(lockRoot+"/"+lockName))

@@ -36,7 +36,7 @@ func createContainerIfNotExist(conn *zk.Conn, path string) (err error) {
 func deleteNodeOne(conn *zk.Conn, path string, version int32) (err error) {
 	for {
 		if err := conn.Delete(path, version); err != nil && err == zk.ErrNoNode {
-			return err
+			return errors.WithStack(err)
 		} else if err != nil {
 			continue
 		} else {
@@ -51,7 +51,7 @@ func deleteNodeAll(conn *zk.Conn, path string, delSelf bool) (err error) {
 	wg := sync.WaitGroup{}
 	for {
 		if children, stat, err := conn.Children(path); err != nil && err == zk.ErrNoNode {
-			return err
+			return errors.WithStack(err)
 		} else if err != nil {
 			continue
 		} else {
@@ -67,7 +67,7 @@ func deleteNodeAll(conn *zk.Conn, path string, delSelf bool) (err error) {
 			wg.Wait()
 			if delSelf && stat.EphemeralOwner == 0 {
 				if err := deleteNodeOne(conn, path, stat.Version); err != nil {
-					return err
+					return errors.WithStack(err)
 				}
 			}
 			break
