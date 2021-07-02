@@ -11,9 +11,7 @@ import (
 	"time"
 )
 
-// TODO: LOG is not Implemented
-
-var sheetCache *cache.SheetCache = nil
+var sheetCache *cache.SheetCache
 
 func getSheetCache() *cache.SheetCache {
 	if sheetCache == nil {
