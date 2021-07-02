@@ -11,12 +11,12 @@ func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 	//listening on chunkservers
 	if strings.Compare("chunkserver", who[:11]) == 0 {
 		//TODO: check and update chunk states
-		clientAddr := util.Address(who[11:])
-		logrus.Infof("client %v exists", clientAddr)
+		chunkServerAddr := util.Address(who[11:])
+		logrus.Infof("client %v exists", chunkServerAddr)
 		// Get chunk states in chunkServer
 		var argG util.GetChunkStatesArgs
 		var retG util.GetChunkStatesReply
-		err := util.Call(string(clientAddr), "ChunkServer.GetChunkStatesRPC", argG, &retG)
+		err := util.Call(string(chunkServerAddr), "ChunkServer.GetChunkStatesRPC", argG, &retG)
 		m.RLock()
 		defer m.RUnlock()
 		staleHandles := make([]util.Handle, 0)
@@ -35,12 +35,12 @@ func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 		var argS util.SetStaleArgs
 		var retS util.SetStaleReply
 		argS.Handles = staleHandles
-		err = util.Call(string(clientAddr), "ChunkServer.SetStaleRPC", argS, &retS)
+		err = util.Call(string(chunkServerAddr), "ChunkServer.SetStaleRPC", argS, &retS)
 		if err != nil {
 			logrus.Fatal("Master addServer error : ", err)
 			return
 		}
-		err = m.RegisterServer(util.Address(who))
+		err = m.RegisterServer(chunkServerAddr)
 		if err != nil {
 			logrus.Fatal("Master addServer error : ", err)
 			return
@@ -51,8 +51,13 @@ func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 func (m *Master) onClusterHeartbeatDisConn(_ string, who string) {
 	if strings.Compare("chunkserver", who[:11]) == 0 {
 		//TODO: remove chunkserver state
-		clientAddr := util.Address(who[11:])
-		logrus.Print("chunkserver %v leaves", clientAddr)
+		chunkServerAddr := util.Address(who[11:])
+		err := m.UnregisterServer(chunkServerAddr)
+		if err != nil {
+			logrus.Fatal("Master removeServer error : ", err)
+			return
+		}
+		logrus.Infof("chunkserver %v leaves", chunkServerAddr)
 	}
 }
 

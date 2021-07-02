@@ -12,9 +12,8 @@ import (
 	"testing"
 	"time"
 )
-
 // initTest init and return the handle of client,master and chunkservers
-func InitTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer){
+func InitTest() (c *client.Client,m *master.Master,csList []*chunkserver.ChunkServer){
 	logrus.SetLevel(logrus.DebugLevel)
 	//delete old ckp
 	util.DeleteFile("../log/checkpoint.dat")
@@ -38,10 +37,10 @@ func InitTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer
 	if err != nil {
 		logrus.Fatalf("mkdir %v error\n", "ck")
 	}
-	cs = make([]*chunkserver.ChunkServer, 5)
+	csList = make([]*chunkserver.ChunkServer, 5)
 	for index,port := range []int{3000,3001,3002,3003,3004}{
 		addr := util.Address("127.0.0.1:" + strconv.Itoa(port))
-		cs[index] = chunkserver.InitChunkServer(string(addr), "ck/ck"+strconv.Itoa(port),  util.MASTER1ADDR)
+		csList[index] = chunkserver.InitChunkServer(string(addr), "ck/ck"+strconv.Itoa(port),  util.MASTER1ADDR)
 		_ = m.RegisterServer(addr)
 		//util.AssertNil(t,err)
 	}
@@ -49,8 +48,60 @@ func InitTest() (c *client.Client,m *master.Master,cs []*chunkserver.ChunkServer
 	return
 }
 
+// initTest init and return the handle of client,master and chunkservers
+func InitMultiTest() (cList []*client.Client,m *master.Master,csList []*chunkserver.ChunkServer){
+	logrus.SetLevel(logrus.DebugLevel)
+	//delete old ckp
+	util.DeleteFile("../log/checkpoint.dat")
+	//delete old log
+	util.DeleteFile("../log/log.dat")
+	// Init master and client
+	m,_ = master.InitMaster(util.MASTER1ADDR, "../log")
+	go func(){m.Serve()}()
+	//Init five clients
+
+	cList = make([]*client.Client, 5)
+	for index, port := range []int{1333, 1334, 1335, 1336, 1337} {
+		go func(order int, p int) {
+			addr := util.Address("127.0.0.1:" + strconv.Itoa(p))
+			cList[order] = client.InitClient(addr, util.Address(""))
+			cList[order].Serve()
+		}(index, port)
+	}
+
+	// Register some virtual chunkServers
+	_, err := os.Stat("ck")
+	if err == nil {
+		err := os.RemoveAll("ck")
+		if err != nil {
+			logrus.Fatalf("mkdir %v error\n", "ck")
+		}
+	}
+	err = os.Mkdir("ck", 0755)
+	if err != nil {
+		logrus.Fatalf("mkdir %v error\n", "ck")
+	}
+	csList = make([]*chunkserver.ChunkServer, 5)
+	for index,port := range []int{3000,3001,3002,3003,3004}{
+		addr := util.Address("127.0.0.1:" + strconv.Itoa(port))
+		csList[index] = chunkserver.InitChunkServer(string(addr), "ck/ck"+strconv.Itoa(port),  util.MASTER1ADDR)
+		//util.AssertNil(t,err)
+	}
+	time.Sleep(500*time.Millisecond)
+	return
+}
+
+
+// Test single-client read & write operation
 func TestReadWrite(t *testing.T) {
-	c,m,cs := InitTest()
+	c,m,csList := InitTest()
+	defer func() {
+		m.Exit()
+		c.Exit()
+		for _,_cs := range csList{
+			_cs.Exit()
+		}
+	}()
 	err := util.HTTPCreate(util.CLIENTADDR,"/file1")
 	util.AssertNil(t,err)
 	err = util.HTTPCreate(util.CLIENTADDR,"/file2")
@@ -93,12 +144,20 @@ func TestReadWrite(t *testing.T) {
 	result,err = util.HTTPRead(util.CLIENTADDR,fd2,util.MAXCHUNKSIZE*2-1,util.MAXCHUNKSIZE+2)
 	util.AssertNil(t,err)
 	util.AssertEqual(t,string(result.Data),"xyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijk")
+}
 
-	m.Exit()
-	c.Exit()
-	for _,_cs := range cs{
-		_cs.Exit()
-	}
+// Test multiple clients read & write operations with multiple masters
+func TestReadWriteMulti(t *testing.T){
+	cList,m,csList := InitMultiTest()
+	defer func() {
+		m.Exit()
+		for _,c := range cList{
+			c.Exit()
+		}
+		for _,cs := range csList{
+			cs.Exit()
+		}
+	}()
 
 }
 
