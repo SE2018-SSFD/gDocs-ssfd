@@ -20,7 +20,6 @@ const (
 
 var (
 	logCommitEntry = gdocFS.SheetLogPickle{
-		Timestamp: time.Now(),
 		Row: -1,
 		Col: -1,
 	}
