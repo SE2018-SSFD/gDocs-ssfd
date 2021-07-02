@@ -94,7 +94,7 @@ func InitMultiTest() (cList []*client.Client,m *master.Master,csList []*chunkser
 
 
 // Test single-client read & write operation
-func TestReadWrite(t *testing.T) {
+func TestReadWriteSingle(t *testing.T) {
 	c,m,csList := InitTest()
 	defer func() {
 		m.Exit()
@@ -186,6 +186,7 @@ func TestReadWriteMulti(t *testing.T){
 		util.AssertNil(t,err)
 		util.AssertEqual(t,string(result.Data),util.MakeInt(i,2*util.MAXCHUNKSIZE))
 	}
+	logrus.Infoln("score : 25")
 
 	// 4 clients write to same file (independent chunk)
 	wg.Add(4)
@@ -208,7 +209,7 @@ func TestReadWriteMulti(t *testing.T){
 		util.AssertNil(t,err)
 		util.AssertEqual(t,string(result.Data),util.MakeInt(i,util.MAXCHUNKSIZE))
 	}
-
+	logrus.Infoln("score : 50")
 	// 4 clients write to same file (cross chunk)
 	wg.Add(4)
 	data = make([]byte,6*util.MAXCHUNKSIZE)
@@ -230,10 +231,27 @@ func TestReadWriteMulti(t *testing.T){
 		util.AssertNil(t,err)
 		util.AssertEqual(t,string(result.Data),util.MakeInt(i,util.MAXCHUNKSIZE*1.5))
 	}
+	logrus.Infoln("score : 75")
 
-
-
-
+	// 4 clients write to same file same place
+	wg.Add(4)
+	for i:=0;i<4;i++ {
+		go func(index int) {
+			offset := 0
+			data = []byte(util.MakeInt(index,util.MAXCHUNKSIZE*4))
+			err = util.HTTPWrite(util.CLIENTADDR,fdList[2],offset,data)
+			util.AssertNil(t,err)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+	for i:=0;i<4;i++ {
+		offset := i * util.MAXCHUNKSIZE
+		result,err := util.HTTPRead(util.CLIENTADDR,fdList[2],offset,util.MAXCHUNKSIZE)
+		util.AssertNil(t,err)
+		util.AssertSameData(t,result.Data)
+	}
+	logrus.Infoln("score : 100")
 }
 
 func CClear() {

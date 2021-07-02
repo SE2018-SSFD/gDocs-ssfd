@@ -197,10 +197,12 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		//TODO : Update ChunkServerState
 		//m.css.xxx
 	} else {
-		fs.Unlock()
 		targetChunk = fs.chunks[args.ChunkIndex]
+		targetChunk.RLock()
+		defer targetChunk.RUnlock()
+		fs.Unlock()
 	}
-	logrus.Debugln("targetchunk : ", targetChunk)
+	logrus.Debugf("targetchunk handle :%v, Locations : %v ", targetChunk.Handle,targetChunk.Locations)
 	// Get target servers which store the replicate
 	reply.ChunkServerAddrs = make([]util.Address, 0)
 	for _, addr := range targetChunk.Locations {

@@ -21,6 +21,21 @@ const (
 	MAXWAITINGTIME = 5 // the time to wait for parallel tests finished
 )
 
+// Assert if a string contains same data
+func AssertSameData(t *testing.T,a []byte){
+	if len(a) > 0{
+		r := a[0]
+		for _,char := range a{
+			if char!=r{
+				t.Fail()
+				t.Fatal("AssertSameData failed : ",r,char)
+			}
+		}
+	}
+	t.Logf("AssertSameData Succeed : ")
+
+}
+
 func AssertEqual(t *testing.T, a, b interface{}) {
 	t.Helper()
 	if a != b {

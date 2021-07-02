@@ -131,6 +131,7 @@ func (s* ChunkStates) CreateChunkAndReplica(fs *fileState,addrs []util.Address) 
 	newChunk.Lock()
 	defer newChunk.Unlock()
 	fs.Unlock()
+
 	for _ , addr := range addrs{
 		arg.Handle = newHandle
 		err = util.Call(string(addr), "ChunkServer.CreateChunkRPC", arg, &ret)

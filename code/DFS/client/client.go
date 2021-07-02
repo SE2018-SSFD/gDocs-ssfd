@@ -321,7 +321,6 @@ func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
 // 		w.WriteHeader(400)
 // 		return
 // 	}
-
 // 	// Get the file metadata and check
 // 	path := c.fdTable[argC.Fd]
 // 	if path == "" {
@@ -340,10 +339,8 @@ func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
 // 		return
 // 	}
 // 	var offset int
-
 // 	chunkIndex := retG.Size / util.MAXCHUNKSIZE
 // 	end := false
-
 // 	// try append to chunk, pad it and retry on next chunk if normal failure
 // 	// until success or unexpected error
 // 	for !end {
@@ -353,7 +350,6 @@ func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
 // 			end = true
 // 		}
 // 	}
-
 // 	retC.Offset = offset
 // 	msg, _ := json.Marshal(retC)
 // 	w.Write(msg)
@@ -516,7 +512,6 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	// Write to chunk
 	// writtenBytes, err := c._Write(path, argW.Offset, argW.Data, fileSize)
 	writtenBytes, err := c._Write(path, argW.Offset, argW.Data)
-
 	if err != nil {
 		logrus.Fatalln("Client write failed :", err)
 		w.WriteHeader(400)
