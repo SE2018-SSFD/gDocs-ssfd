@@ -23,10 +23,11 @@ func GetCheckPointPath(fileType string, fid uint, cid uint) string {
 		strconv.FormatUint(uint64(cid), 10) + ".txt"
 }
 
-func PickleCheckPointFromContent(content string) (chkp SheetCheckPointPickle, err error) {
-	if err = json.Unmarshal([]byte(content), &chkp); err != nil {
-		return SheetCheckPointPickle{}, err
+func PickleSheetCheckPointFromContent(content string) (chkp *SheetCheckPointPickle, err error) {
+	ret := SheetCheckPointPickle{}
+	if err = json.Unmarshal([]byte(content), &ret); err != nil {
+		return nil, err
 	} else {
-		return chkp, nil
+		return &ret, nil
 	}
 }

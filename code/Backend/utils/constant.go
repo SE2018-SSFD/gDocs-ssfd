@@ -24,6 +24,10 @@ const (
 	SheetIsInTrashBin		=	18
 	SheetWSRedirect			=	19
 	SheetWSDestination		=	20
+	SheetGetChkpSuccess		=	21
+	SheetChkpDoNotExist		=	22
+	SheetGetLogSuccess		=	23
+	SheetLogDoNotExist		=	24
 )
 
 var TokenTerm int64 = 30 * 60 // 30min
@@ -86,6 +90,18 @@ type GetSheetCheckPoint struct {
 type DeleteSheetParams struct {
 	Token		string		`json:"token"`
 	Fid			uint		`json:"fid"`
+}
+
+type GetSheetCheckPointParams struct {
+	Token		string		`json:"token"`
+	Fid			uint		`json:"fid"`
+	Cid			uint		`json:"cid"`
+}
+
+type GetSheetLogParams struct {
+	Token		string		`json:"token"`
+	Fid			uint		`json:"fid"`
+	Lid			uint		`json:"lid"`
 }
 
 type GetChunkParams struct {

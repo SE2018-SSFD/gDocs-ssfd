@@ -45,6 +45,28 @@ func DeleteSheet(ctx iris.Context) {
 	}
 }
 
+func GetSheetCheckPoint(ctx iris.Context) {
+	var params utils.GetSheetCheckPointParams
+	if !utils.GetContextParams(ctx, &params) {
+		return
+	}
+
+	success, msg, data := service.GetSheetCheckPoint(params)
+
+	utils.SendResponse(ctx, success, msg, data)
+}
+
+func GetSheetLog(ctx iris.Context) {
+	var params utils.GetSheetLogParams
+	if !utils.GetContextParams(ctx, &params) {
+		return
+	}
+
+	success, msg, data := service.GetSheetLog(params)
+
+	utils.SendResponse(ctx, success, msg, data)
+}
+
 func GetChunk(ctx iris.Context) {
 	var params utils.GetChunkParams
 	if !utils.GetContextParams(ctx, &params) {

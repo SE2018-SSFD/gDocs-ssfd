@@ -118,7 +118,7 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 				if err != nil {
 					panic(err)
 				}
-				filePickled, err := gdocFS.PickleCheckPointFromContent(fileRaw)
+				filePickled, err := gdocFS.PickleSheetCheckPointFromContent(fileRaw)
 				if err != nil {
 					panic("cannot pickle checkpoint from file")
 				}
@@ -189,7 +189,57 @@ func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int, redirec
 		success, msg = false, utils.InvalidToken
 	}
 
-	return
+	return success, msg, redirect
+}
+
+func GetSheetCheckPoint(params utils.GetSheetCheckPointParams) (success bool, msg int, data *gdocFS.SheetCheckPointPickle) {
+	uid := CheckToken(params.Token)
+	if uid != 0 {
+		ownedFids := dao.GetSheetFidsByUid(uid)
+		if !utils.UintListContains(ownedFids, params.Fid) {
+			success, msg, data = false, utils.SheetNoPermission, nil
+		} else {
+			sheet := dao.GetSheetByFid(params.Fid)
+			if params.Cid > uint(sheet.CheckPointNum) || params.Cid == 0 {
+				return false, utils.SheetChkpDoNotExist, nil
+			} else {
+				chkp, err := sheetGetPickledCheckPointFromDfs(params.Fid, params.Cid)
+				if err != nil {
+					panic(err)
+				}
+				success, msg, data = true, utils.SheetGetChkpSuccess, chkp
+			}
+		}
+	} else {
+		success, msg, data = false, utils.InvalidToken, nil
+	}
+
+	return success, msg, data
+}
+
+func GetSheetLog(params utils.GetSheetLogParams) (success bool, msg int, data []gdocFS.SheetLogPickle) {
+	uid := CheckToken(params.Token)
+	if uid != 0 {
+		ownedFids := dao.GetSheetFidsByUid(uid)
+		if !utils.UintListContains(ownedFids, params.Fid) {
+			success, msg, data = false, utils.SheetNoPermission, nil
+		} else {
+			sheet := dao.GetSheetByFid(params.Fid)
+			if params.Lid > uint(sheet.CheckPointNum) || params.Lid == 0 {
+				return false, utils.SheetLogDoNotExist, nil
+			} else {
+				log, err := sheetGetPickledLogFromDfs(params.Fid, params.Lid)
+				if err != nil {
+					panic(err)
+				}
+				success, msg, data = true, utils.SheetGetLogSuccess, log
+			}
+		}
+	} else {
+		success, msg, data = false, utils.InvalidToken, nil
+	}
+
+	return success, msg, data
 }
 
 func GetChunk(params utils.GetChunkParams) (success bool, msg int) {

@@ -284,7 +284,7 @@ func doSheetModifyWriteThrough(wss *wsWrap.WSServer, fid uint, uid uint, usernam
 			return
 		}
 
-		filePickled, err := gdocFS.PickleCheckPointFromContent(fileRaw)
+		filePickled, err := gdocFS.PickleSheetCheckPointFromContent(fileRaw)
 		if err != nil {
 			logger.Errorf("[%s] Checkpoint file cannot be pickled!", path)
 			return

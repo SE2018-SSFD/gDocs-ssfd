@@ -8,7 +8,7 @@ import (
 	"backend/utils"
 	"backend/utils/logger"
 	"encoding/json"
-	"errors"
+	"github.com/pkg/errors"
 	"strconv"
 	"time"
 )
@@ -119,7 +119,7 @@ func SheetFSCheck(fid uint, fullChk bool) (cid uint, lid uint, err error) {
 			if content, err := dao.FileGetAll(chkpPath); err != nil {
 				return 0, 0, err
 			} else {
-				if chkp, err := gdocFS.PickleCheckPointFromContent(content); err != nil ||
+				if chkp, err := gdocFS.PickleSheetCheckPointFromContent(content); err != nil ||
 					chkp.Cid != curCid || chkp.Rows <= 0 || chkp.Columns <= 0 {
 					// TODO: recover - checkpoint is invalid
 					return 0, 0, SheetFSUnrecoverableErr
@@ -214,7 +214,7 @@ func recoverSheetFromLog(sheet *model.Sheet) (memSheet *cache.MemSheet) {
 				memSheet = cache.NewMemSheet(minRows, minCols)
 			} else {			// load latest checkpoint
 				if chkpContent, err := dao.FileGetAll(chkpPath); err == nil {
-					if chkp, err := gdocFS.PickleCheckPointFromContent(chkpContent); err == nil {
+					if chkp, err := gdocFS.PickleSheetCheckPointFromContent(chkpContent); err == nil {
 						memSheet = cache.NewMemSheetFromStringSlice(chkp.Content, chkp.Columns)
 					} else {
 						logger.Errorf("[fid: %d] Sheet checkpoint cannot be pickled")
@@ -247,4 +247,24 @@ func recoverSheetFromLog(sheet *model.Sheet) (memSheet *cache.MemSheet) {
 	}
 
 	return memSheet
+}
+
+func sheetGetPickledCheckPointFromDfs(fid uint, cid uint) (chkp *gdocFS.SheetCheckPointPickle, err error) {
+	path := gdocFS.GetCheckPointPath("sheet", fid, cid)
+	if fileRaw, err := dao.FileGetAll(path); err != nil {
+		return nil, errors.WithStack(err)
+	} else {
+		chkp, err = gdocFS.PickleSheetCheckPointFromContent(fileRaw)
+		return chkp, errors.WithStack(err)
+	}
+}
+
+func sheetGetPickledLogFromDfs(fid uint, lid uint) (log []gdocFS.SheetLogPickle, err error) {
+	path := gdocFS.GetLogPath("sheet", fid, lid)
+	if fileRaw, err := dao.FileGetAll(path); err != nil {
+		return nil, errors.WithStack(err)
+	} else {
+		log, err = gdocFS.PickleSheetLogsFromContent(fileRaw)
+		return log, errors.WithStack(err)
+	}
 }
