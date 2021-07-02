@@ -39,7 +39,7 @@ func DeleteSheet(ctx iris.Context) {
 
 	success, msg, addr := service.DeleteSheet(params)
 	if addr != "" {
-		utils.RequestRedirectTo(ctx, addr, "http://", "/deletesheet")
+		utils.RequestRedirectTo(ctx, "http://", addr, "/deletesheet")
 	} else {
 		utils.SendResponse(ctx, success, msg, nil)
 	}
