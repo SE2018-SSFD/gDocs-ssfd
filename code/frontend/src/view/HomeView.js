@@ -54,6 +54,21 @@ class HomeHeader extends React.Component {
 
 class HomeSider extends React.Component {
 
+    constructor(props) {
+        super(props);
+        this.state = {
+            current: 'MainPage',
+        }
+        this.menuCallback = this.props.menuCallback;
+    }
+
+    handleClick = (e) => {
+        console.log(e);
+        this.menuCallback(e.key);
+
+        this.setState({current: e.key});
+    }
+
     newSheet() {
         const token = localStorage.getItem("token");
         const data = {
@@ -66,6 +81,7 @@ class HomeSider extends React.Component {
     }
 
     render() {
+        const {current} = this.state;
         return <Sider className="sider" width={264} style={{
             background: "#fafbfc",
         }
@@ -88,17 +104,17 @@ class HomeSider extends React.Component {
                 </Col>
             </Row>
 
-            <Menu mode="inline">
-                <Menu.Item key="1" icon={<HomeOutlined/>}>
+            <Menu mode="inline" onClick={this.handleClick} selectedKeys={[current]}>
+                <Menu.Item key="MainPage" icon={<HomeOutlined/>}>
                     首页
                 </Menu.Item>
-                <SubMenu key="2" icon={<FileTextOutlined/>} title="我的文档">
-                    <Menu.Item key="3" icon={<FolderOutlined/>}>与我共享</Menu.Item>
-                    <Menu.Item key="4" icon={<FolderOutlined/>}>Hi, 欢迎使用SSFDoc</Menu.Item>
+                <SubMenu key="MyDoc" icon={<FileTextOutlined/>} title="我的文档">
+                    <Menu.Item key="ShareMe" icon={<FolderOutlined/>}>与我共享</Menu.Item>
+                    <Menu.Item key="Introduce" icon={<FolderOutlined/>}>Hi, 欢迎使用SSFDoc</Menu.Item>
                 </SubMenu>
                 <Divider/>
-                <Menu.Item icon={<AppstoreAddOutlined/>}>模板</Menu.Item>
-                <Menu.Item icon={<DeleteOutlined/>}>回收站</Menu.Item>
+                <Menu.Item key="Template" icon={<AppstoreAddOutlined/>}>模板</Menu.Item>
+                <Menu.Item key="Recycle" icon={<DeleteOutlined/>}>回收站</Menu.Item>
             </Menu>
         </Sider>;
     }
@@ -122,6 +138,21 @@ class HomeContent extends React.Component {
     }
 }
 
+class RecycleContent extends React.Component {
+    render() {
+        return <Content style={{margin: "24px 16px 0"}}>
+            <div>
+                <h1>
+                    回收站
+                </h1>
+            </div>
+            <div className="site-layout-background" style={{padding: 24, minHeight: 360}}>
+                <FileList/>
+            </div>
+        </Content>;
+    }
+}
+
 class HomeFooter extends React.Component {
     render() {
         return <Footer style={{textAlign: "center"}}>SSF Doc ©2021 Created by SJTU Super SoFtware
@@ -134,19 +165,48 @@ class HomeView extends React.Component {
 
     constructor(props) {
         super(props);
-
+        this.state = {
+            curSection: 0,
+        }
     }
+
     componentDidMount() {
+
         getUser();
     }
 
+    menuCallback = (key) => {
+        switch (key) {
+            case 'MainPage':
+                this.setState({curSection: 0});
+                break;
+            case 'Recycle':
+                this.setState({curSection: 1});
+                break;
+            default:
+                // console.error("Not a valid key");
+                this.setState({curSection: 0});
+                break;
+        }
+    };
+
     render() {
+        const curSection = this.state.curSection;
+        const content =
+            curSection === 0 ? (
+                <HomeContent/>
+            ) : curSection === 1 ? (
+                <RecycleContent/>
+            ) : (
+                <></>
+            );
+
         return (
             <Layout>
-                <HomeSider/>
+                <HomeSider menuCallback={this.menuCallback}/>
                 <Layout>
                     <HomeHeader/>
-                    <HomeContent/>
+                    {content}
                     <HomeFooter/>
                 </Layout>
             </Layout>

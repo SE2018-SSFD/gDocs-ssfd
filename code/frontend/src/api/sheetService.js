@@ -7,14 +7,18 @@ export const newSheet = () =>{
     const url = HTTP_URL+'newsheet';
 
     const token = JSON.parse(localStorage.getItem("token"));
-    const name = "新建表格";
+    const name = "new sheet";
 
     const post_data = {
         token: token,
         name: name,
+        initColumns:60,
+        intiRows: 84,
     }
+    console.log(post_data);
 
     const callback = (rec_data) => {
+        console.log(rec_data);
         let msg_word = MSG_WORDS[rec_data.msg];
         if (rec_data.success === true) {
             history.push("/sheet?id=" + rec_data.data);
@@ -49,6 +53,28 @@ export const getSheet = (data,callback) =>{
 // need fid and token
 export const deleteSheet = (data,callback) =>{
     const url = HTTP_URL+'deletesheet';
+    // const callback = (rec_data) => {
+    //     let msg_word = MSG_WORDS[rec_data.msg];
+    //     if (rec_data.success === true) {
+    //         let sheets = JSON.parse(localStorage.getItem('sheets'));
+    //         sheets.push(
+    //             {
+    //                 fid:rec_data.data,
+    //                 isDeleted:false,
+    //                 name:"新建表格",
+    //                 checkpoints:null,
+    //                 columns:0,
+    //                 content:null,
+    //             }
+    //         )
+    //         localStorage.setItem("sheets",JSON.stringify(sheets))
+    //         message.success(msg_word).then(r => {
+    //         });
+    //     } else {
+    //         message.error(msg_word).then(r => {
+    //         });
+    //     }
+    // }
     postRequest(url, data, callback);
 }
 

@@ -21,11 +21,11 @@ const columns = [
             </div>
     },
     {
-        title: '创建者',
+        title: '来自',
         dataIndex: 'owner',
     },
     {
-        title: '最近修改',
+        title: '最近查看',
         dataIndex: 'last_update',
     },
 ];
