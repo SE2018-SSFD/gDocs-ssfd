@@ -277,17 +277,9 @@ func doSheetRelease(wss *wsWrap.WSServer, fid uint, uid uint, username string,
 func doSheetModifyWriteThrough(wss *wsWrap.WSServer, fid uint, uid uint, username string,
 	sheetMsg sheetMessage, group *sheetGroupEntry) {
 	if msg := sheetModifyAuthenticateCell(fid, uid, username, sheetMsg, group); msg != nil {
-		path := gdocFS.GetCheckPointPath("sheet", fid, 0)
-		fileRaw, err := dao.FileGetAll(path)
+		filePickled, err := sheetGetPickledCheckPointFromDfs(fid, 0)
 		if err != nil {
-			logger.Errorf("[%s] Checkpoint file does not exist!", path)
-			return
-		}
-
-		filePickled, err := gdocFS.PickleSheetCheckPointFromContent(fileRaw)
-		if err != nil {
-			logger.Errorf("[%s] Checkpoint file cannot be pickled!", path)
-			return
+			logger.Errorf("%+v", err)
 		}
 
 		if msg.Row >= filePickled.Rows || msg.Col >= filePickled.Columns {
@@ -300,11 +292,9 @@ func doSheetModifyWriteThrough(wss *wsWrap.WSServer, fid uint, uid uint, usernam
 		}
 
 		filePickled.Timestamp = time.Now()
-		fileRawByte, _ := json.Marshal(filePickled)
-		fileRaw = string(fileRawByte)
-		if err = dao.FileOverwriteAll(path, fileRaw); err != nil {
-			logger.Errorf("[%s] Checkpoint file overwrite fails!", path)
-			return
+
+		if err := sheetWritePickledCheckPointToDfs(fid, 0, filePickled); err != nil {
+			logger.Errorf("%+v", err)
 		}
 
 		sheet := dao.GetSheetByFid(fid)

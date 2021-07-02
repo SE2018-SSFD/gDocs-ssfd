@@ -8,7 +8,6 @@ import (
 	"backend/model"
 	"backend/utils"
 	"backend/utils/config"
-	"encoding/json"
 	"time"
 )
 
@@ -35,27 +34,18 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 		sheet.Owner = user.Username
 
 		if config.Get().WriteThrough {
-			chkpPath := gdocFS.GetCheckPointPath("sheet", fid, 0)
-			if err := dao.FileCreate(chkpPath, 0); err != nil {
-				panic(err)
-			}
-
-			initFile := gdocFS.SheetCheckPointPickle{
+			if err := sheetCreatePickledCheckPointInDfs(fid, 0, &gdocFS.SheetCheckPointPickle{
 				Cid: 0,
 				Timestamp: time.Now(),
 				Rows: int(params.InitRows),
 				Columns: int(params.InitColumns),
 				Content: make([]string, params.InitRows * params.InitColumns),
-			}
-
-			initFileRaw, _ := json.Marshal(initFile)
-			if err := dao.FileOverwriteAll(chkpPath, string(initFileRaw)); err != nil {
+			}); err != nil {
 				panic(err)
 			}
 		} else {
 			// create initial log file
-			logPath := gdocFS.GetLogPath("sheet", fid, 1)
-			if err := dao.FileCreate(logPath, 0); err != nil {
+			if err := sheetCreateLogFile(fid, 1); err != nil {
 				panic(err)
 			}
 
@@ -113,14 +103,9 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 			}
 
 			if config.Get().WriteThrough {
-				path := gdocFS.GetCheckPointPath("sheet", params.Fid, 0)
-				fileRaw, err := dao.FileGetAll(path)
+				filePickled, err := sheetGetPickledCheckPointFromDfs(params.Fid, 0)
 				if err != nil {
 					panic(err)
-				}
-				filePickled, err := gdocFS.PickleSheetCheckPointFromContent(fileRaw)
-				if err != nil {
-					panic("cannot pickle checkpoint from file")
 				}
 				sheet.Columns = filePickled.Columns
 				sheet.Content = filePickled.Content
