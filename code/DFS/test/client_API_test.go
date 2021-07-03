@@ -59,13 +59,13 @@ func InitMultiTest() (cList []*client.Client,m *master.Master,csList []*chunkser
 	// Init master and client
 	m,_ = master.InitMaster(util.MASTER1ADDR, "../log")
 	go func(){m.Serve()}()
-	//Init five clients
-
+	//Init four clients
 	cList = make([]*client.Client, 4)
 	for index, port := range []int{1333, 1334, 1335, 1336} {
 		go func(order int, p int) {
 			addr := util.Address("127.0.0.1:" + strconv.Itoa(p))
-			cList[order] = client.InitClient(addr, util.Address(""))
+			cList[order] = client.InitClient(addr, util.MASTER1ADDR)
+			logrus.Infof("Init Client %v Success",addr)
 			cList[order].Serve()
 		}(index, port)
 	}
@@ -86,9 +86,11 @@ func InitMultiTest() (cList []*client.Client,m *master.Master,csList []*chunkser
 	for index,port := range []int{3000,3001,3002,3003,3004}{
 		addr := util.Address("127.0.0.1:" + strconv.Itoa(port))
 		csList[index] = chunkserver.InitChunkServer(string(addr), "ck/ck"+strconv.Itoa(port),  util.MASTER1ADDR)
+		_ = m.RegisterServer(addr)
+
 		//util.AssertNil(t,err)
 	}
-	time.Sleep(500*time.Millisecond)
+	time.Sleep(1000*time.Millisecond)
 	return
 }
 
@@ -149,22 +151,36 @@ func TestReadWriteSingle(t *testing.T) {
 
 // Test multiple clients read & write operations with multiple masters
 func TestReadWriteMulti(t *testing.T){
-	c,m,csList := InitTest()
+	cList,m,csList := InitMultiTest()
 	defer func() {
 		m.Exit()
-		c.Exit()
+		for _,c := range cList{
+			c.Exit()
+		}
 		for _,cs := range csList{
 			cs.Exit()
 		}
 	}()
-	fdList := make([]int,4)
-
+	// to save fd in every client
+	fdList := make([][]int,4)
+	for index,_ := range fdList{
+		fdList[index] = make([]int,4)
+	}
+	// create 4 testing files
 	for i:=0;i<4;i++{
-		path := "/file"+strconv.Itoa(i+1)
-		err := util.HTTPCreate(util.CLIENTADDR,path)
-		util.AssertNil(t,err)
-		fdList[i],err = util.HTTPOpen(util.CLIENTADDR,path)
-		util.AssertNil(t,err)
+		path := "/file" + strconv.Itoa(i+1)
+		err := util.HTTPCreate(string(cList[0].GetClientAddr()), path)
+		util.AssertNil(t, err)
+	}
+	// open all files in all clients
+	for i:=0;i<4;i++{
+		clientAddr:= cList[i].GetClientAddr()
+		for j:=0;j<4;j++ {
+			var err error
+			path := "/file" + strconv.Itoa(j+1)
+			fdList[i][j], err = util.HTTPOpen(string(clientAddr), path)
+			util.AssertNil(t, err)
+		}
 	}
 
 	// 4 clients write to different file
@@ -172,9 +188,10 @@ func TestReadWriteMulti(t *testing.T){
 	wg.Add(4)
 	for i:=0;i<4;i++ {
 		go func(index int) {
+			clientAddr:= cList[index].GetClientAddr()
 			offset := 0
 			data := []byte(util.MakeInt(index,2*util.MAXCHUNKSIZE))
-			err := util.HTTPWrite(util.CLIENTADDR,fdList[index],offset, data)
+			err := util.HTTPWrite(string(clientAddr),fdList[index][index],offset, data)
 			util.AssertNil(t,err)
 			wg.Done()
 		}(i)
@@ -182,7 +199,7 @@ func TestReadWriteMulti(t *testing.T){
 	wg.Wait()
 	for i:=0;i<4;i++ {
 		offset := 0
-		result,err := util.HTTPRead(util.CLIENTADDR,fdList[i],offset,2*util.MAXCHUNKSIZE)
+		result,err := util.HTTPRead(string(cList[0].GetClientAddr()),fdList[0][i],offset,2*util.MAXCHUNKSIZE)
 		util.AssertNil(t,err)
 		util.AssertEqual(t,string(result.Data),util.MakeInt(i,2*util.MAXCHUNKSIZE))
 	}
@@ -191,13 +208,14 @@ func TestReadWriteMulti(t *testing.T){
 	// 4 clients write to same file (independent chunk)
 	wg.Add(4)
 	data := make([]byte,4*util.MAXCHUNKSIZE)
-	err := util.HTTPWrite(util.CLIENTADDR,fdList[0],0, data)
+	err := util.HTTPWrite(string(cList[0].GetClientAddr()),fdList[0][0],0, data)
 	util.AssertNil(t,err)
 	for i:=0;i<4;i++ {
 		go func(index int) {
+			clientAddr:= cList[index].GetClientAddr()
 			offset := index*util.MAXCHUNKSIZE
 			data = []byte(util.MakeInt(index,util.MAXCHUNKSIZE))
-			err = util.HTTPWrite(util.CLIENTADDR,fdList[0],offset,data)
+			err = util.HTTPWrite(string(clientAddr),fdList[index][0],offset,data)
 			util.AssertNil(t,err)
 			wg.Done()
 		}(i)
@@ -205,21 +223,22 @@ func TestReadWriteMulti(t *testing.T){
 	wg.Wait()
 	for i:=0;i<4;i++ {
 		offset := i*util.MAXCHUNKSIZE
-		result,err := util.HTTPRead(util.CLIENTADDR,fdList[0],offset,util.MAXCHUNKSIZE)
+		result,err := util.HTTPRead(string(cList[0].GetClientAddr()),fdList[i][0],offset,util.MAXCHUNKSIZE)
 		util.AssertNil(t,err)
 		util.AssertEqual(t,string(result.Data),util.MakeInt(i,util.MAXCHUNKSIZE))
 	}
 	logrus.Infoln("score : 50")
+
 	// 4 clients write to same file (cross chunk)
 	wg.Add(4)
 	data = make([]byte,6*util.MAXCHUNKSIZE)
-	err = util.HTTPWrite(util.CLIENTADDR,fdList[1],0, data)
+	err = util.HTTPWrite(string(cList[0].GetClientAddr()),fdList[0][1],0, data)
 	util.AssertNil(t,err)
 	for i:=0;i<4;i++ {
 		go func(index int) {
 			offset := index*(util.MAXCHUNKSIZE*1.5)
 			data = []byte(util.MakeInt(index,util.MAXCHUNKSIZE*1.5))
-			err = util.HTTPWrite(util.CLIENTADDR,fdList[1],offset,data)
+			err = util.HTTPWrite(string(cList[index].GetClientAddr()),fdList[index][1],offset,data)
 			util.AssertNil(t,err)
 			wg.Done()
 		}(i)
@@ -227,19 +246,21 @@ func TestReadWriteMulti(t *testing.T){
 	wg.Wait()
 	for i:=0;i<4;i++ {
 		offset := i*(util.MAXCHUNKSIZE*1.5)
-		result,err := util.HTTPRead(util.CLIENTADDR,fdList[1],offset,util.MAXCHUNKSIZE*1.5)
+		result,err := util.HTTPRead(string(cList[0].GetClientAddr()),fdList[0][1],offset,util.MAXCHUNKSIZE*1.5)
 		util.AssertNil(t,err)
 		util.AssertEqual(t,string(result.Data),util.MakeInt(i,util.MAXCHUNKSIZE*1.5))
 	}
+
 	logrus.Infoln("score : 75")
 
 	// 4 clients write to same file same place
 	wg.Add(4)
 	for i:=0;i<4;i++ {
 		go func(index int) {
+			clientAddr:= cList[index].GetClientAddr()
 			offset := 0
 			data = []byte(util.MakeInt(index,util.MAXCHUNKSIZE*4))
-			err = util.HTTPWrite(util.CLIENTADDR,fdList[2],offset,data)
+			err = util.HTTPWrite(string(clientAddr),fdList[index][1],offset,data)
 			util.AssertNil(t,err)
 			wg.Done()
 		}(i)
@@ -247,7 +268,7 @@ func TestReadWriteMulti(t *testing.T){
 	wg.Wait()
 	for i:=0;i<4;i++ {
 		offset := i * util.MAXCHUNKSIZE
-		result,err := util.HTTPRead(util.CLIENTADDR,fdList[2],offset,util.MAXCHUNKSIZE)
+		result,err := util.HTTPRead(string(cList[0].GetClientAddr()),fdList[i][1],offset,util.MAXCHUNKSIZE)
 		util.AssertNil(t,err)
 		util.AssertSameData(t,result.Data)
 	}
