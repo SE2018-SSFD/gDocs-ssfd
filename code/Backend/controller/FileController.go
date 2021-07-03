@@ -98,7 +98,18 @@ func GetChunk(ctx iris.Context) {
 		return
 	}
 
-	success, msg:= service.GetChunk(params)
+	success, msg:= service.GetChunk(ctx, params)
+
+	utils.SendResponse(ctx, success, msg, nil)
+}
+
+func UploadChunk(ctx iris.Context) {
+	var params utils.UploadChunkParams
+	if !utils.GetContextParams(ctx, &params) {
+		return
+	}
+
+	success, msg:= service.UploadChunk(ctx, params)
 
 	utils.SendResponse(ctx, success, msg, nil)
 }

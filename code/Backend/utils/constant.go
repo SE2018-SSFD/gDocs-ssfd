@@ -121,5 +121,9 @@ type GetSheetLogParams struct {
 type GetChunkParams struct {
 	Token		string		`json:"token"`
 	Fid			uint		`json:"fid"`
-	Chunk		uint		`json:"chunk"`
+	ChunkName	string		`json:"chunkName"`
+}
+
+type UploadChunkParams struct {
+
 }

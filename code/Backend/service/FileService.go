@@ -8,6 +8,7 @@ import (
 	"backend/model"
 	"backend/utils"
 	"backend/utils/config"
+	"github.com/kataras/iris/v12"
 	"time"
 )
 
@@ -287,6 +288,11 @@ func GetSheetLog(params utils.GetSheetLogParams) (success bool, msg int, data []
 	return success, msg, data
 }
 
-func GetChunk(params utils.GetChunkParams) (success bool, msg int) {
+func GetChunk(ctx iris.Context, params utils.GetChunkParams) (success bool, msg int) {
+	return
+}
+
+func UploadChunk(ctx iris.Context, params utils.UploadChunkParams) (success bool, msg int) {
+	ctx.SetMaxRequestBodySize(ctx.GetContentLength() + 1 << 20)
 	return
 }
