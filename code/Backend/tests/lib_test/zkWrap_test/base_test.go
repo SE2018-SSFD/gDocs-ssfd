@@ -1,4 +1,4 @@
-package tests
+package zkWrap_test
 
 import (
 	"backend/lib/zkWrap"
