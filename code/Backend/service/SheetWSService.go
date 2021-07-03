@@ -283,10 +283,10 @@ func doSheetModifyWriteThrough(wss *wsWrap.WSServer, fid uint, uid uint, usernam
 		}
 
 		if msg.Row >= filePickled.Rows || msg.Col >= filePickled.Columns {
-			tmpCells := cache.NewCellNetFromStringSlice(filePickled.Content, filePickled.Columns)
-			tmpCells.Set(msg.Row, msg.Col, msg.Content)
-			filePickled.Content = tmpCells.ToStringSlice()
-			filePickled.Rows, filePickled.Columns = tmpCells.Shape()
+			tmpSheet := cache.NewMemSheetFromStringSlice(filePickled.Content, filePickled.Columns)
+			tmpSheet.Set(msg.Row, msg.Col, msg.Content)
+			filePickled.Content = tmpSheet.ToStringSlice()
+			filePickled.Rows, filePickled.Columns = tmpSheet.Shape()
 		} else {
 			filePickled.Content[msg.Row * filePickled.Columns + msg.Col] = msg.Content
 		}
