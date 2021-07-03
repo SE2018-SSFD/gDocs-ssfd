@@ -77,7 +77,7 @@ func (cs *ChunkServer) SetStaleRPC(args util.SetStaleArgs, reply *util.SetStaleR
 }
 
 func (cs *ChunkServer) LoadDataRPC(args util.LoadDataArgs, reply *util.LoadDataReply) error {
-	log.Printf("ChunkServer %v: load data \n", cs.addr)
+	//log.Printf("ChunkServer %v: load data \n", cs.addr)
 	cs.cache.Set(args.CID, args.Data)
 	if len(args.Addrs) > 0 {
 		newArgs := util.LoadDataArgs{

@@ -175,7 +175,7 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (readBytes int, b
 		if err != nil {
 			return
 		}
-		logrus.Debugf(" ChunkHandle : %d Addresses : %s %s %s\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2])
+		logrus.Debugf(" Read ChunkHandle : %d Addresses : %s %s %s\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2])
 		//TODO : make it random
 		argRCK.Handle = retR.ChunkHandle
 		argRCK.Len = roundReadBytes
@@ -192,6 +192,7 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (readBytes int, b
 		buf = append(buf, retRCK.Buf...)
 		readBytes += roundReadBytes
 		logrus.Debugf(" Read %d bytes from chunkserver %s, bytes read %d\n", roundReadBytes, string(retR.ChunkServerAddrs[0]), readBytes)
+		logrus.Debugf("read:%s",retRCK.Buf)
 	}
 	return
 }
@@ -427,16 +428,18 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenByte
 		if err != nil {
 			return
 		}
-		logrus.Debugf(" ChunkHandle : %d Addresses : %s %s %s\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2])
 		roundWrittenBytes := int(math.Min(float64(util.MAXCHUNKSIZE-(offset+writtenBytes)%util.MAXCHUNKSIZE), float64(len(data)-writtenBytes)))
+		logrus.Infof(" Write ChunkHandle : %d Addresses : %s %s %s, write %v\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2],roundWrittenBytes)
 		var cid = util.CacheID{
 			Handle:     retR.ChunkHandle,
 			ClientAddr: c.clientAddr,
 		}
+
 		argL.CID = cid
 		argL.Data = data[writtenBytes:(writtenBytes + roundWrittenBytes)]
 		// TODO: make it random , now is fixed order
 		argL.Addrs = retR.ChunkServerAddrs
+
 		//argL.Addrs = make([]util.Address,0)
 		//for _,index := range rand.Perm(len(retR.ChunkServerAddrs)){
 		//	argL.Addrs = append(argL.Addrs,retR.ChunkServerAddrs[index])
@@ -459,7 +462,7 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenByte
 			return
 		}
 		writtenBytes += roundWrittenBytes
-		logrus.Debugf(" Write %d bytes to chunkserver %s, bytes written %d\n", roundWrittenBytes, argL.Addrs[0], writtenBytes)
+		logrus.Debugf(" Write %d bytes : %v, bytes written %d offset %d\n", roundWrittenBytes, argL.Data, writtenBytes,argC.Off)
 	}
 	// Set new file metadata back to master
 	// if offset+writtenBytes > fileSize {
@@ -491,6 +494,7 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
 	// Get the file metadata and check
 	path := c.fdTable[argW.Fd]
 	if path == "" {
@@ -503,6 +507,8 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 		logrus.Fatalln("Client write failed :", err)
 		return
 	}
+	logrus.Debugf("client write path:%v,offset:%v,datasize:%v",path,argW.Offset,len(argW.Data))
+
 	// fileSize := retF.Size
 	// if argW.Offset > fileSize {
 	// 	err = fmt.Errorf("Client write failed : write offset exceed file size\n")

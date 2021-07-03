@@ -40,7 +40,7 @@ func AssertEqual(t *testing.T, a, b interface{}) {
 	t.Helper()
 	if a != b {
 		t.Fail()
-		t.Fatal("AssertEqual Failed :", a, b)
+		t.Logf("AssertEqual Failed %v,%v:", a, b)
 	}
 	t.Logf("AssertEqual Succeed :")
 
