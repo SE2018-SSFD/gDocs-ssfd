@@ -85,9 +85,6 @@ func TestModifyUser(t *testing.T) {
 	bodySuccess := utils.ModifyUserParams {
 		Token:    testToken2,
 		Username: "test_mod",
-		Email:    "test_mod",
-		Turtle:   2,
-		Task:     2,
 	}
 	bodyGetUserAfterModify := utils.GetUserParams {
 		Token: testToken2,
@@ -95,9 +92,6 @@ func TestModifyUser(t *testing.T) {
 	bodyModifyDupUsername := utils.ModifyUserParams {
 		Token:    testToken2,
 		Username: "test",
-		Email:    "test_mod",
-		Turtle:   2,
-		Task:     2,
 	}
 	bodyInvalidToken := utils.ModifyUserAuthParams {
 		Token: "invalid!",
