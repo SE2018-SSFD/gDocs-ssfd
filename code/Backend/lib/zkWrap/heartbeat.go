@@ -80,10 +80,10 @@ func RegisterHeartbeat(serviceName string, timeout time.Duration, regData string
 						deleted := oldSet.Difference(newSet)
 						added := newSet.Difference(oldSet)
 						for del := range deleted.Iterator().C {
-							onDisConnectCallback(regData, del.(string))
+							go onDisConnectCallback(regData, del.(string))
 						}
 						for add := range added.Iterator().C {
-							onConnectCallback(regData, add.(string))
+							go onConnectCallback(regData, add.(string))
 						}
 						oldChildren = newChildren
 
