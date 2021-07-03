@@ -4,9 +4,11 @@ import (
 	"DFS/util"
 	"DFS/util/zkWrap"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"log"
 	"net"
 	"net/rpc"
+	"time"
 )
 
 func (cs *ChunkServer) StartRPCServer() error {
@@ -40,6 +42,7 @@ func (cs *ChunkServer) StartRPCServer() error {
 	}()
 
 	zkWrap.Chroot("/DFS")
+	time.Sleep(5*time.Second)
 	cs.RegisterNodes()
 	// cs.Printf("Register zookeeper node\n")
 	//
@@ -159,7 +162,11 @@ func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error 
 
 		}
 	} else {
-		cs.SetChunk(args.CID.Handle, args.Off, data)
+		len,err := cs.SetChunk(args.CID.Handle, args.Off, data)
+		logrus.Print("Handle ",args.CID.Handle," len ",len," off ",args.Off)
+		if err != nil {
+			logrus.Panic(err)
+		}
 	}
 
 	ch := make(chan error)

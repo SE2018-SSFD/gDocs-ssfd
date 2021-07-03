@@ -3,20 +3,22 @@ package client
 import (
 	"DFS/util"
 	"DFS/util/zkWrap"
-	"strings"
-
 	"github.com/sirupsen/logrus"
+	"strings"
 )
 
-func (c *Client) onHeartbeatConn(_ string, who string) {
-	logrus.Print("leader heartbeart conn")
+func (c *Client) onHeartbeatConn(me string, who string) {
 	if strings.Compare("master", who[:6]) == 0 {
+		logrus.Infof("%v leader heartbeart conn : master leader %v join",me,who)
 		c.masterAddr = util.Address(who[6:])
 		//TODO: maybe we should clean fdTable
+	}else{
+		logrus.Infof("%v leader heartbeart conn : another client %v join",me,who)
 	}
 }
 
 func onHeartbeatDisConn(_ string, who string) {
+
 }
 
 func (c *Client) RegisterNodes() {
@@ -32,8 +34,10 @@ func (c *Client) RegisterNodes() {
 	}
 
 	c.LeaderHeartbeat = hb
-
+	logrus.Debugf("stage 1 %v",c.GetClientAddr())
 	for _, mate := range hb.GetOriginMates() {
 		c.onHeartbeatConn("", mate)
 	}
+	logrus.Debugf("stage 2 %v",c.GetClientAddr())
+
 }

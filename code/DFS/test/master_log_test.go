@@ -231,6 +231,7 @@ func TestLogAndCheckpointSingle(t *testing.T){
 }
 func TestLogMultiMaster(t *testing.T){
 	c,mList,csList:=initTestMulti()
+	time.Sleep(5*util.HERETRYTIMES*time.Second)
 	defer func() {
 		for i:=0;i<util.MASTERCOUNT;i++{
 			mList[i].Exit()

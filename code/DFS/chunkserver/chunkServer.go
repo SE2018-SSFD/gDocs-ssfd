@@ -73,9 +73,8 @@ func InitChunkServer(chunkAddr string, dataPath string, masterAddr string) *Chun
 	}
 
 	cs.RecoverChunkInfo()
-	log.Printf("chunkserver %v: init success\n", chunkAddr)
-
 	cs.StartRPCServer()
+	log.Printf("chunkserver %v: init success\n", chunkAddr)
 
 	return cs
 }

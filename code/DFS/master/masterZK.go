@@ -12,11 +12,24 @@ func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 	if strings.Compare("chunkserver", who[:11]) == 0 {
 		//TODO: check and update chunk states
 		chunkServerAddr := util.Address(who[11:])
-		logrus.Infof("client %v exists", chunkServerAddr)
-		// Get chunk states in chunkServer
+		logrus.Infof("chunkserver %v exists", chunkServerAddr)
+		// Get chunk states in chunkServer, retry until RPCServer is available
 		var argG util.GetChunkStatesArgs
 		var retG util.GetChunkStatesReply
-		err := util.Call(string(chunkServerAddr), "ChunkServer.GetChunkStatesRPC", argG, &retG)
+		count := util.HERETRYTIMES
+		for count>0{
+			err := util.Call(string(chunkServerAddr), "ChunkServer.GetChunkStatesRPC", argG, &retG)
+			if err != nil {
+				logrus.Warnf("Master addServer error : %v,retry", err)
+				count --
+			}else{
+				break
+			}
+		}
+		if count==0{
+			logrus.Fatal("Master addServer error : cannot connect to chunkServer RPC  ")
+		}
+
 		m.RLock()
 		defer m.RUnlock()
 		staleHandles := make([]util.Handle, 0)
@@ -35,7 +48,7 @@ func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 		var argS util.SetStaleArgs
 		var retS util.SetStaleReply
 		argS.Handles = staleHandles
-		err = util.Call(string(chunkServerAddr), "ChunkServer.SetStaleRPC", argS, &retS)
+		err := util.Call(string(chunkServerAddr), "ChunkServer.SetStaleRPC", argS, &retS)
 		if err != nil {
 			logrus.Fatal("Master addServer error : ", err)
 			return
@@ -45,6 +58,8 @@ func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 			logrus.Fatal("Master addServer error : ", err)
 			return
 		}
+		logrus.Info("Master addServer success: ", who)
+
 	}
 }
 

@@ -23,6 +23,10 @@ type Client struct {
 	//TODO:add lease
 }
 
+func  (c *Client)GetClientAddr() util.Address {
+	return c.clientAddr
+}
+
 // InitClient initClient init a new client and return.
 func InitClient(clientAddr util.Address, masterAddr util.Address) *Client {
 	c := &Client{
@@ -31,7 +35,13 @@ func InitClient(clientAddr util.Address, masterAddr util.Address) *Client {
 		fdTable:    make(map[int]util.DFSPath),
 	}
 	//to find master leader
-	zkWrap.Chroot("/DFS")
+	logrus.Debugf("stage 0 %v",c.GetClientAddr())
+
+	err := zkWrap.Chroot("/DFS")
+	if err != nil {
+		logrus.Fatalln(err)
+		return nil
+	}
 	c.RegisterNodes()
 	return c
 }
@@ -51,7 +61,7 @@ func (c *Client) Serve() {
 	mux.HandleFunc("/scan", c.Scan)
 	mux.HandleFunc("/fileInfo", c.GetFileInfo)
 	c.s = &http.Server{
-		Addr:           util.CLIENTADDR,
+		Addr: 			string(c.clientAddr),
 		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
@@ -59,7 +69,7 @@ func (c *Client) Serve() {
 	}
 	err := c.s.ListenAndServe()
 	if err != nil {
-		logrus.Debug("Client server shutdown!\n")
+		logrus.Debug("Client server shutdown:",err)
 	}
 	//logrus.Fatalln("stop!")
 }
