@@ -18,12 +18,13 @@ let postRequest = (url, json, callback) => {
             callback(data);
         })
         .catch((error) => {
-            message.error("请检查您的网络连接").then(() => {})
+            message.error("请检查您的网络连接").then(() => {
+            })
             console.log(error);
         });
 };
 
-let getRequest = (url,callback) => {
+let getRequest = (url, callback) => {
     let opts = {
         method: "GET",
         headers: {
@@ -40,10 +41,11 @@ let getRequest = (url,callback) => {
             callback(data);
         })
         .catch((error) => {
-            message.error("请检查您的网络连接").then(() => {})
+            message.error("请检查您的网络连接").then(() => {
+            })
             console.log(error);
         });
 };
 
 
-export {getRequest,postRequest};
+export {getRequest, postRequest};

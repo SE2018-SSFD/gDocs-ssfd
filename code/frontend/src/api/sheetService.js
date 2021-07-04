@@ -1,5 +1,5 @@
 import {getRequest, postRequest} from "./ajax";
-import {HTTP_URL,MSG_WORDS} from "./common";
+import {HTTP_URL, MSG_WORDS, WS_URL} from "./common";
 import {history} from "../route/history";
 import {message} from "antd";
 
@@ -45,21 +45,22 @@ export const newSheet = () =>{
 }
 
 // need fid and token
-export const getSheet = (data,callback) =>{
-    const url = HTTP_URL+'getsheet';
+export const getSheet = (url, data,callback) =>{
     postRequest(url, data, callback);
 }
 
 // need fid and token
-export const deleteSheet = (fid,callback) =>{
-    const url = HTTP_URL+'deletesheet';
-    const token = JSON.parse(localStorage.getItem("token"));
-    const data={
-        fid:fid,
-        token:token,
+export const deleteSheet = (fid, callback) =>{
+    const callback1 = (url) =>{
+        let myurl = url + "deletesheet";
+        const token = JSON.parse(localStorage.getItem("token"));
+        let data = {
+            fid : fid,
+            token: token
+        }
+        postRequest(myurl, data, callback);
     }
-
-    postRequest(url, data, callback);
+    getURL(fid,callback1);
 }
 
 
@@ -73,4 +74,16 @@ export const testWS = (fid,callback) =>{
     const token = JSON.parse(localStorage.getItem("token"));
     const url = HTTP_URL + 'sheetws?token='+token+"&fid="+fid+"&query=1";
     getRequest(url,callback)
+}
+
+export const getURL = (fid,callback1) =>{
+    const callback = (data) =>{
+        if (data.success === false) {
+            callback1("http"+data.data.slice(2,25));
+        }
+        else{
+            callback1(HTTP_URL);
+        }
+    }
+    testWS(fid,callback)
 }

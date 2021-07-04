@@ -1,14 +1,33 @@
 import React from 'react';
 import {withRouter} from "react-router-dom";
-import {getSheet, testWS} from "../api/sheetService";
-import {WS_URL} from "../api/common";
+import {deleteSheet, getSheet, testWS} from "../api/sheetService";
+import {HTTP_URL, MSG_WORDS, WS_URL} from "../api/common";
+import {message} from "antd";
 
 const luckysheet = window.luckysheet;
 let socket;
 let fid;
+let url = "";
+let post_data = {}
+let deleteHandler = () =>{
+    const callback = (rec_data) =>{
+        let msg_word = MSG_WORDS[rec_data.msg];
+        if(rec_data.success === true){
+            message.success(msg_word).then(r => {});
+        }
+        else{
+            message.error(msg_word).then(r => {});
+        }
+    }
+    if(url !== "")
+    {
+        let sheetUrl = url.slice(2,24);
+        sheetUrl = "http"+sheetUrl+"/deletesheet";
+        deleteSheet(sheetUrl,post_data, callback);
+    }
+}
 
 class SheetView extends React.Component {
-
 
     constructor(props) {
         super(props);
@@ -18,13 +37,20 @@ class SheetView extends React.Component {
         }
     }
 
+
+
     connectWS(data) {
-        console.log("connectWS", data);
         const token = JSON.parse(localStorage.getItem("token"));
-        let url = WS_URL + 'sheetws?token=' + token + "&fid=" + fid;
+        const username = JSON.parse(localStorage.getItem("username"));
+        url = WS_URL + 'sheetws?token=' + token + "&fid=" + fid;
         if (data.success === false) {
             url = data.data;
         }
+        post_data = {
+            token: token,
+            fid: fid
+        }
+
         socket = new WebSocket(url);
         socket.addEventListener('open', function (event) {
             console.log('WebSocket open: ', event);
@@ -65,23 +91,6 @@ class SheetView extends React.Component {
         socket.addEventListener('error', function (event) {
             console.log('WebSocket error: ', event);
         });
-    }
-
-    componentDidMount() {
-        console.log("Mount");
-
-        const query = this.props.location.search;
-        const arr = query.split('&');
-        fid = parseInt(arr[0].substr(4));
-
-        const token = JSON.parse(localStorage.getItem("token"));
-        const username = JSON.parse(localStorage.getItem("username"));
-
-        const post_data = {
-            token: token,
-            fid: fid
-        }
-        console.log("post_data", post_data);
 
         const getData = (data) => {
             console.log("getData", data);
@@ -127,7 +136,7 @@ class SheetView extends React.Component {
                         ],
                         myFolderUrl: "/",
                         //devicePixelRatio:window.devicePixelRatio
-                        // TODO: functionButton:
+                        // functionButton:"<Button onclick= {deleteHandler}> delete </Button>",
                         //showConfigWindowResize:true
                         //forceCalculation:false,cellRightClickConfig:{},sheetRightClickConfig:{}
                         //rowHeaderWidth:46,columnHeaderHeight:20,sheetFormulaBar:true,
@@ -194,8 +203,24 @@ class SheetView extends React.Component {
             }
         }
 
-        getSheet(post_data, getData);
-        testWS(fid, this.connectWS)
+        if(url !== "")
+        {
+            let sheetUrl = url.slice(2,25);
+            sheetUrl = "http"+sheetUrl+"getsheet";
+            console.log(sheetUrl);
+            getSheet(sheetUrl,post_data, getData);
+        }
+    }
+
+    componentDidMount() {
+        console.log("Mount");
+
+        const query = this.props.location.search;
+        const arr = query.split('&');
+        fid = parseInt(arr[0].substr(4));
+
+        testWS(fid, this.connectWS);
+
     }
 
     render() {
