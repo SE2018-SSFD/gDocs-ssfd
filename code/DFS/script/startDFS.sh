@@ -1,7 +1,7 @@
 #!/bin/bash
-MASTER1ADDR=127.0.0.1:1234
-MASTER2ADDR=127.0.0.1:1235
-MASTER3ADDR=127.0.0.1:1236
+MASTER1ADDR=0.0.0.0:1234
+MASTER2ADDR=0.0.0.0:1235
+MASTER3ADDR=0.0.0.0:1236
 MASTER1DIR=../log/log_1
 MASTER2DIR=../log/log_2
 MASTER3DIR=../log/log_3
@@ -23,6 +23,6 @@ sleep 2
 for a in `eval echo {3000..$[CHUNKSERVERNUM+3000]}`
 do
 mkdir ${CHUNKSERVERROOT}/ck"${a}"
-./NodeRunner chunkServer 127.0.0.1:"${a}" ${CHUNKSERVERROOT}/ck"${a}" ${MASTER1ADDR} &> ../log/chunkServerOutput"${a}".log &
+./NodeRunner chunkServer 0.0.0.0:"${a}" ${CHUNKSERVERROOT}/ck"${a}" ${MASTER1ADDR} &> ../log/chunkServerOutput"${a}".log &
 done
 
