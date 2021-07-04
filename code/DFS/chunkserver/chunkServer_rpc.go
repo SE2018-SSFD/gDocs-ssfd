@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 	"net/rpc"
-	"time"
 )
 
 func (cs *ChunkServer) StartRPCServer() error {
@@ -42,7 +41,6 @@ func (cs *ChunkServer) StartRPCServer() error {
 	}()
 
 	zkWrap.Chroot("/DFS")
-	time.Sleep(5*time.Second)
 	cs.RegisterNodes()
 	// cs.Printf("Register zookeeper node\n")
 	//
