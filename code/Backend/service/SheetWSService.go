@@ -111,14 +111,10 @@ func SheetOnDisConn(uid uint, username string, fid uint) {
 			if !config.Get().WriteThrough {
 				if memSheet := getSheetCache().Get(fid); memSheet != nil {
 					commitOneSheetWithCache(fid, memSheet)
+					keys, evicted := getSheetCache().Put(fid)
+					commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
 				} else {
-					logger.Errorf("[fid:%d] Recovering from log when deleting sheetws group", fid)
-					sheet := dao.GetSheetByFid(fid)
-					if memSheet = recoverSheetFromLog(&sheet); memSheet == nil {
-						logger.Errorf("[fid:%d] Recover from log fails!", fid)
-						return
-					}
-					commitOneSheetWithCache(fid, memSheet)
+					logger.Warnf("[fid:%d] Not in cache when deleting sheetws group", fid)
 				}
 			}
 		}
@@ -310,10 +306,11 @@ func doSheetModifyWithCache(wss *wsWrap.WSServer, fid uint, uid uint, username s
 	if msg := sheetModifyAuthenticateCell(fid, uid, username, sheetMsg, group); msg != nil {
 		sheet := dao.GetSheetByFid(fid)
 
+		inCache := true
 		memSheet := getSheetCache().Get(fid)
 		// not in sheetCache, load from log and do eviction if needed
 		if memSheet == nil {
-			if memSheet = recoverSheetFromLog(&sheet); memSheet == nil {
+			if memSheet, inCache = recoverSheetFromLog(&sheet); memSheet == nil {
 				panic("recoverSheetFromLog fails")
 			}
 		}
@@ -336,6 +333,12 @@ func doSheetModifyWithCache(wss *wsWrap.WSServer, fid uint, uid uint, username s
 		memSheet.Set(msg.Row, msg.Col, msg.Content)
 		_, sheet.Columns = memSheet.Shape()
 		dao.SetSheet(sheet)
+		if !inCache {
+			commitOneSheetWithCache(fid, memSheet)
+		} else {
+			keys, evicted := getSheetCache().Put(fid)
+			commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
+		}
 
 		sheetModifyBroadcast(wss, fid, uid, username, group, msg)
 	}

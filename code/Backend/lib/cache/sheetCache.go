@@ -1,7 +1,9 @@
 package cache
 
 import (
+	"backend/lib/algorithm/lru"
 	"backend/utils/logger"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"unsafe"
@@ -84,8 +86,23 @@ func (net *CellNet) Set(row int32, col int32, content string) {
 	}
 	net.gLock.Unlock()
 
-	atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&net.cells[row][col])), unsafe.Pointer(&content))
-	atomic.AddInt64(&net.RuneNum, int64(len(content)) - int64(len(*net.cells[row][col])))
+	// add RuneNum and store new string atomically
+	for {
+		curCell := (*string)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&net.cells[row][col]))))
+		if swapped := atomic.CompareAndSwapPointer(
+			(*unsafe.Pointer)(unsafe.Pointer(&net.cells[row][col])),
+			unsafe.Pointer(curCell),
+			unsafe.Pointer(&content)); swapped {
+			if curCell == nil {
+				atomic.AddInt64(&net.RuneNum, int64(len(content)))
+			} else {
+				atomic.AddInt64(&net.RuneNum, int64(len(content)) - int64(len(*curCell)))
+			}
+			break
+		} else {
+			continue
+		}
+	}
 }
 
 func (net *CellNet) Get(row int32, col int32) string {
@@ -127,7 +144,9 @@ func (net *CellNet) ToStringSlice() (ss []string) {
 // In-memory sheet
 type MemSheet struct {
 	cells		*CellNet
-	monoLock	sync.Mutex
+	monoLock	sync.RWMutex
+	lastReport	int64
+	refCount	int32
 }
 
 func NewMemSheet(initRow int, initCol int) *MemSheet {
@@ -143,20 +162,38 @@ func NewMemSheetFromStringSlice(ss []string, columns int) *MemSheet {
 }
 
 func (ms *MemSheet) Set(row int, col int, content string) {
+	ms.monoLock.RLock()
+	defer ms.monoLock.RUnlock()
+
 	if row < 0 || col < 0 {
-		panic("row or column index is negative")
+		logger.Warnf("[row:%d col:%d]row or column index is negative\n %s", row, col, debug.Stack())
+		return
 	}
 	ms.cells.Set(int32(row), int32(col), content)
 }
 
 func (ms *MemSheet) Get(row int, col int) (content string) {
 	if row < 0 || col < 0 {
-		panic("row or column index is negative")
+		logger.Warnf("[row:%d col:%d]row or column index is negative\n %s", row, col, debug.Stack())
 	}
 
 	content = ms.cells.Get(int32(row), int32(col))
 
 	return content
+}
+
+func (ms *MemSheet) refer() {
+	atomic.AddInt32(&ms.refCount, 1)
+}
+
+func (ms *MemSheet) unRefer() {
+	if refCnt := atomic.AddInt32(&ms.refCount, -1); refCnt < 0 {
+		logger.Fatalf("refCount of MemSheet is negative\n %s", debug.Stack())
+	}
+}
+
+func (ms *MemSheet) isReferred() bool {
+	return atomic.LoadInt32(&ms.refCount) > 0
 }
 
 func (ms *MemSheet) Lock() {
@@ -177,6 +214,16 @@ func (ms *MemSheet) GetSize() int64 {
 	return size
 }
 
+func (ms *MemSheet) CellNet() *CellNet {
+	return ms.cells
+}
+
+func (ms *MemSheet) reportSizeChange() (change int64) {
+	change = ms.GetSize() - ms.lastReport
+	ms.lastReport += change
+	return change
+}
+
 func (ms *MemSheet) Shape() (rows int, cols int) {
 	r, c := ms.cells.Shape()
 	return int(r), int(c)
@@ -190,47 +237,154 @@ func (ms *MemSheet) ToStringSlice() (ss []string) {
 type SheetCache struct {
 	maxSize			int64
 	curSize			int64
+	gLock			sync.RWMutex
 	cache			sync.Map
+	lru				*lru.LRU
 }
 
 func NewSheetCache(maxSize int64) *SheetCache {
 	return &SheetCache{
 		maxSize: maxSize,
 		curSize: 0,
+		lru: lru.NewLRU(),
 	}
 }
 
 // If excess memory constraint, do eviction and return true
-func (sc *SheetCache) Add(key interface{}, ms *MemSheet) (keys []interface{}, evicted []*MemSheet) {
-	if sc.curSize + ms.GetSize() > sc.maxSize {
-		if keys, evicted = sc.doEvict(ms.GetSize()); evicted == nil {
-			logger.Error("Cannot get enough memory from eviction!")
-			return nil, nil
-		}
-	}
+func (sc *SheetCache) Add(key interface{}, ms *MemSheet) (memSheet *MemSheet, keys []interface{}, evicted []*MemSheet) {
+	spared, keys, evicted, doEvict, success := sc.doEvictIfNeeded(key, ms, false)
+	logger.Debugf("[%v] curSize: %d, maxSize: %d, toAdd: %d, doEvict: %t, evicted: %v, spared: %d",
+		key, sc.curSize, sc.maxSize, ms.GetSize(), doEvict, keys, spared)
 
-	sc.cache.Store(key, ms)
-	return keys, evicted
+	if success {
+		ms.refer()
+		sc.lru.Add(key)
+		sc.cache.Store(key, ms)
+		return ms, keys, evicted
+	} else {
+		return nil, keys, evicted
+	}
 }
 
 func (sc *SheetCache) Get(key interface{}) *MemSheet {
+	sc.gLock.RLock()
+	defer sc.gLock.RUnlock()
+
 	if v, ok := sc.cache.Load(key); !ok {
 		return nil
 	} else {
-		return v.(*MemSheet)
+		ms := v.(*MemSheet)
+		ms.refer()
+		sc.lru.Add(key)
+		return ms
 	}
 }
 
-func (sc *SheetCache) Del(key interface{}) {
-	sc.cache.Delete(key)
+func (sc *SheetCache) Put(key interface{}) (keys []interface{}, evicted []*MemSheet) {
+	if v, ok := sc.cache.Load(key); !ok {
+		return keys, evicted
+	} else {
+		ms := v.(*MemSheet)
+		_, keys, evicted, _, _ := sc.doEvictIfNeeded(key, ms, true)
+		ms.unRefer()
+		return keys, evicted
+	}
 }
 
-func (sc *SheetCache) doEvict(spareAtLeast int64) (keys []interface{}, evicted []*MemSheet) {
+func (sc *SheetCache) doEvictIfNeeded(key interface{}, ms *MemSheet, isPut bool) (spared int64,
+	keys []interface{}, evicted []*MemSheet, doEvict bool, success bool) {
+	sc.gLock.Lock()
+	defer sc.gLock.Unlock()
+
+	ms.Lock()
+	defer ms.Unlock()
+
+	changedSize := int64(0)
+	if isPut {
+		if _, ok := sc.cache.Load(key); ok {
+			changedSize = ms.reportSizeChange()
+		} else {// in case that, put the same sheet more than once, which existed in cache but cannot fit anymore
+			return 0, []interface{}{}, []*MemSheet{}, false, false
+		}
+	} else {
+		changedSize = ms.GetSize()
+	}
+
+	if sc.curSize + changedSize > sc.maxSize {
+		if keys, evicted, spared = sc.doEvict(key, changedSize - (sc.maxSize - sc.curSize)); spared == 0 {
+			if sc.maxSize != 0 {
+				logger.Warnf("[%v] Cannot get enough memory from eviction! %s", key, debug.Stack())
+			}
+			if isPut {
+				sc.lru.Delete(key)
+				sc.cache.Delete(key)
+				atomic.AddInt64(&sc.curSize, -(ms.GetSize() - changedSize))
+			}
+			return 0, []interface{}{key}, []*MemSheet{ms}, true, false
+		} else {
+			sc.curSize += changedSize - spared
+			ms.reportSizeChange()
+			return spared, keys, evicted, true, true
+		}
+	} else {
+		sc.curSize += changedSize
+		ms.reportSizeChange()
+		return 0, []interface{}{}, []*MemSheet{}, false, true
+	}
+}
+
+func (sc *SheetCache) doEvict(caller interface{}, spareAtLeast int64) (keys []interface{}, evicted []*MemSheet, spared int64) {
 	if sc.curSize < spareAtLeast {
-		return nil, nil
+		return nil, nil, 0
 	}
 
-	// TODO: finish eviction, e.g. LRU
+	noEvictionCnt := int64(0)
+	for spared < spareAtLeast {
+		if sc.lru.Len() == 0 {
+			redoEviction(sc, keys, evicted)
+			return nil, nil, 0
+		}
+		toEvictKey := sc.lru.DoEvict()
+		if toEvictKey == caller {
+			sc.lru.Add(toEvictKey)
+			noEvictionCnt += spareAtLeast
+		} else {
+			if v, ok := sc.cache.Load(toEvictKey); !ok {
+				logger.Fatalf("cache: memSheet in lru but not in cache!\n %s", debug.Stack())
+			} else {
+				toEvict := v.(*MemSheet)
+				toEvict.Lock()
+				if toEvict.isReferred() {
+					sc.lru.Add(toEvictKey)
+					noEvictionCnt += toEvict.GetSize()
+					logger.Debugf("[%v] is referred", toEvictKey)
+				} else {
+					sc.cache.Delete(toEvictKey)
+					spared += toEvict.GetSize()
+					keys = append(keys, toEvictKey)
+					evicted = append(evicted, toEvict)
+					noEvictionCnt = 0
+					logger.Debugf("[%v] can be evicted, spared %d", toEvictKey, spared)
+				}
+				toEvict.Unlock()
+			}
+		}
 
-	return nil, nil
+		// searching for evictable MemSheet (not referred) for 3 cycles and evict nothing
+		if noEvictionCnt > 3 * sc.curSize {
+			redoEviction(sc, keys, evicted)
+			return nil, nil, 0
+		}
+	}
+
+	return keys, evicted, spared
+}
+
+func redoEviction(sc *SheetCache, keys []interface{}, evicted []*MemSheet) {
+	for i := len(keys) - 1; i >= 0; i -= 1 {
+		evicted[i].Lock()
+		sc.cache.Store(keys[i], evicted[i])
+		sc.lru.AddToLeastRecent(keys[i])
+		evicted[i].Unlock()
+	}
 }

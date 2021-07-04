@@ -30,12 +30,42 @@ func (lru *LRU) Add(item interface{}) {
 	}
 }
 
+func (lru *LRU) AddToLeastRecent(item interface{}) {
+	lru.lock.Lock()
+	defer lru.lock.Unlock()
+
+	if elem := lru.hashMap[item]; elem == nil {
+		elem = lru.cacheList.PushBack(item)
+		lru.hashMap[item] = elem
+	} else {
+		lru.cacheList.MoveToBack(elem)
+	}
+}
+
+func (lru *LRU) Delete(item interface{}) {
+	lru.lock.Lock()
+	defer lru.lock.Unlock()
+
+	if elem := lru.hashMap[item]; elem == nil {
+		return
+	} else {
+		delete(lru.hashMap, item)
+		lru.cacheList.Remove(elem)
+	}
+}
+
 func (lru *LRU) DoEvict() (item interface{}) {
 	lru.lock.Lock()
 	defer lru.lock.Unlock()
 
 	evict := lru.cacheList.Back()
 	lru.cacheList.Remove(evict)
+	item = evict.Value
+	delete(lru.hashMap, item)
 
-	return evict.Value
+	return item
+}
+
+func (lru *LRU) Len() int {
+	return lru.cacheList.Len()
 }

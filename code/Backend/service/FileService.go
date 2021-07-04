@@ -113,14 +113,19 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 					return success, msg, data, addr
 				}
 
+				inCache := true
 				memSheet := getSheetCache().Get(sheet.Fid)
 				if memSheet == nil {
-					if memSheet = recoverSheetFromLog(&sheet); memSheet == nil {
+					if memSheet, inCache = recoverSheetFromLog(&sheet); memSheet == nil {
 						panic("recoverSheetFromLog fails")
 					}
 				}
 				sheet.Content = memSheet.ToStringSlice()
 				_, sheet.Columns = memSheet.Shape()
+				if inCache {
+					keys, evicted := getSheetCache().Put(sheet.Fid)
+					commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
+				}
 			}
 
 			success, msg, data = true, utils.SheetGetSuccess, sheet
@@ -164,7 +169,6 @@ func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int, redirec
 					if !sheet.IsDeleted {
 						sheet.IsDeleted = true
 						dao.SetSheet(sheet)
-						getSheetCache().Del(sheet.Fid)
 					} else {
 						sheetRoot := gdocFS.GetRootPath("sheet", sheet.Fid)
 						dao.DeleteSheet(sheet.Fid)
@@ -227,6 +231,8 @@ func CommitSheet(params utils.CommitSheetParams) (success bool, msg int, data ui
 					return false, utils.SheetNotInCache, 0, ""
 				} else {
 					cid := commitOneSheetWithCache(sheet.Fid, memSheet)
+					keys, evicted := getSheetCache().Put(sheet.Fid)
+					commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
 					return true, utils.SheetCommitSuccess, cid, ""
 				}
 			}

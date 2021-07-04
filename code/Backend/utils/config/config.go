@@ -6,8 +6,8 @@ import (
 )
 
 type config struct{
-	MaxSheetCache	int64		`default:"64"`
-	UnitCache		int64		`default:"16"`
+	MaxSheetCache	int64		`default:"3"`
+	UnitCache		int64		`default:"1"`
 	WriteThrough	bool		`default:"true"`
 	ZKRoot			string		`default:"/backend"`
 	ZKAddr			string		`required:"true"`

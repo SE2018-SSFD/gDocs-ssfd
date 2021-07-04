@@ -174,7 +174,7 @@ func commitSheetsWithCache(fids []uint, memSheets []*cache.MemSheet) {
 //   when all users quit editing or sheet is evicted from memCache.
 // BUT log can be *UNCOMMITTED* if the server it belonged to crashed, for which we need to thoroughly handle
 //   all possible circumstances here in order to achieve crash consistency.
-func recoverSheetFromLog(sheet *model.Sheet) (memSheet *cache.MemSheet) {
+func recoverSheetFromLog(sheet *model.Sheet) (memSheet *cache.MemSheet, inCache bool) {
 	fid := sheet.Fid
 	curCid := uint(sheet.CheckPointNum)
 
@@ -187,7 +187,7 @@ func recoverSheetFromLog(sheet *model.Sheet) (memSheet *cache.MemSheet) {
 	} else {
 		if chkp, err := sheetGetPickledCheckPointFromDfs(fid, curCid); err != nil {
 			logger.Errorf("[%s] %+v", err)
-			return nil
+			return nil, false
 		} else {
 			memSheet = cache.NewMemSheetFromStringSlice(chkp.Content, chkp.Columns)
 		}
@@ -196,19 +196,21 @@ func recoverSheetFromLog(sheet *model.Sheet) (memSheet *cache.MemSheet) {
 	// redo with latest log
 	if logs, err := sheetGetPickledLogFromDfs(fid, curCid + 1); err != nil {
 		logger.Errorf("%+v", err)
-		return nil
+		return nil, false
 	} else {
 		for li := 0; li < len(logs); li += 1 {
 			log := &logs[li]
 			memSheet.Set(log.Row, log.Col, log.New)
+		}
 
-			// do eviction
-			keys, evicted := getSheetCache().Add(fid, memSheet)
+		// do eviction
+		if ms, keys, evicted := getSheetCache().Add(fid, memSheet); ms != nil {
 			commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
+			return ms, true
+		} else {
+			return memSheet, false
 		}
 	}
-
-	return memSheet
 }
 
 // sheetGetPickledCheckPointFromDfs pickles a CheckPoint from dfs with fid and cid
