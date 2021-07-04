@@ -17,6 +17,7 @@ type LoadDataReply struct {
 type StoreDataArgs struct {
 	CID CacheID
 	Off int
+	Pad bool
 }
 
 type StoreDataReply struct {

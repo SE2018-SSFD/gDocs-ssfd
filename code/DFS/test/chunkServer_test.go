@@ -307,7 +307,7 @@ func TestReReplicate(t *testing.T) {
 	var syncArgs []util.SyncArgs = make([]util.SyncArgs, 4)
 	for i := 0; i < 4; i++ {
 		go func(idx int) {
-			syncArgs[idx] = util.SyncArgs{CID: cid[idx], Off: (idx % 2) * 4, Addrs: csAddrs[idx/2]}
+			syncArgs[idx] = util.SyncArgs{CID: cid[idx], Off: (idx % 2) * 4, Addrs: csAddrs[idx/2], IsAppend: false}
 			err := cs[idx/2].SyncRPC(syncArgs[idx], nil)
 			if err != nil {
 				logrus.Printf("Sync error\n")
@@ -383,6 +383,130 @@ func TestReReplicate(t *testing.T) {
 	wg[0].Wait()
 	logrus.Printf("Clone and Read Done !!!\n")
 
+	chunkServerExit(cs)
+	Clear()
+}
+
+func TestConcurrentAppend(t *testing.T) {
+	logrus.SetLevel(logrus.DebugLevel)
+	cs := initChunkServer()
+	var h []util.Handle = make([]util.Handle, 2)
+	var wg []sync.WaitGroup = make([]sync.WaitGroup, 2)
+	var createChunkArgs []util.CreateChunkArgs = make([]util.CreateChunkArgs, 2)
+	h[0] = util.Handle(1)
+	h[1] = util.Handle(2)
+	wg[0].Add(3)
+	wg[1].Add(3)
+	createChunkArgs[0] = util.CreateChunkArgs{Handle: h[0]}
+	createChunkArgs[1] = util.CreateChunkArgs{Handle: h[1]}
+	for i := 0; i < 3; i++ {
+		go func(idx int) {
+			err := cs[idx].CreateChunkRPC(createChunkArgs[0], nil)
+			if err != nil {
+				logrus.Printf("CreateChunk error\n")
+				logrus.Println(err)
+				t.Fail()
+			}
+			wg[0].Done()
+		}(i)
+	}
+	for i := 1; i < 4; i++ {
+		go func(idx int) {
+			err := cs[idx].CreateChunkRPC(createChunkArgs[1], nil)
+			if err != nil {
+				logrus.Printf("CreateChunk error\n")
+				logrus.Println(err)
+				t.Fail()
+			}
+			wg[1].Done()
+		}(i)
+	}
+	wg[0].Wait()
+	wg[1].Wait()
+	logrus.Printf("Create Chunk Done\n")
+
+	var str [][]byte = make([][]byte, 8)
+	for i := 0; i < 8; i++ {
+		str[i] = []byte(util.MakeInt(i, util.MAXCHUNKSIZE/4))
+	}
+
+	var csAddrs [][]util.Address = make([][]util.Address, 2)
+	csAddrs[0] = make([]util.Address, 0)
+	csAddrs[1] = make([]util.Address, 0)
+
+	//notice i begin with 1
+	//server 0,1,2 store chunk-1
+	//server 1,2,3 store chunk-2
+	for i := 1; i < 3; i++ {
+		csAddrs[0] = append(csAddrs[0], util.Address(cs[i].GetAddr()))
+	}
+	for i := 2; i < 4; i++ {
+		csAddrs[1] = append(csAddrs[1], util.Address(cs[i].GetAddr()))
+	}
+	var cid []util.CacheID = make([]util.CacheID, 8)
+	cid[0] = util.CacheID{Handle: h[0], ClientAddr: "127.0.0.1:2100"}
+	cid[1] = util.CacheID{Handle: h[0], ClientAddr: "127.0.0.1:2101"}
+	cid[2] = util.CacheID{Handle: h[0], ClientAddr: "127.0.0.1:2102"}
+	cid[3] = util.CacheID{Handle: h[0], ClientAddr: "127.0.0.1:2103"}
+	cid[4] = util.CacheID{Handle: h[1], ClientAddr: "127.0.0.1:2100"}
+	cid[5] = util.CacheID{Handle: h[1], ClientAddr: "127.0.0.1:2101"}
+	cid[6] = util.CacheID{Handle: h[1], ClientAddr: "127.0.0.1:2102"}
+	cid[7] = util.CacheID{Handle: h[1], ClientAddr: "127.0.0.1:2103"}
+	// wg[0].Add(8)
+	// load Data
+	var loadArgs []util.LoadDataArgs = make([]util.LoadDataArgs, 8)
+	for i := 0; i < 8; i++ {
+		wg[0].Add(1)
+		go func(idx int) {
+			loadArgs[idx] = util.LoadDataArgs{
+				Data:  str[idx],
+				CID:   cid[idx],
+				Addrs: csAddrs[idx/4]}
+			err := cs[idx/4].LoadDataRPC(loadArgs[idx], nil)
+			if err != nil {
+				logrus.Printf("loadData error\n")
+				logrus.Println(err)
+				t.Fail()
+			}
+			wg[0].Done()
+		}(i)
+	}
+	wg[0].Wait()
+	logrus.Println("Load Data Done!")
+
+	// wg[0].Add(4)
+	var syncArgs []util.SyncArgs = make([]util.SyncArgs, 8)
+	var syncReplys []util.SyncReply = make([]util.SyncReply, 8)
+	for i := 0; i < 8; i++ {
+		wg[0].Add(1)
+		go func(idx int) {
+			syncArgs[idx] = util.SyncArgs{CID: cid[idx], Off: 0, Addrs: csAddrs[idx/4], IsAppend: true}
+			err := cs[idx/4].SyncRPC(syncArgs[idx], &syncReplys[idx])
+			if err != nil {
+				logrus.Printf("Sync error\n")
+				logrus.Println(err)
+				t.Fail()
+			}
+			wg[0].Done()
+		}(i)
+	}
+	wg[0].Wait()
+	logrus.Printf("Write Done !!!\n")
+
+	err := cs[0].LoadDataRPC(loadArgs[0], nil)
+	if err != nil {
+		logrus.Printf("loadData error\n")
+		logrus.Println(err)
+		t.Fail()
+	}
+	err = cs[0].SyncRPC(syncArgs[0], &syncReplys[0])
+	if syncReplys[0].ErrorCode != util.NOSPACE {
+		if err != nil {
+			logrus.Printf("Sync error\n")
+			logrus.Println(err)
+		}
+		t.Fail()
+	}
 	chunkServerExit(cs)
 	Clear()
 }

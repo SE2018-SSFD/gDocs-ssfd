@@ -40,6 +40,35 @@ func (cs *ChunkServer) SetChunk(handle util.Handle, off int, buf []byte) (int, e
 	return fd.WriteAt(buf, int64(off))
 }
 
+func (cs *ChunkServer) PadChunk(handle util.Handle) error {
+
+	// if off+len(buf) > util.MAXCHUNKSIZE {
+	// log.Panic("chunk size cannot be larger than maxchunksize\n")
+	// }
+
+	filename := cs.GetFileName(handle)
+
+	fd, err := os.OpenFile(filename, os.O_WRONLY, 0644)
+
+	if err != nil {
+		return err
+	}
+
+	defer fd.Close()
+	fileinfo, err := fd.Stat()
+	if err != nil {
+		log.Panic(err)
+		return err
+	}
+	if fileinfo.Size() == util.MAXCHUNKSIZE {
+		return nil
+	} else {
+		buf := []byte{0}
+		_, err = fd.WriteAt(buf, util.MAXCHUNKSIZE-1)
+	}
+	return err
+}
+
 func (cs *ChunkServer) CreateAndSetChunk(handle util.Handle, off int, buf []byte) (int, error) {
 
 	if off+len(buf) > util.MAXCHUNKSIZE {
@@ -108,10 +137,21 @@ func (cs *ChunkServer) AppendChunk(handle util.Handle, buf []byte) (off int, err
 
 	defer fd.Close()
 	fileInfo, err := fd.Stat()
+	//NO SPACE
 	if fileInfo.Size()+int64(len(buf)) > util.MAXCHUNKSIZE {
-		off = util.MAXCHUNKSIZE
-
-		return
+		if fileInfo.Size() == util.MAXCHUNKSIZE {
+			return util.MAXCHUNKSIZE, nil
+		}
+		offset := util.MAXCHUNKSIZE - 1
+		data := []byte{0}
+		f, err := os.OpenFile(filename, os.O_WRONLY, 0644)
+		if err != nil {
+			logrus.Panic(err)
+			return 0, err
+		}
+		defer f.Close()
+		_, err = f.WriteAt(data, int64(offset))
+		return util.MAXCHUNKSIZE, err
 	}
 
 	writeByte, err := fd.Write(buf)

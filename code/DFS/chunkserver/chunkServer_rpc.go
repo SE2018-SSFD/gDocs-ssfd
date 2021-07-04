@@ -4,11 +4,12 @@ import (
 	"DFS/util"
 	"DFS/util/zkWrap"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"log"
 	"net"
 	"net/rpc"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func (cs *ChunkServer) StartRPCServer() error {
@@ -42,7 +43,7 @@ func (cs *ChunkServer) StartRPCServer() error {
 	}()
 
 	zkWrap.Chroot("/DFS")
-	time.Sleep(500*time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	cs.RegisterNodes()
 	// cs.Printf("Register zookeeper node\n")
 	//
@@ -155,15 +156,21 @@ func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error 
 	ck.Lock()
 	cs.RUnlock()
 	defer ck.Unlock()
-
+	var pad bool = false
 	if args.IsAppend {
-		_, err := cs.AppendChunk(args.CID.Handle, data)
+		off, err := cs.AppendChunk(args.CID.Handle, data)
+		logrus.Print("Append handle ", args.CID.Handle, " len ", len(data), " off ", off)
 		if err != nil {
-
+			logrus.Print(err)
 		}
+		if off == util.MAXCHUNKSIZE {
+			reply.ErrorCode = util.NOSPACE
+			pad = true // pad other chunkServer
+		}
+		args.Off = off
 	} else {
-		len,err := cs.SetChunk(args.CID.Handle, args.Off, data)
-		logrus.Print("Handle ",args.CID.Handle," len ",len," off ",args.Off)
+		len, err := cs.SetChunk(args.CID.Handle, args.Off, data)
+		logrus.Print("Handle ", args.CID.Handle, " len ", len, " off ", args.Off)
 		if err != nil {
 			logrus.Panic(err)
 		}
@@ -176,6 +183,7 @@ func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error 
 				util.StoreDataArgs{
 					CID: args.CID,
 					Off: args.Off,
+					Pad: pad,
 				}, nil)
 		}(secondaryAddr)
 	}
@@ -212,8 +220,14 @@ func (cs *ChunkServer) StoreDataRPC(args util.StoreDataArgs, reply *util.StoreDa
 	ck.Lock()
 	cs.RUnlock()
 	defer ck.Unlock()
-
-	len, err := cs.SetChunk(args.CID.Handle, args.Off, data)
+	var len int
+	if args.Pad {
+		// data = []byte{0}
+		// len, err = cs.SetChunk(args.CID.Handle, util.MAXCHUNKSIZE-1, data)
+		err = cs.PadChunk(args.CID.Handle)
+	} else {
+		len, err = cs.SetChunk(args.CID.Handle, args.Off, data)
+	}
 	log.Printf("ChunkServer %v: store handle %v, len %v\n", cs.addr, args.CID.Handle, len)
 	return err
 }
