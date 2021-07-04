@@ -34,10 +34,8 @@ func (c *Client) RegisterNodes() {
 	}
 
 	c.LeaderHeartbeat = hb
-	logrus.Debugf("stage 1 %v",c.GetClientAddr())
 	for _, mate := range hb.GetOriginMates() {
 		c.onHeartbeatConn("", mate)
 	}
-	logrus.Debugf("stage 2 %v",c.GetClientAddr())
 
 }

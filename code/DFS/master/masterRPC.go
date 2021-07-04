@@ -209,5 +209,6 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		reply.ChunkServerAddrs = append(reply.ChunkServerAddrs, addr)
 	}
 	reply.ChunkHandle = targetChunk.Handle
+	reply.ChunkIndex = args.ChunkIndex
 	return nil
 }

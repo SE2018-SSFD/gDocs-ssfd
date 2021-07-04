@@ -35,8 +35,6 @@ func InitClient(clientAddr util.Address, masterAddr util.Address) *Client {
 		fdTable:    make(map[int]util.DFSPath),
 	}
 	//to find master leader
-	logrus.Debugf("stage 0 %v",c.GetClientAddr())
-
 	err := zkWrap.Chroot("/DFS")
 	if err != nil {
 		logrus.Fatalln(err)
@@ -202,7 +200,7 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (readBytes int, b
 		buf = append(buf, retRCK.Buf...)
 		readBytes += roundReadBytes
 		logrus.Debugf(" Read %d bytes from chunkserver %s, bytes read %d\n", roundReadBytes, string(retR.ChunkServerAddrs[0]), readBytes)
-		logrus.Debugf("read:%s",retRCK.Buf)
+		//logrus.Debugf("read:%s",retRCK.Buf)
 	}
 	return
 }
@@ -370,6 +368,7 @@ func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
 // Append to a file
 func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 	var argA util.AppendArg
+	var retA util.CAppendRet
 	var argF util.GetFileMetaArg
 	var retF util.GetFileMetaRet
 
@@ -412,9 +411,10 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
-	msg, _ := json.Marshal(offset)
+	retA.Offset = offset
+	logrus.Info("offset in client:",offset)
+	msg, _ := json.Marshal(retA)
 	w.Write(msg)
-	w.WriteHeader(200)
 	return
 
 }
@@ -472,7 +472,7 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenByte
 			return
 		}
 		writtenBytes += roundWrittenBytes
-		logrus.Debugf(" Write %d bytes : %v, bytes written %d offset %d\n", roundWrittenBytes, argL.Data, writtenBytes,argC.Off)
+		//logrus.Debugf(" Write %d bytes : %v, bytes written %d offset %d\n", roundWrittenBytes, argL.Data, writtenBytes,argC.Off)
 	}
 	// Set new file metadata back to master
 	// if offset+writtenBytes > fileSize {
@@ -602,7 +602,6 @@ func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error)
 	var argL util.LoadDataArgs
 	var retL util.LoadDataReply
 	var argC util.SyncArgs
-	var retC util.SyncReply
 
 	// Write the chunk (may add chunks)
 	// By default, the first entry int retR.ChunkServerAddr is the primary
@@ -614,6 +613,8 @@ func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error)
 	//4.redo 2
 	argR.ChunkIndex = -1
 	for {
+		var retC util.SyncReply
+
 		err = util.Call(string(c.masterAddr), "Master.GetReplicasRPC", argR, &retR)
 		if err != nil {
 			return
@@ -646,9 +647,9 @@ func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error)
 			IsAppend: true,
 		}
 		err = util.Call(string(argL.Addrs[0]), "ChunkServer.SyncRPC", argC, &retC)
-		if err == nil {
-			offset = retC.Off
-			logrus.Debugf(" Append %d bytes to chunkserver %s, offset %d\n", len(data), argL.Addrs[0], retC.Off)
+		if err == nil && retC.ErrorCode!=util.NOSPACE {
+			offset = retC.Off+retR.ChunkIndex*util.MAXCHUNKSIZE
+			logrus.Debugf(" Append %d bytes to chunkserver %s, offset %d\n", len(data), argL.Addrs[0],offset)
 			return
 		} else if retC.ErrorCode != util.NOSPACE {
 			//TODO: we should retry append
@@ -657,6 +658,8 @@ func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error)
 		}
 
 		// errorcode == nospace, try append to the next chunk
+
+		logrus.Debugf("Client write file %v chunk %v no space, retry, Errcode: %v ,err: %v", path,retR.ChunkIndex,retC.ErrorCode,err)
 		argR.ChunkIndex = retR.ChunkIndex + 1
 	}
 	return
