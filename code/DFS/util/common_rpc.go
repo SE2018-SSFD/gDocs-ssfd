@@ -3,6 +3,7 @@ package util
 type CacheID struct {
 	Handle     Handle
 	ClientAddr Address
+	Timestamp  int64
 }
 
 type LoadDataArgs struct {

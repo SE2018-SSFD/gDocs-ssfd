@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"path"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -21,6 +22,7 @@ type Client struct {
 	fdTable         map[int]util.DFSPath
 	s               *http.Server
 	LeaderHeartbeat *zkWrap.Heartbeat // only one master(leader) and some clients in this room
+	cidLock         sync.Mutex
 	//TODO:add lease
 }
 
@@ -443,10 +445,7 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenByte
 		}
 		roundWrittenBytes := int(math.Min(float64(util.MAXCHUNKSIZE-(offset+writtenBytes)%util.MAXCHUNKSIZE), float64(len(data)-writtenBytes)))
 		logrus.Infof(" Write ChunkHandle : %d Addresses : %s %s %s, write %v\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2], roundWrittenBytes)
-		var cid = util.CacheID{
-			Handle:     retR.ChunkHandle,
-			ClientAddr: c.clientAddr,
-		}
+		var cid = c.newCacheID(retR.ChunkHandle)
 
 		argL.CID = cid
 		argL.Data = data[writtenBytes:(writtenBytes + roundWrittenBytes)]
@@ -640,10 +639,7 @@ func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error)
 		}
 		logrus.Debugf(" ChunkHandle : %d Addresses : %s %s %s\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2])
 		// roundWrittenBytes := int(math.Min(float64(util.MAXCHUNKSIZE-(offset+writtenBytes)%util.MAXCHUNKSIZE), float64(len(data)-writtenBytes)))
-		var cid = util.CacheID{
-			Handle:     retR.ChunkHandle,
-			ClientAddr: c.clientAddr,
-		}
+		var cid = c.newCacheID(retR.ChunkHandle)
 		argL.CID = cid
 		argL.Data = data
 
@@ -682,4 +678,17 @@ func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error)
 		argR.ChunkIndex = retR.ChunkIndex + 1
 	}
 	return
+}
+
+func (c *Client) newCacheID(handle util.Handle) util.CacheID {
+	c.cidLock.Lock()
+	t := time.Now().UnixNano()
+	c.cidLock.Unlock()
+
+	var cid = util.CacheID{
+		Handle:     handle,
+		ClientAddr: c.clientAddr,
+		Timestamp:  t,
+	}
+	return cid
 }
