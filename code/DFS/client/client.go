@@ -23,7 +23,7 @@ type Client struct {
 	//TODO:add lease
 }
 
-func  (c *Client)GetClientAddr() util.Address {
+func (c *Client) GetClientAddr() util.Address {
 	return c.clientAddr
 }
 
@@ -35,7 +35,7 @@ func InitClient(clientAddr util.Address, masterAddr util.Address) *Client {
 		fdTable:    make(map[int]util.DFSPath),
 	}
 	//to find master leader
-	logrus.Debugf("stage 0 %v",c.GetClientAddr())
+	logrus.Debugf("stage 0 %v", c.GetClientAddr())
 
 	err := zkWrap.Chroot("/DFS")
 	if err != nil {
@@ -61,7 +61,7 @@ func (c *Client) Serve() {
 	mux.HandleFunc("/scan", c.Scan)
 	mux.HandleFunc("/fileInfo", c.GetFileInfo)
 	c.s = &http.Server{
-		Addr: 			string(c.clientAddr),
+		Addr:           string(c.clientAddr),
 		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
@@ -69,7 +69,7 @@ func (c *Client) Serve() {
 	}
 	err := c.s.ListenAndServe()
 	if err != nil {
-		logrus.Debug("Client server shutdown:",err)
+		logrus.Debug("Client server shutdown:", err)
 	}
 	//logrus.Fatalln("stop!")
 }
@@ -170,11 +170,12 @@ func (c *Client) Close(w http.ResponseWriter, r *http.Request) {
 }
 
 // func (c *Client) _Read(path util.DFSPath, offset int, len int, fileSize int) (readBytes int, buf []byte, err error) {
-func (c *Client) _Read(path util.DFSPath, offset int, len int) (readBytes int, buf []byte, err error) {
+func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes int, buf []byte, err error) {
 	var argR util.GetReplicasArg
 	var retR util.GetReplicasRet
 	var argRCK util.ReadChunkArgs
 	var retRCK util.ReadChunkReply
+	var readBytes int
 	argR.Path = path
 	for readBytes < len {
 		roundOff := (offset + readBytes) % util.MAXCHUNKSIZE
@@ -201,8 +202,9 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (readBytes int, b
 		}
 		buf = append(buf, retRCK.Buf...)
 		readBytes += roundReadBytes
+		realReadBytes += retRCK.Len
 		logrus.Debugf(" Read %d bytes from chunkserver %s, bytes read %d\n", roundReadBytes, string(retR.ChunkServerAddrs[0]), readBytes)
-		logrus.Debugf("read:%s",retRCK.Buf)
+		logrus.Debugf("read:%s", retRCK.Buf)
 	}
 	return
 }
@@ -439,7 +441,7 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenByte
 			return
 		}
 		roundWrittenBytes := int(math.Min(float64(util.MAXCHUNKSIZE-(offset+writtenBytes)%util.MAXCHUNKSIZE), float64(len(data)-writtenBytes)))
-		logrus.Infof(" Write ChunkHandle : %d Addresses : %s %s %s, write %v\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2],roundWrittenBytes)
+		logrus.Infof(" Write ChunkHandle : %d Addresses : %s %s %s, write %v\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2], roundWrittenBytes)
 		var cid = util.CacheID{
 			Handle:     retR.ChunkHandle,
 			ClientAddr: c.clientAddr,
@@ -472,7 +474,7 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenByte
 			return
 		}
 		writtenBytes += roundWrittenBytes
-		logrus.Debugf(" Write %d bytes : %v, bytes written %d offset %d\n", roundWrittenBytes, argL.Data, writtenBytes,argC.Off)
+		logrus.Debugf(" Write %d bytes : %v, bytes written %d offset %d\n", roundWrittenBytes, argL.Data, writtenBytes, argC.Off)
 	}
 	// Set new file metadata back to master
 	// if offset+writtenBytes > fileSize {
@@ -504,7 +506,6 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	// Get the file metadata and check
 	path := c.fdTable[argW.Fd]
 	if path == "" {
@@ -517,7 +518,7 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 		logrus.Fatalln("Client write failed :", err)
 		return
 	}
-	logrus.Debugf("client write path:%v,offset:%v,datasize:%v",path,argW.Offset,len(argW.Data))
+	logrus.Debugf("client write path:%v,offset:%v,datasize:%v", path, argW.Offset, len(argW.Data))
 
 	// fileSize := retF.Size
 	// if argW.Offset > fileSize {

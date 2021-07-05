@@ -120,7 +120,8 @@ func (cs *ChunkServer) ReadChunkRPC(args util.ReadChunkArgs, reply *util.ReadChu
 	reply.Len = len
 	reply.VerNum = ck.verNum
 	if args.Len != len {
-		return fmt.Errorf("ChunkServer %v: read chunk len %v,but actual len %v", cs.addr, args.Len, len)
+		logrus.Printf("ChunkServer %v: read chunk len %v,but actual len %v\n", cs.addr, args.Len, len)
+		// return fmt.Errorf("ChunkServer %v: read chunk len %v,but actual len %v", cs.addr, args.Len, len)
 	}
 	return nil
 }
