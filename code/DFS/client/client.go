@@ -128,7 +128,7 @@ func (c *Client) Open(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	for i := 0; i < util.MAXFD; i++ {
+	for i := util.MINFD; i < util.MAXFD; i++ {
 		_, exist := c.fdTable[i]
 		if !exist {
 			logrus.Debugf("Client open : assign %d", i)
