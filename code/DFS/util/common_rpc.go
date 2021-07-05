@@ -168,8 +168,9 @@ type GetFileMetaArg struct {
 	Path DFSPath `json:"path"`
 }
 type GetFileMetaRet struct {
-	Exist bool `json:"exist"`
-	IsDir bool `json:"is_dir"`
+	Exist    bool `json:"exist"`
+	IsDir    bool `json:"is_dir"`
+	ChunkNum int  `json:"chunk_num"`
 	// Size  int  `json:"size"`
 }
 type SetFileMetaArg struct {
