@@ -4,6 +4,7 @@ import (
 	"DFS/util"
 	"DFS/util/zkWrap"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net"
 	"net/rpc"
 	"os"
@@ -11,8 +12,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 type Master struct {
@@ -77,8 +76,9 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error
 		wg.Done()
 	}
 	m.L = l
-	// Init zookeeper
-	//c, _, err := zk.Connect([]string{"127.0.0.1"}, time.Second) //*10)
+	// Init Kafka client
+	//config := sarama.NewConfig()
+
 
 	// Init metadata manager
 	m.ns = newNamespaceState()

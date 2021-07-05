@@ -119,7 +119,7 @@ func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMet
 			ChunkNum: 0,
 			// Size: -1,
 		}
-		return err
+		return nil
 	}
 	reply.Exist = true
 	reply.IsDir = node.isDir

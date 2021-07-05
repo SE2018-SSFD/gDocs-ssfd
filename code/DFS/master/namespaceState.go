@@ -122,7 +122,14 @@ func (ns *NamespaceState) Delete(path util.DFSPath) (err error) {
 		err = fmt.Errorf("DeleteError : the requested DFS path %s is not exist\n", string(path))
 		return err
 	}
-	if node.isDir == true && len(node.treeNodes)!=0{
+	empty := true
+	for key,_ := range node.treeNodes{
+		if strings.HasPrefix(key,util.DELETEPREFIX){ // ignore deleted bindings
+			continue
+		}
+		empty = false
+	}
+	if node.isDir == true && !empty{
 		err = fmt.Errorf("DeleteError : the requested DFS dir %s is not empty\n", string(path))
 		return err
 	}

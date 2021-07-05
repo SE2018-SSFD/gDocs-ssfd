@@ -1,4 +1,6 @@
 #!/bin/bash
+export GOPROXY=goproxy.cn
+
 MASTER1ADDR=0.0.0.0:1234
 MASTER2ADDR=0.0.0.0:1235
 MASTER3ADDR=0.0.0.0:1236
