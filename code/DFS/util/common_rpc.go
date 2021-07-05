@@ -191,3 +191,10 @@ type ReadRet struct {
 	Len  int    `json:"len"`
 	Data []byte `json:"data"`
 }
+
+// client
+type GetFileInfoRet struct {
+	Exist         bool `json:"exist"`
+	IsDir         bool `json:"is_dir"`
+	UpperFileSize int  `json:"upper_file_size"`
+}

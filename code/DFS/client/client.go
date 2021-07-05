@@ -544,6 +544,7 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 func (c *Client) GetFileInfo(w http.ResponseWriter, r *http.Request) {
 	var arg util.GetFileMetaArg
 	var ret util.GetFileMetaRet
+	var ret2 util.GetFileInfoRet
 	// Decode the params
 	err := json.NewDecoder(r.Body).Decode(&arg)
 	if err != nil {
@@ -557,7 +558,12 @@ func (c *Client) GetFileInfo(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
-	msg, _ := json.Marshal(ret)
+	ret2 = util.GetFileInfoRet{
+		Exist:         ret.Exist,
+		IsDir:         ret.IsDir,
+		UpperFileSize: ret.ChunkNum * util.MAXCHUNKSIZE,
+	}
+	msg, _ := json.Marshal(ret2)
 	w.Write(msg)
 }
 

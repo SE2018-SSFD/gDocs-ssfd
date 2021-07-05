@@ -3,8 +3,9 @@ package master
 import (
 	"DFS/util"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"path"
+
+	"github.com/sirupsen/logrus"
 )
 
 // CreateRPC is called by client to create a new file
@@ -114,8 +115,8 @@ func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMet
 	if err != nil {
 		logrus.Warnf("RPC getFileMeta failed : %s", err)
 		*reply = util.GetFileMetaRet{
-			Exist: false,
-			IsDir: false,
+			Exist:    false,
+			IsDir:    false,
 			ChunkNum: 0,
 			// Size: -1,
 		}
@@ -123,12 +124,12 @@ func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMet
 	}
 	reply.Exist = true
 	reply.IsDir = node.isDir
-	reply.ChunkNum = m.cs.getChunkNum(args.Path)
-	// if node.isDir{
-	// 	reply.Size = -1
-	// }else{
-	// 	reply.Size = m.cs.file[args.Path].size
-	// }
+
+	if node.isDir {
+		reply.ChunkNum = 0
+	} else {
+		reply.ChunkNum = m.cs.getChunkNum(args.Path)
+	}
 	return nil
 }
 
@@ -204,7 +205,7 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		defer targetChunk.RUnlock()
 		fs.Unlock()
 	}
-	logrus.Debugf("targetchunk handle :%v, Locations : %v ", targetChunk.Handle,targetChunk.Locations)
+	logrus.Debugf("targetchunk handle :%v, Locations : %v ", targetChunk.Handle, targetChunk.Locations)
 	// Get target servers which store the replicate
 	reply.ChunkServerAddrs = make([]util.Address, 0)
 	for _, addr := range targetChunk.Locations {
