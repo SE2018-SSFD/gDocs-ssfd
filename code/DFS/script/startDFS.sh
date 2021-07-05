@@ -20,11 +20,11 @@ rm -rf ${MASTER2DIR}
 mkdir ${MASTER2DIR}
 rm -rf ${MASTER3DIR}
 mkdir ${MASTER3DIR}
-./NodeRunner multimaster ${MASTER1ADDR} ${MASTER2ADDR} ${MASTER3ADDR} ${MASTER1DIR} ${MASTER2DIR} ${MASTER3DIR} &> ../log/masterOutput.log &
-sleep 2
 for a in `eval echo {3000..$[CHUNKSERVERNUM+3000]}`
 do
 mkdir ${CHUNKSERVERROOT}/ck"${a}"
 ./NodeRunner chunkServer 0.0.0.0:"${a}" ${CHUNKSERVERROOT}/ck"${a}" ${MASTER1ADDR} &> ../log/chunkServerOutput"${a}".log &
 done
+sleep 2
+./NodeRunner multimaster ${MASTER1ADDR} ${MASTER2ADDR} ${MASTER3ADDR} ${MASTER1DIR} ${MASTER2DIR} ${MASTER3DIR} &> ../log/masterOutput.log &
 
