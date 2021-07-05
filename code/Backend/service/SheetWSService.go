@@ -27,11 +27,18 @@ type cellLock struct {
 	owner	uint64
 }
 
+type cellLockNotify struct {
+	Row			int
+	Col			int
+	Username	string
+}
+
 type sheetGroupEntry struct {
-	fid			uint
-	userMap		sync.Map
-	userN		int
-	lockMap		sync.Map
+	fid				uint
+	userMap			sync.Map
+	userN			int
+	lockMap			sync.Map
+	mapLock			sync.RWMutex
 }
 
 type sheetUserEntry struct {
@@ -40,7 +47,7 @@ type sheetUserEntry struct {
 }
 
 type sheetMessage struct {
-	MsgType		string				`json:"msgType"`	// acquire, modify, release
+	MsgType		string				`json:"msgType"`	// acquire, modify, release, onConn
 	Body		json.RawMessage		`json:"body"`
 }
 
@@ -77,7 +84,13 @@ type sheetModifyNotify struct {
 	Username	string			`json:"username"`
 }
 
-func SheetOnConn(uid uint, username string, fid uint) {
+type sheetOnConnNotify struct {
+	Columns			int					`json:"columns"`
+	Content			[]string			`json:"content"`
+	CellLocks		[]cellLockNotify	`json:"cellLocks"`
+}
+
+func SheetOnConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
 	logger.Debugf("[%d %s %d] Connected to server!", uid, username, fid)
 	if v, ok := sheetGroup.Load(fid); !ok {
 		logger.Errorf("[fid:%d username:%s uid:%d] No group entry for sheetws!", fid, username, uid)
@@ -87,19 +100,59 @@ func SheetOnConn(uid uint, username string, fid uint) {
 			username: username,
 		}
 		group := v.(*sheetGroupEntry)
+
+		// send OnConn message
+		sheet := dao.GetSheetByFid(fid)
+
+		inCache := true
+		memSheet := getSheetCache().Get(fid)
+		// not in sheetCache, load from log and do eviction if needed
+		if memSheet == nil {
+			if memSheet, inCache = recoverSheetFromLog(&sheet); memSheet == nil {
+				panic("recoverSheetFromLog fails")
+			}
+		}
+
+		memSheet.Lock()
+		_, columns := memSheet.Shape()
+		body := sheetOnConnNotify{
+			Columns: columns,
+			Content: memSheet.ToStringSlice(),
+			CellLocks: dumpLocksOnCell(group),
+		}
+		memSheet.Unlock()
+		bodyRaw, _ := json.Marshal(body)
+		sheetMsg := sheetMessage{
+			MsgType: "onConn",
+			Body: bodyRaw,
+		}
+		msgRaw, _ := json.Marshal(sheetMsg)
+
+		if !inCache {
+			commitOneSheetWithCache(fid, memSheet)
+		} else {
+			keys, evicted := getSheetCache().Put(fid)
+			commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
+		}
+
+		go wss.Send(utils.GenID("sheet", uid, username, fid), msgRaw)
+
+		// store in userMap
+		group.mapLock.RLock(); defer group.mapLock.RUnlock()
 		if _, loaded := group.userMap.LoadOrStore(uid, &user); !loaded {
 			group.userN += 1
 		}
 	}
 }
 
-func SheetOnDisConn(uid uint, username string, fid uint) {
+func SheetOnDisConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
 	logger.Debugf("[%d %s %d] DisConnected from server!", uid, username, fid)
 
 	if v, ok := sheetGroup.Load(fid); !ok {
 		logger.Errorf("[fid:%d username:%s uid:%d] No group entry for sheetws!", fid, username, uid)
 	} else {
 		group := v.(*sheetGroupEntry)
+		group.mapLock.RLock(); defer group.mapLock.RUnlock()
 		group.userMap.Delete(uid)
 		group.userN -= 1
 		if group.userN == 0 {
@@ -137,7 +190,6 @@ func SheetOnMessage(wss *wsWrap.WSServer, uid uint, username string, fid uint, b
 		} else {
 			handleSheetMessageWithCache(wss, fid, uid, username, sheetMsg, group)
 		}
-
 	}
 }
 
@@ -170,6 +222,7 @@ func SheetOnConnEstablished(token string, fid uint) (bool, int, *model.User, str
 				userN: 0,
 			}); loaded {
 				group := actual.(*sheetGroupEntry)
+				group.mapLock.RLock(); defer group.mapLock.RUnlock()
 				if _, ok := group.userMap.Load(uid); ok {
 					return false, utils.SheetDupConnection, nil, ""
 				}
@@ -211,6 +264,9 @@ func handleSheetMessageWithCache(wss *wsWrap.WSServer, fid uint, uid uint, usern
 }
 
 func tryLockOnCell(group *sheetGroupEntry, uid uint, row int, col int) bool {
+	group.mapLock.RLock()
+	defer group.mapLock.RUnlock()
+
 	if actual, loaded := group.lockMap.LoadOrStore(
 		cellKey{Row: row, Col: col}, &cellLock{owner: uint64(uid)}); loaded {
 		lock := actual.(*cellLock)
@@ -222,6 +278,9 @@ func tryLockOnCell(group *sheetGroupEntry, uid uint, row int, col int) bool {
 }
 
 func unlockOnCell(group *sheetGroupEntry, uid uint, row int, col int) (success bool) {
+	group.mapLock.RLock()
+	defer group.mapLock.RUnlock()
+
 	if v, ok := group.lockMap.Load(cellKey{Row: row, Col: col}); ok {
 		lock := v.(*cellLock)
 		success = atomic.CompareAndSwapUint64(&lock.owner, uint64(uid), 0)
@@ -235,13 +294,37 @@ func unlockOnCell(group *sheetGroupEntry, uid uint, row int, col int) (success b
 	}
 }
 
+func dumpLocksOnCell(group *sheetGroupEntry) (cellLocks []cellLockNotify) {
+	group.mapLock.Lock()
+	defer group.mapLock.Unlock()
+
+	group.lockMap.Range(func(k, v interface{}) bool {
+		lockK := k.(cellKey)
+		lockV := v.(*cellLock)
+		if lockV.owner != 0 {
+			if u, ok := group.userMap.Load(uint(lockV.owner)); ok {
+				user := u.(*sheetUserEntry)
+				cellLocks = append(cellLocks, cellLockNotify{
+					Row:      lockK.Row,
+					Col:      lockK.Col,
+					Username: user.username,
+				})
+			} else {
+				logger.Errorf("[%d %v]Cannot find user by lock owner", lockV.owner, lockK)
+			}
+		}
+		return true
+	})
+
+	return cellLocks
+}
+
 func broadcast(wss *wsWrap.WSServer, group *sheetGroupEntry, uid uint, fid uint, content []byte) {
+	group.mapLock.RLock(); defer group.mapLock.RUnlock()
 	group.userMap.Range(func (k interface{}, v interface{}) bool {
 		curUid := k.(uint)
 		curUser := v.(*sheetUserEntry)
-		if curUid != uid {
-			go wss.Send(utils.GenID("sheet", curUid, curUser.username, fid), content)
-		}
+		go wss.Send(utils.GenID("sheet", curUid, curUser.username, fid), content)
 		return true
 	})
 }

@@ -18,7 +18,7 @@ func onConn(id string) {
 	ns, uid, username, fid := utils.ParseID(id)
 	switch ns {
 	case "sheet":
-		service.SheetOnConn(uid, username, fid)
+		service.SheetOnConn(wss, uid, username, fid)
 	}
 }
 
@@ -26,7 +26,7 @@ func onDisConn(id string) {
 	ns, uid, username, fid := utils.ParseID(id)
 	switch ns {
 	case "sheet":
-		service.SheetOnDisConn(uid, username, fid)
+		service.SheetOnDisConn(wss, uid, username, fid)
 	}
 }
 
