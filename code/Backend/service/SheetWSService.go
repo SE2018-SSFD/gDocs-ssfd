@@ -85,6 +85,7 @@ type sheetModifyNotify struct {
 }
 
 type sheetOnConnNotify struct {
+	Name			string				`json:"name"`
 	Columns			int					`json:"columns"`
 	Content			[]string			`json:"content"`
 	CellLocks		[]cellLockNotify	`json:"cellLocks"`
@@ -116,6 +117,7 @@ func SheetOnConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
 		memSheet.Lock()
 		_, columns := memSheet.Shape()
 		body := sheetOnConnNotify{
+			Name: sheet.Name,
 			Columns: columns,
 			Content: memSheet.ToStringSlice(),
 			CellLocks: dumpLocksOnCell(group),
