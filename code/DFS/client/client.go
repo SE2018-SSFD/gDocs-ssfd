@@ -9,7 +9,6 @@ import (
 	"math"
 	"net/http"
 	"path"
-	"strconv"
 	"sync"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 )
 
 type Client struct {
+	fdLock  sync.RWMutex
 	clientAddr      util.Address
 	masterAddr      util.Address
 	fdTable         map[int]util.DFSPath
@@ -123,24 +123,40 @@ func (c *Client) Mkdir(w http.ResponseWriter, r *http.Request) {
 // Open a file.
 // If fd is depleted, return -1
 func (c *Client) Open(w http.ResponseWriter, r *http.Request) {
-	var arg util.OpenArg
-	var ret util.OpenRet
-	err := json.NewDecoder(r.Body).Decode(&arg)
+	var argO util.OpenArg
+	var retO util.OpenRet
+	var argF util.GetFileMetaArg
+	var retF util.GetFileMetaRet
+	err := json.NewDecoder(r.Body).Decode(&argO)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	argF.Path = argO.Path
+	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
+	if err != nil || !retF.Exist {
+		logrus.Warnln("Client open failed :", err)
+		retO.Fd = -1
+		msg, _ := json.Marshal(retO)
+		w.Write(msg)
+		return
+	}
+	c.fdLock.Lock()
+	defer c.fdLock.Unlock()
 	for i := util.MINFD; i < util.MAXFD; i++ {
+
 		_, exist := c.fdTable[i]
 		if !exist {
 			logrus.Debugf("Client open : assign %d", i)
-			c.fdTable[i] = arg.Path
-			io.WriteString(w, strconv.Itoa(i))
+			c.fdTable[i] = argO.Path
+			retO.Fd = i
+			msg, _ := json.Marshal(retO)
+			w.Write(msg)
 			return
 		}
 	}
 	w.WriteHeader(400)
-	msg, _ := json.Marshal(ret)
+	msg, _ := json.Marshal(retO)
 	w.Write(msg)
 }
 
@@ -158,6 +174,8 @@ func (c *Client) Close(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	c.fdLock.Lock()
+	defer c.fdLock.Unlock()
 	_, exist := c.fdTable[arg.Fd]
 	if !exist {
 		err = fmt.Errorf("FileClosedError : file has been closed\n")
@@ -226,13 +244,15 @@ func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the file metadata and check
-	path := c.fdTable[argR.Fd]
-	if path == "" {
+	c.fdLock.RLock()
+	pathh := c.fdTable[argR.Fd]
+	c.fdLock.RUnlock()
+	if pathh == "" {
 		err = fmt.Errorf("Client read failed : fd %d is not opened\n", argR.Fd)
 		return
 	}
 
-	argF.Path = path
+	argF.Path = pathh
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
 	if err != nil || !retF.Exist {
 		logrus.Warnln("Client read failed :", err)
@@ -252,7 +272,7 @@ func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
 	// Read to chunk
 
 	// readBytes, buf, err := c._Read(path, argR.Offset, argR.Len, fileSize)
-	readBytes, buf, err := c._Read(path, argR.Offset, argR.Len)
+	readBytes, buf, err := c._Read(pathh, argR.Offset, argR.Len)
 
 	if err != nil {
 		logrus.Warnln("Client read failed :", err)
@@ -393,7 +413,10 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the file metadata and check
+	c.fdLock.RLock()
 	path := c.fdTable[argA.Fd]
+	c.fdLock.RUnlock()
+
 	if path == "" {
 		err = fmt.Errorf("Client write failed : fd %d is not opened\n", argA.Fd)
 		return
@@ -507,18 +530,20 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the file metadata and check
-	path := c.fdTable[argW.Fd]
-	if path == "" {
+	c.fdLock.RLock()
+	pathh := c.fdTable[argW.Fd]
+	c.fdLock.RUnlock()
+	if pathh == "" {
 		err = fmt.Errorf("Client write failed : fd %d is not opened\n", argW.Fd)
 		return
 	}
-	argF.Path = path
+	argF.Path = pathh
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
 	if !retF.Exist {
 		logrus.Warnln("Client write failed :", err)
 		return
 	}
-	logrus.Debugf("client write path:%v,offset:%v,datasize:%v", path, argW.Offset, len(argW.Data))
+	logrus.Debugf("client write path:%v,offset:%v,datasize:%v", pathh, argW.Offset, len(argW.Data))
 
 	// fileSize := retF.Size
 	// if argW.Offset > fileSize {
@@ -528,7 +553,7 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 
 	// Write to chunk
 	// writtenBytes, err := c._Write(path, argW.Offset, argW.Data, fileSize)
-	writtenBytes, err := c._Write(path, argW.Offset, argW.Data)
+	writtenBytes, err := c._Write(pathh, argW.Offset, argW.Data)
 	if err != nil {
 		logrus.Warnln("Client write failed :", err)
 		w.WriteHeader(400)
