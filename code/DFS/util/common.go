@@ -40,6 +40,7 @@ const (
 	REPLICATIONTIMES  = 3
 	MAXAPPENDSIZE     = MAXCHUNKSIZE / 2 // TODO: according to GFS docs, we should set it to MAXCHUNKSIZE / 4
 	MAXFD             = 128
+	MINFD 			  = 1
 	HEARTBEATDURATION = 2000 * time.Millisecond // 2s
 	DELETEPREFIX      = "_delete_"
 )

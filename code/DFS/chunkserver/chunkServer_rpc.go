@@ -113,7 +113,7 @@ func (cs *ChunkServer) ReadChunkRPC(args util.ReadChunkArgs, reply *util.ReadChu
 
 	len, err := cs.GetChunk(args.Handle, args.Off, buf)
 	if err != nil {
-		log.Fatalf("get chunk error\n")
+		log.Fatalf("get chunk error : %v",err)
 	}
 
 	reply.Buf = buf[:len]
@@ -167,9 +167,13 @@ func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error 
 		if off == util.MAXCHUNKSIZE {
 			reply.ErrorCode = util.NOSPACE
 			pad = true // pad other chunkServer
+		}else{
+			reply.ErrorCode = 0
 		}
 		args.Off = off
+		reply.Off = off
 	} else {
+		reply.ErrorCode = 0
 		len, err := cs.SetChunk(args.CID.Handle, args.Off, data)
 		logrus.Print("Handle ", args.CID.Handle, " len ", len, " off ", args.Off)
 		if err != nil {

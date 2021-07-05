@@ -41,6 +41,7 @@ func AssertEqual(t *testing.T, a, b interface{}) {
 	if a != b {
 		t.Fail()
 		t.Logf("AssertEqual Failed %v,%v", a, b)
+		return
 	}
 	t.Logf("AssertEqual Succeed :")
 
@@ -191,7 +192,26 @@ func HTTPWrite(addr string,fd int,offset int,data []byte)(err error){
 	return
 }
 
-
+// HTTPAppend : append a file according to fd
+func HTTPAppend(addr string,fd int,data []byte)(result CAppendRet,err error){
+	url := "http://"+addr+"/append"
+	postBody, _ := json.Marshal(map[string]interface{}{
+		"fd":  fd,
+		"data" : data,
+	})
+	responseBody := bytes.NewBuffer(postBody)
+	resp, err := http.Post(url, "application/json", responseBody)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	err = json.NewDecoder(bytes.NewReader(body)).Decode(&result)
+	return
+}
 
 // HTTPRead : read a file according to fd
 func HTTPRead(addr string,fd int,offset int,len int)(result ReadRet,err error){

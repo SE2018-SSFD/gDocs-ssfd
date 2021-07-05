@@ -316,4 +316,56 @@ func TestOpenClose(t *testing.T) {
 	}
 }
 
+func TestClientConcurrentAppend(t *testing.T){
+	cList,m,csList := InitMultiTest()
+	defer func() {
+		m.Exit()
+		for _,c := range cList{
+			c.Exit()
+		}
+		for _,cs := range csList{
+			cs.Exit()
+		}
+	}()
+	fdList:=make([]int,4)
+	var wg sync.WaitGroup
+
+	// create a file
+	path := "/file"
+	err := util.HTTPCreate(string(cList[0].GetClientAddr()), path)
+	util.AssertNil(t, err)
+	// four clients open the file
+	for j:=0;j<4;j++ {
+		var err error
+		path = "/file"
+		fdList[j], err = util.HTTPOpen(string(cList[j].GetClientAddr()), path)
+		util.AssertNil(t, err)
+	}
+	// write sth to it
+	offset := 0
+	data := []byte(util.MakeInt(0,util.MAXCHUNKSIZE*1.5))
+	err = util.HTTPWrite(string(cList[0].GetClientAddr()),fdList[0],offset,data)
+	util.AssertNil(t,err)
+
+	// concurrent append
+	wg.Add(4)
+	offsetList := make([]int,4)
+	for j:=0;j<4;j++ {
+		go func(index int) {
+			data = []byte(util.MakeInt(index,util.MAXCHUNKSIZE*0.25))
+			retC, err := util.HTTPAppend(string(cList[index].GetClientAddr()), fdList[index], data)
+			util.AssertNil(t,err)
+			offsetList[index] = retC.Offset
+			wg.Done()
+		}(j)
+	}
+	wg.Wait()
+	for i:=0;i<4;i++ {
+		offset = offsetList[i]
+		logrus.Info("offset:",offset)
+		result,err := util.HTTPRead(string(cList[i].GetClientAddr()),fdList[i],offset,util.MAXCHUNKSIZE*0.25)
+		util.AssertNil(t,err)
+		util.AssertEqual(t,string(result.Data),util.MakeInt(i,util.MAXCHUNKSIZE*0.25))
+	}
+}
 
