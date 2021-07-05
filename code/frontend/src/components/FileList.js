@@ -1,4 +1,4 @@
-import React, {useCallback} from 'react';
+import React from 'react';
 import {Button, message, Popconfirm, Table} from 'antd';
 import {Link} from 'react-router-dom'
 import sheet from '../assets/google_doc_sheet.png'
@@ -17,14 +17,17 @@ export class FileList extends React.Component {
                 message.error(msg_word);
             }
             let sheets = this.state.sheets;
+            console.log(sheets);
             let newSheets = [];
             for (let i = 0; i< sheets.length;i++)
             {
                 if (sheets[i].fid !== record.fid)
                 {
+                    console.log(sheets[i]);
                     newSheets.push(sheets[i]);
                 }
             }
+            this.forceUpdate();
             this.setState({
                 sheets:newSheets,
                 first:false,
@@ -41,7 +44,7 @@ export class FileList extends React.Component {
         }
     }
 
-    componentDidMount() {
+    componentWillMount() {
         let sheets = this.props.content;
         sheets.forEach((x) => {
             x.key = x.fid;
@@ -49,7 +52,7 @@ export class FileList extends React.Component {
         })
 
         this.setState({
-            sheets:sheets
+            sheets:this.props.content
         })
     }
 
