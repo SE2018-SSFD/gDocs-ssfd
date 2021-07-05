@@ -16,7 +16,7 @@ import (
 )
 
 type Client struct {
-	fdLock  sync.RWMutex
+	fdLock  sync.Mutex
 	clientAddr      util.Address
 	masterAddr      util.Address
 	fdTable         map[int]util.DFSPath
@@ -244,9 +244,9 @@ func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the file metadata and check
-	c.fdLock.RLock()
+	//c.fdLock.RLock()
 	pathh := c.fdTable[argR.Fd]
-	c.fdLock.RUnlock()
+	//c.fdLock.RUnlock()
 	if pathh == "" {
 		err = fmt.Errorf("Client read failed : fd %d is not opened\n", argR.Fd)
 		return
@@ -413,16 +413,16 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the file metadata and check
-	c.fdLock.RLock()
-	path := c.fdTable[argA.Fd]
-	c.fdLock.RUnlock()
+	//c.fdLock.RLock()
+	pathh := c.fdTable[argA.Fd]
+	//c.fdLock.RUnlock()
 
-	if path == "" {
+	if pathh== "" {
 		err = fmt.Errorf("Client write failed : fd %d is not opened\n", argA.Fd)
 		return
 	}
 
-	argF.Path = path
+	argF.Path = pathh
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
 	if !retF.Exist {
 		logrus.Warnln("Client write failed :", err)
@@ -433,7 +433,7 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 	// Write to file
 	// writtenBytes, err := c._Write(path, fileSize, argA.Data, fileSize)
 
-	offset, err := c._Append(path, argA.Data)
+	offset, err := c._Append(pathh, argA.Data)
 	if err != nil {
 		logrus.Warnln("Client write failed :", err)
 		w.WriteHeader(400)
@@ -530,9 +530,9 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the file metadata and check
-	c.fdLock.RLock()
+	//c.fdLock.RLock()
 	pathh := c.fdTable[argW.Fd]
-	c.fdLock.RUnlock()
+	//c.fdLock.RUnlock()
 	if pathh == "" {
 		err = fmt.Errorf("Client write failed : fd %d is not opened\n", argW.Fd)
 		return
