@@ -12,7 +12,6 @@ import {
     StarOutlined
 } from "@ant-design/icons";
 import {UserAvatar} from "../components/UserAvatar";
-import {history} from "../route/history";
 
 const {Header} = Layout
 const luckysheet = window.luckysheet;
@@ -91,13 +90,12 @@ class SheetView extends React.Component {
         })
     }
 
-    handleRecoverLog = (lid) =>
-    {
+    handleRecoverLog = (lid) => {
         console.log(lid);
     }
 
-    handleSave = () =>{
-        const callback = (data) =>{
+    handleSave = () => {
+        const callback = (data) => {
             console.log(data)
             let msg_word = MSG_WORDS[data.msg];
             if (data.success === true) {
@@ -109,15 +107,14 @@ class SheetView extends React.Component {
             }
 
         }
-        commitSheet(this.fid,callback)
+        commitSheet(this.fid, callback)
     }
 
-    handleRecoverCkpt = (cid) =>{
+    handleRecoverCkpt = (cid) => {
         console.log(cid);
-        const callback = (data) =>{
+        const callback = (data) => {
             let msg_word = MSG_WORDS[data.msg];
-            if(data.success===true)
-            {
+            if (data.success === true) {
                 this.cid = data.data.cid;
                 this.timestamp = data.data.timestamp;
                 this.rows = data.data.rows;
@@ -256,8 +253,7 @@ class SheetView extends React.Component {
                 });
                 message.success(msg_word).then(() => {
                 });
-            }
-            else{
+            } else {
                 message.error(msg_word).then(() => {
                 });
             }
@@ -265,22 +261,25 @@ class SheetView extends React.Component {
         const token = JSON.parse(localStorage.getItem("token"));
         const fid = this.fid;
         const data = {
-            token:token,
-            fid:fid,
-            cid:cid,
+            token: token,
+            fid: fid,
+            cid: cid,
         }
-        getSheetCkpt(data,callback)
+        getSheetCkpt(data, callback)
     }
 
     connectWS = (data) => {
+        console.log(data);
         const token = JSON.parse(localStorage.getItem("token"));
         const username = JSON.parse(localStorage.getItem("username"));
 
         this.url = WS_URL + 'sheetws?token=' + token + "&fid=" + this.fid;
         if (data.success === false) {
             this.url = data.data;
+            if (data.msg !== 19) {
+                message.error(MSG_WORDS[data.msg])
+            }
         } else {
-            console.log(MSG_WORDS[data.msg]);
         }
 
         socket = new WebSocket(this.url);
@@ -537,13 +536,13 @@ class SheetView extends React.Component {
         let logContent = this.checkpoint.map(
             (item) =>
                 <Card hoverable style={{width: 240}} title={"编辑记录" + item.toString()}>
-                    <Button onClick={()=>this.handleRecoverLog(item)}>恢复到此处</Button>
+                    <Button onClick={() => this.handleRecoverLog(item)}>恢复到此处</Button>
                 </Card>);
         let ckptContent = this.checkpoint.map(
             (item) =>
                 <Card hoverable style={{width: 240}}
                       title={"恢复点" + item.toString()}>
-                    <Button onClick={()=>this.handleRecoverCkpt(item)}>恢复到此处</Button>
+                    <Button onClick={() => this.handleRecoverCkpt(item)}>恢复到此处</Button>
                 </Card>
         );
 
@@ -581,7 +580,20 @@ class SheetView extends React.Component {
                         <Divider type={"vertical"}/>
                         <Col span={1}>
                             <Tooltip title="复制url给你的好友吧">
-                                <Button type={'primary'}> 分享</Button>
+                                <Button type={'primary'} onClick={() => {
+                                    navigator.permissions.query({name: "clipboard-write"}).then(result => {
+                                        if (result.state == "granted" || result.state == "prompt") {
+                                            /* write to the clipboard now */
+                                            navigator.clipboard.writeText(window.location.href).then(function () {
+                                                console.log('Async: Copying to clipboard was successful!');
+                                                message.success("已复制到剪切板")
+                                            }, function (err) {
+                                                console.error('Async: Could not copy text: ', err);
+                                                message.error("复制剪切板失败，请手动操作")
+                                            });
+                                        }
+                                    })
+                                }}> 分享</Button>
                             </Tooltip>
                         </Col>
                         <Col span={1}>
