@@ -21,6 +21,7 @@ import {newSheet} from "../api/sheetService";
 import {UserAvatar} from "../components/UserAvatar";
 import {MSG_WORDS} from "../api/common";
 import {getUser} from "../api/userService";
+import {history} from "../route/history";
 
 const {Header, Content, Footer, Sider} = Layout;
 
@@ -68,15 +69,35 @@ class HomeSider extends React.Component {
         this.setState({current: e.key});
     }
 
-    newSheet() {
-        const token = localStorage.getItem("token");
-        const data = {
-            token: token,
-            name: 'a new sheet',
-            intiRows: 84,
-            initColumns: 60,
+    handleNew() {
+
+
+        const callback = (data) => {
+            console.log(data);
+            let msg_word = MSG_WORDS[data.msg];
+            if (data.success === true) {
+                history.push("/sheet?id=" + data.data);
+                let sheets = JSON.parse(localStorage.getItem('sheets'));
+                sheets.push(
+                    {
+                        fid: data.data,
+                        isDeleted: false,
+                        name: "新建表格",
+                        checkpoints: null,
+                        columns: 0,
+                        content: null,
+                    }
+                )
+                localStorage.setItem("sheets", JSON.stringify(sheets))
+                message.success(msg_word).then(r => {
+                });
+            } else {
+                message.error(msg_word).then(r => {
+                });
+            }
         };
-        newSheet(data)
+
+        newSheet(callback)
     }
 
     render() {
@@ -96,7 +117,7 @@ class HomeSider extends React.Component {
             <Row>
                 <Col span={20} offset={2}>
                     <Space direction="vertical">
-                        <Button size="large" type="primary" icon={<PlusOutlined/>} onClick={this.newSheet}
+                        <Button size="large" type="primary" icon={<PlusOutlined/>} onClick={this.handleNew}
                                 block={true}>新建</Button>
                         <Button size="large" icon={<UploadOutlined/>} block={true}>导入本地文件</Button>
                     </Space>
@@ -131,7 +152,7 @@ class HomeContent extends React.Component {
                 </Menu.Item>
             </Menu>
             <div className="site-layout-background" style={{padding: 24, minHeight: 360}}>
-                <FileList content={this.props.content}/>
+                <FileList content={this.props.content} type={"main"}/>
             </div>
         </Content>;
     }
@@ -146,7 +167,7 @@ class RecycleContent extends React.Component {
                 </h1>
             </div>
             <div className="site-layout-background" style={{padding: 24, minHeight: 360}}>
-                <FileList content={this.props.content}/>
+                <FileList content={this.props.content} type={"recycle"}/>
             </div>
         </Content>;
     }
@@ -166,8 +187,8 @@ class HomeView extends React.Component {
         super(props);
         this.state = {
             curSection: 0,
-            file:[],
-            deletedFile:[],
+            file: [],
+            deletedFile: [],
         }
     }
 
@@ -192,8 +213,8 @@ class HomeView extends React.Component {
                 }
             })
             this.setState({
-                file:file,
-                deletedFile:deletedFile
+                file: file,
+                deletedFile: deletedFile
             })
 
         }
@@ -216,7 +237,7 @@ class HomeView extends React.Component {
     };
 
     render() {
-        const {curSection,file,deletedFile} = this.state;
+        const {curSection, file, deletedFile} = this.state;
         const content =
             curSection === 0 ? (
                 <HomeContent content={file}/>

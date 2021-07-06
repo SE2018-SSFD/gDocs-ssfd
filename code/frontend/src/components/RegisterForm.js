@@ -2,11 +2,13 @@ import 'antd/dist/antd.css';
 import '../css/LoginForm.css'
 
 import {FileTextOutlined} from '@ant-design/icons';
-import {Button, Col, Input,Row} from 'antd';
+import {Button, Col, Input, message, Row} from 'antd';
 import React from 'react';
 import {Link} from 'react-router-dom';
 
 import {register} from '../api/userService';
+import {MSG_WORDS} from "../api/common";
+import {history} from "../route/history";
 
 class RegisterForm extends React.Component {
     constructor(props) {
@@ -32,8 +34,20 @@ class RegisterForm extends React.Component {
             password: this.state.password,
             email: this.state.email,
         };
-
-        register(data);
+        const callback = (data) => {
+            let msg_word = MSG_WORDS[data.msg];
+            if (data.success === true) {
+                localStorage.setItem('username', JSON.stringify(this.state.username));
+                localStorage.setItem('token', JSON.stringify(data.data));
+                history.push("/");
+                message.success(msg_word).then(() => {
+                });
+            } else {
+                message.error(msg_word).then(() => {
+                });
+            }
+        }
+        register(data,callback);
     }
 
     render() {

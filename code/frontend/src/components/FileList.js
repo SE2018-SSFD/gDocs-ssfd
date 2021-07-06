@@ -4,59 +4,79 @@ import {Link} from 'react-router-dom'
 import sheet from '../assets/google_doc_sheet.png'
 import {deleteSheet} from "../api/sheetService";
 import {MSG_WORDS} from "../api/common";
+import {getUser} from "../api/userService";
 
 export class FileList extends React.Component {
-    deleteHandler=(text,record)=>{
-        const callback = (data)=>{
-            console.log(data);
-            let msg_word = MSG_WORDS[data.msg];
-            if(data.success===true){
-                message.success(msg_word);
-            }
-            else{
-                message.error(msg_word);
-            }
-            let sheets = this.state.sheets;
-            console.log(sheets);
-            let newSheets = [];
-            for (let i = 0; i< sheets.length;i++)
-            {
-                if (sheets[i].fid !== record.fid)
-                {
-                    console.log(sheets[i]);
-                    newSheets.push(sheets[i]);
-                }
-            }
-            this.forceUpdate();
-            this.setState({
-                sheets:newSheets,
-                first:false,
-            })
-        }
-        deleteSheet(record.fid,callback)
-    };
 
     constructor(props) {
         super(props);
         this.state = {
-            sheets:[],
-            first:true,
+            sheets: [],
+            deleteSheet: [],
         }
     }
 
     componentWillMount() {
-        let sheets = this.props.content;
-        sheets.forEach((x) => {
-            x.key = x.fid;
-            x.last_update = new Date(x.UpdatedAt).toLocaleString();
-        })
-
-        this.setState({
-            sheets:this.props.content
-        })
+        const callback = (data) => {
+            let msg_word = MSG_WORDS[data.msg];
+            if (data.success === true) {
+                localStorage.setItem('sheets', JSON.stringify(data.data.sheets));
+                localStorage.setItem('username', JSON.stringify(data.data.username));
+            } else {
+                message.error(msg_word).then(() => {
+                });
+            }
+            let sheets = data.data.sheets;
+            let file = [];
+            let deletedFile = [];
+            sheets.forEach((v, i) => {
+                v.key = v.fid;
+                v.last_update = new Date(v.UpdatedAt).toLocaleString();
+                if (v.isDeleted === true) {
+                    deletedFile.push(v);
+                } else {
+                    file.push(v);
+                }
+            })
+            this.setState({
+                sheets:file,
+                deletedSheets:deletedFile
+            })
+        }
+        getUser(callback);
     }
 
+    handleDelete = (fid) => {
+        const callback = (data) => {
+            let msg_word = MSG_WORDS[data.msg];
+            if (data.success === true) {
+                message.success(msg_word).then(r => {});
+            } else {
+                message.error(msg_word).then(r => {});
+            }
+            let sheets = this.state.sheets;
+            console.log(sheets);
+            let newSheets = [];
+            for (let i = 0; i < sheets.length; i++) {
+                if (sheets[i].fid !== fid) {
+                    console.log(sheets[i]);
+                    newSheets.push(sheets[i]);
+                }
+            }
+            this.setState({
+                sheets: newSheets,
+            })
+        }
+        deleteSheet(fid, callback)
+    };
+
+    handleRecover = (fid) => {
+
+    }
+
+
     render() {
+        const type = this.props.type;
         const columns = [
             {
                 title: '名称',
@@ -82,33 +102,46 @@ export class FileList extends React.Component {
                 title: '最近查看',
                 dataIndex: 'last_update',
             },
-            {
-                title: '操作',
-                dataIndex: 'action',
-                render: (text, record) => {
-                    return (
-                        <Popconfirm
-                            title="你确定要删除这个文档吗?"
-                            onConfirm={() => this.deleteHandler(text,record)}
-                            okText="Yes"
-                            cancelText="No"
-                        >
-                            <Button>删除</Button>
-                        </Popconfirm>
-                    );
-                },
-            }
+
         ];
 
-        let sheets = this.props.content;
-        sheets.forEach((x) => {
-            x.key = x.fid;
-            x.last_update = new Date(x.UpdatedAt).toLocaleString();
-        })
-
-        if(this.state.first!==true){
-            sheets = this.state.sheets;
+        const main_op =  {
+            title: '操作',
+            dataIndex: 'action',
+            render: (_, record) => {
+                return (
+                    <Popconfirm
+                        title="你确定要删除这个文档吗?"
+                        onConfirm={() => this.handleDelete(record.key)}
+                        okText="Yes"
+                        cancelText="No"
+                    >
+                        <Button>删除</Button>
+                    </Popconfirm>
+                );
+            },
         }
+
+        const recycle_op = {
+            title: '操作',
+            dataIndex: 'action',
+            render: (_, record) => {
+                return (
+                        <Button onClick={this.handleRecover(record.key)}>还原</Button>
+                );
+            },
+        }
+
+        let sheets = []
+
+        if(type==="main"){
+            columns.push(main_op);
+            sheets = this.state.sheets;
+        }else{
+            columns.push(recycle_op);
+            sheets = this.state.deletedSheets;
+        }
+
 
         return (
             <div>
@@ -119,4 +152,6 @@ export class FileList extends React.Component {
             </div>
         );
     }
+
+
 }
