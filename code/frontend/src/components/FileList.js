@@ -2,7 +2,7 @@ import React from 'react';
 import {Button, message, Popconfirm, Table} from 'antd';
 import {Link} from 'react-router-dom'
 import sheet from '../assets/google_doc_sheet.png'
-import {deleteSheet} from "../api/sheetService";
+import {deleteSheet, recoverSheet} from "../api/sheetService";
 import {MSG_WORDS} from "../api/common";
 import {getUser} from "../api/userService";
 
@@ -16,7 +16,7 @@ export class FileList extends React.Component {
         }
     }
 
-    componentWillMount() {
+    componentDidMount() {
         const callback = (data) => {
             let msg_word = MSG_WORDS[data.msg];
             if (data.success === true) {
@@ -29,6 +29,14 @@ export class FileList extends React.Component {
             let sheets = data.data.sheets;
             let file = [];
             let deletedFile = [];
+
+
+
+            sheets.sort(function (a,b){
+                let date1 = new Date(a.UpdatedAt),date2 =new Date(b.UpdatedAt);
+                return date2-date1;
+            })
+
             sheets.forEach((v, i) => {
                 v.key = v.fid;
                 v.last_update = new Date(v.UpdatedAt).toLocaleString();
@@ -38,6 +46,7 @@ export class FileList extends React.Component {
                     file.push(v);
                 }
             })
+
             this.setState({
                 sheets:file,
                 deletedSheets:deletedFile
@@ -54,24 +63,46 @@ export class FileList extends React.Component {
             } else {
                 message.error(msg_word).then(r => {});
             }
-            let sheets = this.state.sheets;
-            console.log(sheets);
+            let {sheets,deletedSheets} = this.state;
             let newSheets = [];
             for (let i = 0; i < sheets.length; i++) {
                 if (sheets[i].fid !== fid) {
-                    console.log(sheets[i]);
                     newSheets.push(sheets[i]);
+                }else{
+                    deletedSheets.push(sheets[i]);
                 }
             }
             this.setState({
                 sheets: newSheets,
+                deletedSheets:deletedSheets
             })
         }
         deleteSheet(fid, callback)
     };
 
     handleRecover = (fid) => {
-
+        const callback = (data) => {
+            let msg_word = MSG_WORDS[data.msg];
+            if (data.success === true) {
+                message.success(msg_word).then(r => {});
+            } else {
+                message.error(msg_word).then(r => {});
+            }
+            let {sheets,deletedSheets} = this.state;
+            let newSheets = [];
+            for (let i = 0; i < deletedSheets.length; i++) {
+                if (deletedSheets[i].fid !== fid) {
+                    newSheets.push(deletedSheets[i]);
+                }else{
+                    sheets.push(deletedSheets[i]);
+                }
+            }
+            this.setState({
+                sheets: sheets,
+                deletedSheets:newSheets
+            })
+        }
+        recoverSheet(fid, callback)
     }
 
 
@@ -127,7 +158,7 @@ export class FileList extends React.Component {
             dataIndex: 'action',
             render: (_, record) => {
                 return (
-                        <Button onClick={this.handleRecover(record.key)}>还原</Button>
+                        <Button onClick={()=>this.handleRecover(record.key)}>还原</Button>
                 );
             },
         }

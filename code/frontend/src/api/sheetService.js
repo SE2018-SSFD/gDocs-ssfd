@@ -19,18 +19,34 @@ export const getSheet = (url, data, callback) => {
     postRequest(url, data, callback);
 }
 
-// need fid and token
 export const deleteSheet = (fid, callback) => {
-    const urlCallback = (url) => {
-        let myurl = url + "deletesheet";
-        const token = JSON.parse(localStorage.getItem("token"));
-        let data = {
-            fid: fid,
-            token: token
-        }
-        postRequest(myurl, data, callback);
+    const url = HTTP_URL + 'deletesheet';
+    const token = JSON.parse(localStorage.getItem("token"));
+    let data = {
+        fid: fid,
+        token: token
     }
-    getURL(fid, urlCallback);
+    postRequest(url, data, callback);
+}
+
+export const recoverSheet = (fid, callback) => {
+    const url = HTTP_URL + 'recoversheet';
+    const token = JSON.parse(localStorage.getItem("token"));
+    let data = {
+        fid: fid,
+        token: token
+    }
+    postRequest(url, data, callback);
+}
+
+export const commitSheet = (fid, callback) => {
+    const url = HTTP_URL + 'commitsheet';
+    const token = JSON.parse(localStorage.getItem("token"));
+    let data = {
+        fid: fid,
+        token: token
+    }
+    postRequest(url, data, callback);
 }
 
 
@@ -40,19 +56,18 @@ export const getChuck = (data, callback) => {
     postRequest(url, data, callback);
 }
 
+export const getSheetCkpt = (data,callback) =>{
+    const url = HTTP_URL + 'getsheetchkp';
+    postRequest(url, data, callback);
+}
+
+export const getSheetLog = (data,callback) =>{
+    const url = HTTP_URL + 'getsheetlog';
+    postRequest(url, data, callback);
+}
+
 export const testWS = (fid, callback) => {
     const token = JSON.parse(localStorage.getItem("token"));
     const url = HTTP_URL + 'sheetws?token=' + token + "&fid=" + fid + "&query=1";
     getRequest(url, callback)
-}
-
-export const getURL = (fid, callback1) => {
-    const callback = (data) => {
-        if (data.success === false) {
-            callback1("http" + data.data.slice(2, 25));
-        } else {
-            callback1(HTTP_URL);
-        }
-    }
-    testWS(fid, callback)
 }
