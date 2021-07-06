@@ -110,6 +110,6 @@ func osFileInfo2DfsFileInfo(before os.FileInfo) FileInfo {
 	return FileInfo{
 		Name: before.Name(),
 		IsDir: before.IsDir(),
-		Size: before.Size(),
+		//Size: before.Size(),
 	}
 }
