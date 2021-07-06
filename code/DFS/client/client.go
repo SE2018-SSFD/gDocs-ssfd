@@ -8,7 +8,6 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"path"
 	"sync"
 	"time"
 
@@ -608,26 +607,21 @@ func (c *Client) List(w http.ResponseWriter, r *http.Request) {
 
 // Scan scan all files' information in a dir
 func (c *Client) Scan(w http.ResponseWriter, r *http.Request) {
-	var argL util.ListArg
-	var retL util.ListRet
 	var argS util.ScanArg
 	var retS util.ScanRet
-	var argG util.GetFileMetaArg
-	var retG util.GetFileMetaRet
 	retS.FileInfos = make([]util.GetFileMetaRet, 0)
 	// Decode the params
 	err := json.NewDecoder(r.Body).Decode(&argS)
 	if err != nil {
-		logrus.Warnln("Client getFileInfo failed :", err)
+		logrus.Warnln("Client Scan failed :", err)
 		w.WriteHeader(400)
 		return
 	}
-	argL.Path = argS.Path
-	err = util.Call(string(c.masterAddr), "Master.ListRPC", argL, &retL)
-	for _, file := range retL.Files {
-		argG.Path = util.DFSPath(path.Join(string(argL.Path), file))
-		err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argG, &retG)
-		retS.FileInfos = append(retS.FileInfos, retG)
+	err = util.Call(string(c.masterAddr), "Master.ScanRPC", argS, &retS)
+	if err != nil {
+		logrus.Warnln("Client Scan failed :", err)
+		w.WriteHeader(400)
+		return
 	}
 	msg, _ := json.Marshal(retS)
 	w.Write(msg)

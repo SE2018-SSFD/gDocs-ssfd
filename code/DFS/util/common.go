@@ -36,10 +36,10 @@ type ChunkState struct {
 // Client
 const (
 	//MAXCHUNKSIZE = 64 << 20 // 64MB
-	MAXCHUNKSIZE      = 64 // 64B
+	MAXCHUNKSIZE      = 1024 // 64B
 	REPLICATIONTIMES  = 3
 	MAXAPPENDSIZE     = MAXCHUNKSIZE / 2 // TODO: according to GFS docs, we should set it to MAXCHUNKSIZE / 4
-	MAXFD             = 128
+	MAXFD             = 65535
 	MINFD 			  = 1
 	HEARTBEATDURATION = 2000 * time.Millisecond // 2s
 	DELETEPREFIX      = "_delete_"

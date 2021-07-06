@@ -100,6 +100,7 @@ func (m *Master) ScanRPC(args util.ScanArg, reply *util.ScanRet) (err error) {
 		var ret util.GetFileMetaRet
 		fullPath := path.Join(string(args.Path), file)
 		err := m.GetFileMetaRPC(util.GetFileMetaArg{Path: util.DFSPath(fullPath)}, &ret)
+		logrus.Info("scan:",ret)
 		if err != nil {
 			return err
 		}
@@ -112,19 +113,22 @@ func (m *Master) ScanRPC(args util.ScanArg, reply *util.ScanRet) (err error) {
 func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMetaRet) error {
 	logrus.Debugf("RPC getFileMeta, File Path : %s", args.Path)
 	node, err := m.ns.GetNode(args.Path)
+	_,filename:= path.Split(string(args.Path))
+
 	if err != nil {
 		logrus.Warnf("RPC getFileMeta failed : %s", err)
 		*reply = util.GetFileMetaRet{
 			Exist:    false,
 			IsDir:    false,
 			ChunkNum: 0,
+			Filename: filename,
 			// Size: -1,
 		}
 		return nil
 	}
 	reply.Exist = true
 	reply.IsDir = node.isDir
-
+	reply.Filename = filename
 	if node.isDir {
 		reply.ChunkNum = 0
 	} else {

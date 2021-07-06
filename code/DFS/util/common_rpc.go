@@ -172,6 +172,7 @@ type GetFileMetaRet struct {
 	Exist    bool `json:"exist"`
 	IsDir    bool `json:"is_dir"`
 	ChunkNum int  `json:"chunk_num"`
+	Filename string `json:"filename"`
 	// Size  int  `json:"size"`
 }
 type SetFileMetaArg struct {
