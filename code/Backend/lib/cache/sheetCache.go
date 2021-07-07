@@ -188,7 +188,7 @@ func (ms *MemSheet) refer() {
 
 func (ms *MemSheet) unRefer() {
 	if refCnt := atomic.AddInt32(&ms.refCount, -1); refCnt < 0 {
-		logger.Fatalf("refCount of MemSheet is negative\n %s", debug.Stack())
+		logger.Errorf("refCount of MemSheet is negative\n %s", debug.Stack())
 	}
 }
 
@@ -253,7 +253,7 @@ func NewSheetCache(maxSize int64) *SheetCache {
 // If excess memory constraint, do eviction and return true
 func (sc *SheetCache) Add(key interface{}, ms *MemSheet) (memSheet *MemSheet, keys []interface{}, evicted []*MemSheet) {
 	spared, keys, evicted, doEvict, success := sc.doEvictIfNeeded(key, ms, false)
-	logger.Debugf("[%v] curSize: %d, maxSize: %d, toAdd: %d, doEvict: %t, evicted: %v, spared: %d",
+	logger.Infof("[%v] curSize: %d, maxSize: %d, toAdd: %d, doEvict: %t, evicted: %v, spared: %d",
 		key, sc.curSize, sc.maxSize, ms.GetSize(), doEvict, keys, spared)
 
 	if success {

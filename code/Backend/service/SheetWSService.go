@@ -9,6 +9,7 @@ import (
 	"backend/utils"
 	"backend/utils/logger"
 	"encoding/json"
+	"github.com/panjf2000/ants/v2"
 	"github.com/pkg/errors"
 	"sync"
 	"sync/atomic"
@@ -16,12 +17,22 @@ import (
 )
 
 const (
-	cellChanSize		=		5
-	notifyChanSize		=		50
+	handleCellPoolSize	=		10000
+	notifyChanSize		=		100
 	stopChanSize		=		0		// to be reconsidered
 )
 
 var sheetWSMeta sync.Map	// fid -> sheetWSMetaEntry
+var handleCellPool *ants.PoolWithFunc
+
+func init() {
+	var err error
+	handleCellPool, err = ants.NewPoolWithFunc(handleCellPoolSize, handleCellPoolTask, ants.WithNonblocking(true))
+	if err != nil {
+		panic(err)
+	}
+}
+
 
 type sheetWSMetaEntry struct {
 	fid					uint
@@ -54,9 +65,9 @@ type sheetWSUserMetaEntry struct {
 
 type sheetWSCellMetaEntry struct {
 	cellKey				cellKey
-	cellChan			chan []byte		// cell message -> handleCell
-	stopChan			chan int
 	cellLock			cellLock
+	workerSema			chan int
+	debugCnt			int32
 }
 
 type cellKey struct {
@@ -160,7 +171,7 @@ func SheetOnConnEstablished(token string, fid uint) (bool, int, *model.User, str
 // WS Event Handlers: SheetOnConn, SheetOnDisConn, SheetOnMessage
 
 func SheetOnConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
-	logger.Debugf("[uid(%d)\tusername(%s)\tfid(%d)] Connected to server!", uid, username, fid)
+	logger.Infof("[uid(%d)\tusername(%s)\tfid(%d)] Connected to server!", uid, username, fid)
 	if v, ok := sheetWSMeta.Load(fid); !ok {
 		logger.Errorf("![uid(%d)\tusername(%s)\tfid(%d)] No sheetWSMetaEntry on connection!", uid, username, fid)
 	} else {
@@ -175,6 +186,7 @@ func SheetOnConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
 		meta.wait()
 		defer meta.leave()		// TODO(flag): waiting
 
+		logger.Infof("[uid(%d)\tusername(%s)\tfid(%d)] Get Lock onConn!", uid, username, fid)
 
 		// send OnConn message
 		sheet := dao.GetSheetByFid(fid)
@@ -214,7 +226,8 @@ func SheetOnConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
 
 		// store in userMap
 		if _, loaded := meta.userMap.LoadOrStore(uid, &userMeta); !loaded {
-			atomic.AddInt32(&meta.userN, 1)
+			logger.Infof("[userN(%d)\tfid(%d)] Current user on connection",
+				atomic.AddInt32(&meta.userN, 1), fid)
 			go handleNotify(wss, meta, &userMeta)
 		} else {
 			logger.Errorf("![uid(%d)\tusername(%s)\tfid(%d)] Duplicated connection!", uid, username, fid)
@@ -223,7 +236,7 @@ func SheetOnConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
 }
 
 func SheetOnDisConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
-	logger.Debugf("[uid(%d)\tusername(%s)\tfid(%d)] Disconnected from server!", uid, username, fid)
+	logger.Infof("[uid(%d)\tusername(%s)\tfid(%d)] Disconnected from server!", uid, username, fid)
 
 	if v, ok := sheetWSMeta.Load(fid); !ok {
 		logger.Errorf("![uid(%d)\tusername(%s)\tfid(%d)] No sheetWSMetaEntry on disconnection!", uid, username, fid)
@@ -238,18 +251,14 @@ func SheetOnDisConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
 				uid, username, fid)
 		}
 
-		if atomic.AddInt32(&meta.userN, -1) == 0 {	// TODO(bug): may delete sheetWSMetaEntry after onConn
-			logger.Debugf("[uid(%d)\tusername(%s)\tfid(%d)] Delete sheetWSMetaEntry!", uid, username, fid)
+		if curUserN := atomic.AddInt32(&meta.userN, -1); curUserN == 0 {	// TODO(bug): may delete sheetWSMetaEntry after onConn
+			logger.Infof("[uid(%d)\tusername(%s)\tfid(%d)\tuserN(%d)] Delete sheetWSMetaEntry!",
+				uid, username, fid, curUserN)
 
 			meta.wait()
 			defer meta.leave()		// TODO(flag): waiting
 
-			// notify all handleCell workers to stop
-			meta.cellMap.Range(func(k interface{}, v interface{}) bool {
-				cellMeta := v.(*sheetWSCellMetaEntry)
-				cellMeta.stopChan <- 1
-				return true
-			})
+			logger.Infof("[uid(%d)\tusername(%s)\tfid(%d)] Get Lock onDisConn!", uid, username, fid)
 
 			// delete group entry
 			sheetWSMeta.Delete(fid)
@@ -281,7 +290,7 @@ type cellChanMarshal struct {
 }
 
 func sheetMessage2cellChanMarshalRaw(before *sheetMessage, uid uint, username string) (
-	row int, col int, raw []byte, err error) {
+	row int, col int, cellMsg *cellChanMarshal, err error) {
 	after := cellChanMarshal{}
 	switch before.MsgType {
 	case "acquire":
@@ -316,8 +325,7 @@ func sheetMessage2cellChanMarshalRaw(before *sheetMessage, uid uint, username st
 
 	after.Uid = uid
 	after.Username = username
-	raw, _ = json.Marshal(after)
-	return row, col, raw, nil
+	return row, col, &after, nil
 }
 
 func SheetOnMessage(wss *wsWrap.WSServer, uid uint, username string, fid uint, body []byte) {
@@ -334,24 +342,31 @@ func SheetOnMessage(wss *wsWrap.WSServer, uid uint, username string, fid uint, b
 			return
 		}
 
-		if row, col, raw, err := sheetMessage2cellChanMarshalRaw(&sheetMsg, uid, username); err != nil {
+		if row, col, cellMsg, err := sheetMessage2cellChanMarshalRaw(&sheetMsg, uid, username); err != nil {
 			logger.Errorf("[msgType(%s)\tfid(%d)\tuid(%d)] onMessage: Wrong format of sheet message <%v>",
 				sheetMsg.MsgType, fid, uid, err)
 		} else {
 			key := cellKey{Row: row, Col: col}
 			actual, loaded := meta.cellMap.LoadOrStore(key, &sheetWSCellMetaEntry{
 				cellKey: key,
-				cellChan: make(chan []byte, cellChanSize),
-				stopChan: make(chan int, stopChanSize),
+				workerSema: make(chan int, 1),
 			})
 
 			// wg.Add here, cooperating with meta.wait() and meta.leave()
 			meta.cellWg.Add(1)	// TODO(flag): waiting
 
 			cellMeta := actual.(*sheetWSCellMetaEntry)
-			cellMeta.cellChan <- raw
 			if !loaded {
-				go handleCell(wss, meta, cellMeta)
+				cellMeta.workerSema <- 1
+			}
+			if err := handleCellPool.Invoke(handleCellArgs{
+				wss: wss,
+				meta: meta,
+				cellMeta: cellMeta,
+				cellMsg: cellMsg,
+			}); err != nil {
+				meta.cellWg.Done()		// ignore message overflow simply
+				logger.Debugf("handleCell Pool", err)
 			}
 		}
 	}
@@ -464,48 +479,43 @@ func doSheetModify(meta *sheetWSMetaEntry, cellMeta *sheetWSCellMetaEntry, cellM
 	}
 }
 
-func handleCell(wss *wsWrap.WSServer, meta *sheetWSMetaEntry, cellMeta *sheetWSCellMetaEntry) {
+type handleCellArgs struct {
+	wss			*wsWrap.WSServer
+	meta		*sheetWSMetaEntry
+	cellMeta	*sheetWSCellMetaEntry
+	cellMsg		*cellChanMarshal
+}
+
+func handleCellPoolTask(args interface{}) {
+	cellArg := args.(handleCellArgs)
+	handleCell(cellArg.wss, cellArg.meta, cellArg.cellMeta, cellArg.cellMsg)
+}
+
+func handleCell(wss *wsWrap.WSServer, meta *sheetWSMetaEntry, cellMeta *sheetWSCellMetaEntry,
+	cellMsg *cellChanMarshal) {
+	<- cellMeta.workerSema
+	// wg.Done here, cooperating with meta.wait() and meta.leave()
+	defer func () {
+		cellMeta.workerSema <- 1
+		meta.cellWg.Done()
+	}()		// TODO(flag): waiting
+
 	row, col := cellMeta.cellKey.Row, cellMeta.cellKey.Col
 
 	logger.Debugf("[fid(%d)\trow(%d)\tcol(%d)] handleCell: run goroutine", meta.fid, row, col)
 
-	cellChan := &cellMeta.cellChan
-	stopChan := &cellMeta.stopChan
-	for {
-		select {
-		case rawMsg := <-*cellChan:
-			cellMsg := cellChanMarshal{}
-			err := json.Unmarshal(rawMsg, &cellMsg)
-			if err != nil {
-				logger.Errorf("![fid(%d)\trow(%d)\tcol(%d)] handleCell: Cannot marshal cellChanMarshal!",
-					meta.fid, row, col)
-
-				// wg.Done here, cooperating with meta.wait() and meta.leave()
-				meta.cellWg.Done()		// TODO(flag): waiting
-				continue
-			}
-
-			switch cellMsg.MsgCode {
-			case MsgAcquire:
-				doSheetAcquire(meta, cellMeta, &cellMsg)
-			case MsgModify:
-				doSheetModify(meta, cellMeta, &cellMsg)
-			case MsgRelease:
-				doSheetRelease(meta, cellMeta, &cellMsg)
-			default:
-				logger.Errorf("![fid(%d)\trow(%d)\tcol(%d)] handleCell: Unknown MsgType!",
-					meta.fid, row, col)
-			}
-
-			// wg.Done here, cooperating with meta.wait() and meta.leave()
-			meta.cellWg.Done()			// TODO(flag): waiting
-		case <- *stopChan:
-			logger.Debugf("[fid(%d)\trow(%d)\tcol(%d)] handleCell: quit goroutine", meta.fid, row, col)
-			return
-		default:
-			return
-		}
+	switch cellMsg.MsgCode {
+	case MsgAcquire:
+		doSheetAcquire(meta, cellMeta, cellMsg)
+	case MsgModify:
+		doSheetModify(meta, cellMeta, cellMsg)
+	case MsgRelease:
+		doSheetRelease(meta, cellMeta, cellMsg)
+	default:
+		logger.Errorf("![fid(%d)\trow(%d)\tcol(%d)] handleCell: Unknown MsgType!",
+			meta.fid, row, col)
 	}
+	return
 }
 
 func handleNotify(wss *wsWrap.WSServer, meta *sheetWSMetaEntry, userMeta *sheetWSUserMetaEntry) {
