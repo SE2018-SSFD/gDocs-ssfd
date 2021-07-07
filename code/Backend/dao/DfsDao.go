@@ -28,6 +28,24 @@ func writeAll(fd int, off int64, content string) (err error) {
 	return nil
 }
 
+func appendAll(fd int, content string) (err error) {
+	appended := int64(0)
+	total := int64(len(content))
+	for appended < total {
+		n, err := dfs.Append(fd, content[appended:])
+		if err != nil {
+			return err
+		}
+		appended += n
+	}
+
+	if appended != total {
+		return fmt.Errorf("expect to append %d bytes, actually it is %d", total, appended)
+	}
+
+	return nil
+}
+
 func FileCreate(path string, initSize int64) (err error) {
 	fd, err := dfs.Create(path)
 	if err != nil {
@@ -45,20 +63,36 @@ func FileCreate(path string, initSize int64) (err error) {
 	return err
 }
 
+func DirCreate(path string) (err error) {
+	err = dfs.Mkdir(path)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func FileGetAll(path string) (content string, err error) {
 	fileInfo, err := dfs.Stat(path)
 	if err != nil {
 		return "", err
 	}
 
-	length := fileInfo.Size
-	fd, err := dfs.Open(path)
+	if fileInfo.IsDir {
+		return "", errors.New("cannot get all the content of a directory")
+	}
+
+	fd, err := dfs.Open(path, false)
 	if err != nil {
 		return "", err
 	}
 
-	content, err = dfs.Read(fd, 0, length)
-	return content, err
+	content, err = dfs.ReadAll(fd)
+	if err != nil {
+		return "", err
+	}
+
+	return content, nil
 }
 
 func FileAppend(path string, content string) (err error) {
@@ -71,13 +105,12 @@ func FileAppend(path string, content string) (err error) {
 		return errors.New("cannot append to a directory")
 	}
 
-	off := fileInfo.Size
-	fd, err := dfs.Open(path)
+	fd, err := dfs.Open(path, true)
 	if err != nil {
 		return err
 	}
 
-	err = writeAll(fd, off, content)
+	err = appendAll(fd, content)
 	if err != nil {
 		return err
 	}
@@ -96,15 +129,7 @@ func FileOverwriteAll(path string, content string) error {
 		return errors.New("cannot write a directory")
 	}
 
-	fd, err := dfs.Open(path)
-	if err != nil {
-		return err
-	}
-
-	toWrite := int64(len(content))
-	if fileInfo.Size > toWrite {
-		err = dfs.Truncate(fd, toWrite)
-	}
+	fd, err := dfs.Open(path, false)
 	if err != nil {
 		return err
 	}

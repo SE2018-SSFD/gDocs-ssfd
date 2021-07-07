@@ -5,7 +5,6 @@ go 1.14
 require (
 	github.com/Joker/hpp v1.0.0 // indirect
 	github.com/Rossil2012/go-leaderelection v0.0.0-20210331061708-509b79d3577a
-	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/deckarep/golang-set v1.7.1
 	github.com/go-zookeeper/zk v1.0.2
 	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1
@@ -19,6 +18,8 @@ require (
 	github.com/kataras/iris/v12 v12.2.0-alpha2
 	github.com/kataras/neffos v0.0.18
 	github.com/mattn/go-colorable v0.1.8 // indirect
+	github.com/nats-io/nats-server/v2 v2.3.1 // indirect
+	github.com/panjf2000/ants/v2 v2.4.6 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/sacOO7/gowebsocket v0.0.0-20210515122958-9396f1a71e23
 	github.com/sirupsen/logrus v1.8.1 // indirect

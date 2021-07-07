@@ -62,12 +62,13 @@ func (wss *WSServer) Send(id string, content []byte) {
 	if v, ok := wss.connMap.Load(id); ok {
 		conn := v.(*websocket.Conn)
 		for !conn.IsClosed() {
-			// TODO: races may exist?
 			if err := conn.Socket().WriteText(content, time.Second * 5); err == nil {
 				break
+			} else {
+				logger.Errorf("[WSId(%s)] Failed to send response WS message!\n%v", err)
 			}
 		}
 	} else {
-		logger.Errorf("[%s] ID does not exist")
+		logger.Errorf("[WSId(%s)] ID does not exist")
 	}
 }

@@ -29,7 +29,6 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 		})
 		sheet := dao.GetSheetByFid(fid)
 		user := dao.GetUserByUid(uid)
-		sheet.Path = gdocFS.GetRootPath("sheet", fid)
 		sheet.Owner = user.Username
 
 		if config.Get().WriteThrough {
@@ -45,6 +44,11 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 		} else {
 			// create initial log file
 			if err := sheetCreateLogFile(fid, 1); err != nil {
+				panic(err)
+			}
+
+			// create initial checkpoint directory
+			if err := sheetCreateCheckPointDir(fid); err != nil {
 				panic(err)
 			}
 
@@ -66,8 +70,6 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 				Uid: uid,
 				Username: user.Username,
 			})
-
-			sheet.Columns = cols
 		}
 
 
@@ -116,10 +118,11 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 				inCache := true
 				memSheet := getSheetCache().Get(sheet.Fid)
 				if memSheet == nil {
-					if memSheet, inCache = recoverSheetFromLog(&sheet); memSheet == nil {
+					if memSheet, inCache = recoverSheetFromLog(sheet.Fid); memSheet == nil {
 						panic("recoverSheetFromLog fails")
 					}
 				}
+				sheet.CheckPointNum = sheetGetCheckPointNum(params.Fid)
 				sheet.Content = memSheet.ToStringSlice()
 				_, sheet.Columns = memSheet.Shape()
 				if inCache {
@@ -251,8 +254,7 @@ func GetSheetCheckPoint(params utils.GetSheetCheckPointParams) (success bool, ms
 		if !utils.UintListContains(ownedFids, params.Fid) {
 			success, msg, data = false, utils.SheetNoPermission, nil
 		} else {
-			sheet := dao.GetSheetByFid(params.Fid)
-			if params.Cid > uint(sheet.CheckPointNum) || params.Cid == 0 {
+			if params.Cid > uint(sheetGetCheckPointNum(params.Fid)) || params.Cid == 0 {
 				return false, utils.SheetChkpDoNotExist, nil
 			} else {
 				chkp, err := sheetGetPickledCheckPointFromDfs(params.Fid, params.Cid)
@@ -276,8 +278,7 @@ func GetSheetLog(params utils.GetSheetLogParams) (success bool, msg int, data []
 		if !utils.UintListContains(ownedFids, params.Fid) {
 			success, msg, data = false, utils.SheetNoPermission, nil
 		} else {
-			sheet := dao.GetSheetByFid(params.Fid)
-			if params.Lid > uint(sheet.CheckPointNum) || params.Lid == 0 {
+			if params.Lid > uint(sheetGetCheckPointNum(params.Fid)) || params.Lid == 0 {
 				return false, utils.SheetLogDoNotExist, nil
 			} else {
 				log, err := sheetGetPickledLogFromDfs(params.Fid, params.Lid)

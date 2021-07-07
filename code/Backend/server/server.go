@@ -14,7 +14,7 @@ import (
 
 func NewApp() *iris.Application {
 	app := iris.New()
-	app.Logger().SetLevel("debug")
+	app.Logger().SetLevel("Info")
 
 	app.Use(recover.New())
 	app.Use(logger.New())

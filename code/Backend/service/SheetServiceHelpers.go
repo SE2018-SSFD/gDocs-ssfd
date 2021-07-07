@@ -4,7 +4,6 @@ import (
 	"backend/dao"
 	"backend/lib/cache"
 	"backend/lib/gdocFS"
-	"backend/model"
 	"backend/utils"
 	"backend/utils/logger"
 	"encoding/json"
@@ -122,7 +121,7 @@ func appendOneSheetLog(fid uint, lid uint, log *gdocFS.SheetLogPickle) {
 	fileRawByte, _ := json.Marshal(*log)
 	fileRaw := string(fileRawByte)
 	if err := dao.FileAppend(path, fileRaw); err != nil {
-		logger.Errorf("[%s] Log file append fails!", path)
+		logger.Errorf("[%s] Log file append fails!\n%+v", path, err)
 		return
 	}
 }
@@ -131,13 +130,10 @@ func commitOneSheetWithCache(fid uint, memSheet *cache.MemSheet) (cid uint) {
 	memSheet.Lock()
 
 	// update model Sheet
-	sheet := dao.GetSheetByFid(fid)
-	curCid := sheet.CheckPointNum
-	sheet.CheckPointNum = curCid + 1
-	dao.SetSheet(sheet)
+	curCid := uint(sheetGetCheckPointNum(fid))
 
 	// write checkpoint to curCid+1
-	cid = uint(curCid + 1)
+	cid = curCid + 1
 	rows, cols := memSheet.Shape()
 	if err := sheetCreatePickledCheckPointInDfs(fid, cid, &gdocFS.SheetCheckPointPickle{
 		Cid: cid,
@@ -150,7 +146,7 @@ func commitOneSheetWithCache(fid uint, memSheet *cache.MemSheet) (cid uint) {
 	}
 
 	// write commit entry to log with lid=curCid+1
-	lid := uint(curCid + 1)
+	lid := curCid + 1
 	appendOneSheetLog(fid, lid, &logCommitEntry)
 
 	// create log with lid=curCid+2
@@ -174,9 +170,8 @@ func commitSheetsWithCache(fids []uint, memSheets []*cache.MemSheet) {
 //   when all users quit editing or sheet is evicted from memCache.
 // BUT log can be *UNCOMMITTED* if the server it belonged to crashed, for which we need to thoroughly handle
 //   all possible circumstances here in order to achieve crash consistency.
-func recoverSheetFromLog(sheet *model.Sheet) (memSheet *cache.MemSheet, inCache bool) {
-	fid := sheet.Fid
-	curCid := uint(sheet.CheckPointNum)
+func recoverSheetFromLog(fid uint) (memSheet *cache.MemSheet, inCache bool) {
+	curCid := uint(sheetGetCheckPointNum(fid))
 
 	// TODO: determine whether sheet is from crashed server and call SheetFSCheck
 	// SheetFSCheck(fid, isFromCrashServer)
@@ -186,7 +181,7 @@ func recoverSheetFromLog(sheet *model.Sheet) (memSheet *cache.MemSheet, inCache 
 		memSheet = cache.NewMemSheet(minRows, minCols)
 	} else {
 		if chkp, err := sheetGetPickledCheckPointFromDfs(fid, curCid); err != nil {
-			logger.Errorf("[%s] %+v", err)
+			logger.Errorf("[%d] %+v", fid, err)
 			return nil, false
 		} else {
 			memSheet = cache.NewMemSheetFromStringSlice(chkp.Content, chkp.Columns)
@@ -260,8 +255,42 @@ func sheetGetPickledLogFromDfs(fid uint, lid uint) (logs []gdocFS.SheetLogPickle
 func sheetCreateLogFile(fid uint, lid uint) (err error) {
 	logPath := gdocFS.GetLogPath("sheet", fid, lid)
 	if err := dao.FileCreate(logPath, 0); err != nil {
-		return errors.WithStack(err)
+		return err
 	} else {
 		return nil
+	}
+}
+
+// sheetCreateCheckPointDir create a empty checkpoint directory in dfs with fid
+func sheetCreateCheckPointDir(fid uint) (err error) {
+	chkpRoot := gdocFS.GetCheckPointRootPath("sheet", fid)
+	if err := dao.DirCreate(chkpRoot); err != nil {
+		return err
+	} else {
+		return nil
+	}
+}
+
+func sheetGetCheckPointNum(fid uint) (chkpNum int) {
+	path := gdocFS.GetCheckPointRootPath("sheet", fid)
+	fileNames, err := dao.DirFilenamesAllSorted(path)
+	if err != nil {
+		panic(err)
+	}
+
+	if len(fileNames) != 0 {
+		latestChkpName := fileNames[len(fileNames)-1]
+		chkpNum, err = strconv.Atoi(latestChkpName)
+		if err != nil {
+			logger.Errorf("[%s] bad checkpoint name, use length of children instead", latestChkpName)
+			return len(fileNames)
+		}
+
+		if len(fileNames) != chkpNum {
+			logger.Errorf("[%s] len(children) != latest checkpoint's name, use the latter", latestChkpName)
+		}
+		return chkpNum
+	} else {
+		return 0
 	}
 }

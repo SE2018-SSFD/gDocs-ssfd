@@ -5,13 +5,25 @@ import (
 	"backend/service"
 	"backend/utils"
 	"github.com/kataras/iris/v12/context"
+	"github.com/panjf2000/ants/v2"
 	"strconv"
 )
 
 var wss *wsWrap.WSServer
 
+var onMessagePool *ants.PoolWithFunc
+
+const (
+	onMessagePoolSize = 2000
+)
+
 func init() {
 	wss = wsWrap.NewWSServer(onConn, onDisConn, onMessage)
+	var err error
+	onMessagePool, err = ants.NewPoolWithFunc(onMessagePoolSize, onMessagePoolTask, ants.WithNonblocking(true))
+	if err != nil {
+		panic(err)
+	}
 }
 
 func onConn(id string) {
@@ -30,11 +42,28 @@ func onDisConn(id string) {
 	}
 }
 
+type onMessageArgs struct {
+	uid			uint
+	username	string
+	fid			uint
+	body		[]byte
+}
+
+func onMessagePoolTask(args interface{}) {
+	msgArg := args.(*onMessageArgs)
+	service.SheetOnMessage(wss, msgArg.uid, msgArg.username, msgArg.fid, msgArg.body)
+}
+
 func onMessage(id string, body []byte) {
 	ns, uid, username, fid := utils.ParseID(id)
 	switch ns {
 	case "sheet":
-		service.SheetOnMessage(wss, uid, username, fid, body)
+		_ = onMessagePool.Invoke(&onMessageArgs{
+			uid: uid,
+			username: username,
+			fid: fid,
+			body: body,
+		})
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"backend/controller"
 	"backend/middleware"
 	"github.com/kataras/iris/v12"
+	"github.com/kataras/iris/v12/middleware/pprof"
 )
 
 func SetRouter(app *iris.Application) {
@@ -25,6 +26,10 @@ func SetRouter(app *iris.Application) {
 
 	root.Handle("GET", "/sheetws",
 		controller.SheetBeforeUpgradeHandler(), controller.SheetUpgradeHandler())
+
+	p := pprof.New()
+	root.Handle("GET", "/pprof", p)
+	root.Handle("GET", "/pprof/{action:path}", p)
 
 	return
 }
