@@ -361,9 +361,9 @@ class SheetView extends React.Component {
                                 const cellLocks = JSON.parse(localStorage.getItem("cellLocks"));
                                 for (let i = 0; i < cellLocks.length; i++) {
                                     if (row === cellLocks[i].Row && col === cellLocks[i].Col) {
-                                        if (username !== cellLocks.Username) {
+                                        if (username !== cellLocks[i].Username) {
                                             console.log("other is writing");
-                                            message.error(cellLocks.Username + "正在输入，请稍等再点击")
+                                            message.error(cellLocks[i].Username + "正在输入，请稍等再点击")
                                         }
                                     }
                                 }
@@ -448,13 +448,7 @@ class SheetView extends React.Component {
                     const col = data.body.col;
                     const username = data.body.username;
                     const me = JSON.parse(localStorage.getItem("username"));
-                    const cellLocks = JSON.parse(localStorage.getItem("cellLocks"));
-                    cellLocks.push({
-                        Row: row,
-                        Col: col,
-                        Username: username,
-                    })
-                    localStorage.setItem("cellLocks", JSON.stringify(cellLocks));
+
                     if (locking_col === col && locking_row === row) {
                         if (me === username) {
                             console.log("acquired");
@@ -468,6 +462,13 @@ class SheetView extends React.Component {
                             luckysheet.setCellValue(row, col, username + " 正在编辑 ");
                         }
                     } else {
+                        const cellLocks = JSON.parse(localStorage.getItem("cellLocks"));
+                        cellLocks.push({
+                            Row: row,
+                            Col: col,
+                            Username: username,
+                        })
+                        localStorage.setItem("cellLocks", JSON.stringify(cellLocks));
                         luckysheet.setCellValue(row, col, username + " 正在编辑 ");
                     }
                     break;
@@ -582,7 +583,7 @@ class SheetView extends React.Component {
                             <Tooltip title="复制url给你的好友吧">
                                 <Button type={'primary'} onClick={() => {
                                     navigator.permissions.query({name: "clipboard-write"}).then(result => {
-                                        if (result.state == "granted" || result.state == "prompt") {
+                                        if (result.state === "granted" || result.state === "prompt") {
                                             /* write to the clipboard now */
                                             navigator.clipboard.writeText(window.location.href).then(function () {
                                                 console.log('Async: Copying to clipboard was successful!');
