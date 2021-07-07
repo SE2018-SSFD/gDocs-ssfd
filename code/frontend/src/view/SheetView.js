@@ -36,6 +36,11 @@ class SheetView extends React.Component {
         }
     }
 
+    componentWillUnmount() {
+        socket.close();
+    }
+
+
     componentDidMount() {
         const query = this.props.location.search;
         const arr = query.split('&');
@@ -99,6 +104,8 @@ class SheetView extends React.Component {
             console.log(data)
             let msg_word = MSG_WORDS[data.msg];
             if (data.success === true) {
+                this.checkpoint_num++;
+                this.checkpoint.unshift(this.checkpoint_num);
                 message.success(msg_word).then(() => {
                 });
             } else {

@@ -16,6 +16,7 @@ export class FileList extends React.Component {
         }
     }
 
+
     componentDidMount() {
         const callback = (data) => {
             let msg_word = MSG_WORDS[data.msg];
