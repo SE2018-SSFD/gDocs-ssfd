@@ -8,6 +8,8 @@ require (
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/deckarep/golang-set v1.7.1
 	github.com/go-zookeeper/zk v1.0.2
+	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1
+	github.com/gopherjs/websocket v0.0.0-20191103002815-9a42957e2b3a
 	github.com/gorilla/websocket v1.4.2
 	github.com/iris-contrib/httpexpect/v2 v2.0.5
 	github.com/iris-contrib/middleware/cors v0.0.0-20210110101738-6d0a4d799b5d
@@ -18,6 +20,7 @@ require (
 	github.com/kataras/neffos v0.0.18
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/sacOO7/gowebsocket v0.0.0-20210515122958-9396f1a71e23
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/stretchr/testify v1.7.0
