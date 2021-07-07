@@ -1,6 +1,6 @@
 import React from 'react';
 import {Link, withRouter} from "react-router-dom";
-import {commitSheet, getSheet, getSheetCkpt, testWS} from "../api/sheetService";
+import {commitSheet, getSheet, getSheetCkpt, getSheetLog, testWS} from "../api/sheetService";
 import {HTTP_URL, MSG_WORDS, WS_URL} from "../api/common";
 import {Button, Card, Col, Divider, Drawer, Layout, message, Row, Tooltip} from "antd";
 import {
@@ -12,6 +12,7 @@ import {
     StarOutlined
 } from "@ant-design/icons";
 import {UserAvatar} from "../components/UserAvatar";
+import {ColMap, RowMap} from "../utils";
 
 const {Header} = Layout
 const luckysheet = window.luckysheet;
@@ -29,7 +30,9 @@ class SheetView extends React.Component {
         this.checkpoint_num = 0;
         this.checkpoint = [];
         this.url = "";
+        this.checkpoint_now = 0;
         this.state = {
+            log:[],
             name: "",
             logVisible: false,
             ckptVisible: false,
@@ -53,9 +56,9 @@ class SheetView extends React.Component {
             fid: this.fid,
         }
         const callback = (data) => {
-            console.log(data);
             if (data.success === true) {
                 this.checkpoint_num = data.data.checkpoint_num;
+                this.checkpoint_now = this.checkpoint_num;
                 let checkpoint = [];
                 for (let i = this.checkpoint_num; i >= 1; i--) {
                     checkpoint.push(i);
@@ -72,9 +75,41 @@ class SheetView extends React.Component {
     }
 
     openLogDrawer = () => {
-        this.setState({
-            logVisible: true,
-        })
+        const token = JSON.parse(localStorage.getItem("token"));
+        const data = {
+            token:token,
+            fid:this.fid,
+            lid:this.checkpoint_now
+        }
+        console.log(data);
+        const callback = (data) =>{
+            console.log(data);
+            const msg_word = MSG_WORDS[data.msg];
+            if (data.success === true) {
+                message.success(msg_word);
+                let log = data.data;
+                // log.sort(function (a,b){
+                //     let date1 = new Date(a.timestamp),date2 =new Date(b.timestamp);
+                //     return date2-date1;
+                // })
+                let log_new = [];
+                for(let i = log.length-1;i >= 0 ; i--)
+                {
+                    if(log[i].new!==log[i].old&&log[i].lid!==0)
+                    {
+                        log_new.push(log[i]);
+                    }
+                }
+                this.setState({
+                    logVisible: true,
+                    log:log_new
+                })
+            } else {
+                console.log(MSG_WORDS[data.msg]);
+                message.error(msg_word);
+            }
+        }
+        getSheetLog(data,callback)
     }
 
     closeLogDrawer = () => {
@@ -104,8 +139,13 @@ class SheetView extends React.Component {
             console.log(data)
             let msg_word = MSG_WORDS[data.msg];
             if (data.success === true) {
+                if(this.checkpoint_now===this.checkpoint_num) {
+                    this.checkpoint_now++;
+                }
                 this.checkpoint_num++;
+
                 this.checkpoint.unshift(this.checkpoint_num);
+
                 message.success(msg_word).then(() => {
                 });
             } else {
@@ -127,6 +167,10 @@ class SheetView extends React.Component {
                 this.rows = data.data.rows;
                 this.columns = data.data.columns;
                 this.content = data.data.content;
+                this.checkpoint_now=cid;
+                this.setState({
+                    ckptVisible: false
+                })
                 const username = JSON.parse(localStorage.getItem("username"));
                 let j = 0, k = 0;
                 let celldata = [];
@@ -165,9 +209,7 @@ class SheetView extends React.Component {
                         {url: "/", "icon": '<i class="fa fa-folder" aria-hidden="true"></i>', "name": "我的表格"},
                     ],
                     myFolderUrl: "/",
-                    functionButton:
-                        '<button id="log_button" style="padding:3px 6px;font-size: 12px;margin-right: 10px;">Log</button>' +
-                        '<button id="ckpt_button" style="padding:3px 6px;font-size: 12px;margin-right: 10px;">CKPT</button>',
+                    // functionButton:
                     hook: {
                         // 进入单元格编辑模式之前触发。
                         cellEditBefore: (range) => {
@@ -355,9 +397,7 @@ class SheetView extends React.Component {
                             {url: "/", "icon": '<i class="fa fa-folder" aria-hidden="true"></i>', "name": "我的表格"},
                         ],
                         myFolderUrl: "/",
-                        functionButton:
-                            '<button id="log_button" style="padding:3px 6px;font-size: 12px;margin-right: 10px;">Log</button>' +
-                            '<button id="ckpt_button" style="padding:3px 6px;font-size: 12px;margin-right: 10px;">CKPT</button>',
+                        // functionButton:
                         hook: {
                             // 进入单元格编辑模式之前触发。
                             cellEditBefore: (range) => {
@@ -539,16 +579,26 @@ class SheetView extends React.Component {
             left: '0px',
             top: '60px',
         }
-        const {name} = this.state;
 
-        let logContent = this.checkpoint.map(
+        const {name,log} = this.state;
+
+        let logContent = log.map(
             (item) =>
-                <Card hoverable style={{width: 240}} title={"编辑记录" + item.toString()}>
-                    <Button onClick={() => this.handleRecoverLog(item)}>恢复到此处</Button>
+                <Card hoverable style={{width: 300}} title={item.username + " - " + new Date(item.timestamp).toLocaleString()}>
+                    <div>
+                        {
+                            item.old===""?
+                                (<p> 设置 {ColMap(item.col) + RowMap(item.row)} 为 {item.new}</p>):
+                                item.new===""?
+                                    (<p> 清空 {ColMap(item.col) + RowMap(item.row)}</p>):
+                                    (<p> 将 {ColMap(item.col) + RowMap(item.row)} 从 {item.old} 修改为 {item.new}</p>)
+                        }
+                        {/*<Button onClick={() => this.handleRecoverLog(item)}>恢复到此处</Button>*/}
+                    </div>
                 </Card>);
         let ckptContent = this.checkpoint.map(
             (item) =>
-                <Card hoverable style={{width: 240}}
+                <Card hoverable style={{width: 300}}
                       title={"恢复点" + item.toString()}>
                     <Button onClick={() => this.handleRecoverCkpt(item)}>恢复到此处</Button>
                 </Card>

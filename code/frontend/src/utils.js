@@ -10,3 +10,17 @@ export function arrTrans(num, arr) {
     });
     return iconsArr;
 }
+
+export function RowMap(row){
+    return row + 1;
+}
+export function ColMap(col){
+    let first_idx = Math.floor(col/26);
+    let second_idx = col % 26;
+    if(first_idx === 0)
+    {
+        return String.fromCharCode(65+ second_idx);
+    }else{
+        return String.fromCharCode(65+ first_idx) + String.fromCharCode(65+ second_idx);
+    }
+}
