@@ -131,7 +131,7 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 					commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
 				}
 
-				for i := 1; i < sheet.CheckPointNum; i += 1 {
+				for i := 1; i <= sheet.CheckPointNum; i += 1 {
 					curCid := uint(i)
 					filePickled, err := sheetGetPickledCheckPointFromDfs(params.Fid, curCid)
 					if err != nil {
