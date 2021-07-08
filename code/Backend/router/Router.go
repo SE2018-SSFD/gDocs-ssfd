@@ -23,10 +23,12 @@ func SetRouter(app *iris.Application) {
 	root.Handle("POST", "/getchunk", controller.GetChunk)
 	root.Handle("POST", "/getsheetchkp", controller.GetSheetCheckPoint)
 	root.Handle("POST", "/getsheetlog", controller.GetSheetLog)
+	root.Handle("POST", "/rollbacksheet", controller.RollbackSheet)
 
 	root.Handle("GET", "/sheetws",
 		controller.SheetBeforeUpgradeHandler(), controller.SheetUpgradeHandler())
 
+	// for debug
 	p := pprof.New()
 	root.Handle("GET", "/pprof", p)
 	root.Handle("GET", "/pprof/{action:path}", p)

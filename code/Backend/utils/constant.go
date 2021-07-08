@@ -33,6 +33,7 @@ const (
 	SheetNotInCache			=	27
 	SheetCommitSuccess		=	28
 	SheetNothingToCommit	=	29
+	SheetRollbackSuccess	=	30
 )
 
 var TokenTerm int64 = 30 * 60 // 30min
@@ -117,6 +118,12 @@ type GetSheetLogParams struct {
 	Token		string		`json:"token"`
 	Fid			uint		`json:"fid"`
 	Lid			uint		`json:"lid"`
+}
+
+type RollbackSheetParams struct {
+	Token		string		`json:"token"`
+	Fid			uint		`json:"fid"`
+	Cid			uint		`json:"cid"`
 }
 
 type GetChunkParams struct {

@@ -285,9 +285,13 @@ func (sc *SheetCache) Put(key interface{}) (keys []interface{}, evicted []*MemSh
 		return keys, evicted
 	} else {
 		ms := v.(*MemSheet)
-		_, keys, evicted, _, _ := sc.doEvictIfNeeded(key, ms, true)
-		ms.unRefer()
-		return keys, evicted
+		_, keys, evicted, doEvict, success := sc.doEvictIfNeeded(key, ms, true)
+		if !doEvict && !success {
+			return keys, evicted
+		} else {
+			ms.unRefer()
+			return keys, evicted
+		}
 	}
 }
 
@@ -307,7 +311,12 @@ func (sc *SheetCache) doEvictIfNeeded(key interface{}, ms *MemSheet, isPut bool)
 			return 0, []interface{}{}, []*MemSheet{}, false, false
 		}
 	} else {
-		changedSize = ms.GetSize()
+		if v, ok := sc.cache.Load(key); ok {
+			old := v.(*MemSheet)
+			changedSize = ms.GetSize() - old.GetSize()
+		} else {
+			changedSize = ms.GetSize()
+		}
 	}
 
 	if sc.curSize + changedSize > sc.maxSize {

@@ -168,6 +168,10 @@ func RemoveAll(path string) (err error) {
 	return dfs.Delete(path)
 }
 
+func Remove(path string) (err error) {
+	return dfs.Delete(path)
+}
+
 //func FileInsert(path string, off int64, content string, maxsize int64) error {
 //	toWrite := int64(len(content))
 //	if off + toWrite > maxsize {

@@ -273,14 +273,14 @@ func SheetOnDisConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
 			// delete group entry
 			sheetWSMeta.Delete(fid)
 
-			// persist in dfs
-			if memSheet := getSheetCache().Get(fid); memSheet != nil {
-				commitOneSheetWithCache(fid, memSheet)
-				keys, evicted := getSheetCache().Put(fid)
-				commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
-			} else {
-				logger.Warnf("[fid:%d] Not in cache when deleting sheetws group", fid)
-			}
+			//// persist in dfs
+			//if memSheet := getSheetCache().Get(fid); memSheet != nil {
+			//	commitOneSheetWithCache(fid, memSheet)
+			//	keys, evicted := getSheetCache().Put(fid)
+			//	commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
+			//} else {
+			//	logger.Warnf("[fid:%d] Not in cache when deleting sheetws group", fid)
+			//}
 		}
 	}
 }

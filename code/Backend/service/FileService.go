@@ -8,6 +8,7 @@ import (
 	"backend/model"
 	"backend/utils"
 	"backend/utils/config"
+	"backend/utils/logger"
 	"github.com/kataras/iris/v12"
 	"time"
 )
@@ -258,7 +259,7 @@ func GetSheetCheckPoint(params utils.GetSheetCheckPointParams) (success bool, ms
 		if !utils.UintListContains(ownedFids, params.Fid) {
 			success, msg, data = false, utils.SheetNoPermission, nil
 		} else {
-			if params.Cid > uint(sheetGetCheckPointNum(params.Fid)) || params.Cid == 0 {
+			if params.Cid > uint(sheetGetCheckPointNum(params.Fid)) || params.Cid <= 0 {
 				return false, utils.SheetChkpDoNotExist, nil
 			} else {
 				chkp, err := sheetGetPickledCheckPointFromDfs(params.Fid, params.Cid)
@@ -282,7 +283,7 @@ func GetSheetLog(params utils.GetSheetLogParams) (success bool, msg int, data []
 		if !utils.UintListContains(ownedFids, params.Fid) {
 			success, msg, data = false, utils.SheetNoPermission, nil
 		} else {
-			if params.Lid > uint(sheetGetCheckPointNum(params.Fid)) || params.Lid == 0 {
+			if params.Lid > uint(sheetGetCheckPointNum(params.Fid)) || params.Lid <= 0 {
 				return false, utils.SheetLogDoNotExist, nil
 			} else {
 				log, err := sheetGetPickledLogFromDfs(params.Fid, params.Lid)
@@ -297,6 +298,62 @@ func GetSheetLog(params utils.GetSheetLogParams) (success bool, msg int, data []
 	}
 
 	return success, msg, data
+}
+
+func RollbackSheet(params utils.RollbackSheetParams) (success bool, msg int) {
+	uid := CheckToken(params.Token)
+	if uid != 0 {
+		ownedFids := dao.GetSheetFidsByUid(uid)
+		if !utils.UintListContains(ownedFids, params.Fid) {
+			success, msg = false, utils.SheetNoPermission
+		} else {
+			if params.Cid > uint(sheetGetCheckPointNum(params.Fid)) || params.Cid <= 0 {
+				return false, utils.SheetChkpDoNotExist
+			} else {
+				chkp, err := sheetGetPickledCheckPointFromDfs(params.Fid, params.Cid)
+				if err != nil {
+					panic(err)
+				}
+
+				memSheet := cache.NewMemSheetFromStringSlice(chkp.Content, chkp.Columns)
+				if ms, keys, evicted := getSheetCache().Add(params.Fid, memSheet); ms != nil {
+					commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
+				}
+
+				keys, evicted := getSheetCache().Put(params.Fid)
+				commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
+
+				chkpNum := sheetGetCheckPointNum(params.Fid)
+				for i := 1; i <= chkpNum; i += 1 {
+					curCid := params.Cid + uint(i)
+					if err := sheetDeleteCheckPointFile(params.Fid, curCid); err != nil {
+						logger.Errorf("[fid(%d)\tcid(%d)\tuid(%d)] Rollback Sheet: fail to delete checkpoint file",
+							params.Fid, curCid, uid)
+					}
+					if err := sheetDeleteLogFile(params.Fid, curCid); err != nil {
+						logger.Errorf("[fid(%d)\tlid(%d)\tuid(%d)] Rollback Sheet: fail to delete log file",
+							params.Fid, curCid, uid)
+					}
+				}
+				lastLid := params.Cid + uint(chkpNum + 1)
+				if err := sheetDeleteLogFile(params.Fid, lastLid); err != nil {
+					logger.Errorf("[fid(%d)\tlid(%d)\tuid(%d)] Rollback Sheet: fail to delete log file",
+						params.Fid, lastLid, uid)
+				}
+
+				if err := sheetCreateLogFile(params.Fid, params.Cid + 1); err != nil {
+					logger.Errorf("[fid(%d)\tlid(%d)\tuid(%d)] Rollback Sheet: fail to create empty log file",
+						params.Fid, params.Cid + 1, uid)
+				}
+
+				success, msg = true, utils.SheetRollbackSuccess
+			}
+		}
+	} else {
+		success, msg = false, utils.InvalidToken
+	}
+
+	return success, msg
 }
 
 func GetChunk(ctx iris.Context, params utils.GetChunkParams) (success bool, msg int) {

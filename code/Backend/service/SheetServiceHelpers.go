@@ -247,31 +247,20 @@ func sheetCreatePickledCheckPointInDfs(fid uint, cid uint, chkp *gdocFS.SheetChe
 	}
 }
 
-// sheetGetPickledLogFromDfs pickles a Log from dfs with fid and lid
-func sheetGetPickledLogFromDfs(fid uint, lid uint) (logs []gdocFS.SheetLogPickle, err error) {
-	path := gdocFS.GetLogPath("sheet", fid, lid)
-	if fileRaw, err := dao.FileGetAll(path); err != nil {
-		return nil, errors.WithStack(err)
-	} else {
-		logs, err = gdocFS.PickleSheetLogsFromContent(fileRaw)
-		return logs, errors.WithStack(err)
-	}
-}
-
-// sheetCreateLogFile create a empty Log in dfs with fid and lid
-func sheetCreateLogFile(fid uint, lid uint) (err error) {
-	logPath := gdocFS.GetLogPath("sheet", fid, lid)
-	if err := dao.FileCreate(logPath, 0); err != nil {
+// sheetCreateCheckPointDir create a empty checkpoint directory in dfs with fid
+func sheetCreateCheckPointDir(fid uint) (err error) {
+	chkpRoot := gdocFS.GetCheckPointRootPath("sheet", fid)
+	if err := dao.DirCreate(chkpRoot); err != nil {
 		return err
 	} else {
 		return nil
 	}
 }
 
-// sheetCreateCheckPointDir create a empty checkpoint directory in dfs with fid
-func sheetCreateCheckPointDir(fid uint) (err error) {
-	chkpRoot := gdocFS.GetCheckPointRootPath("sheet", fid)
-	if err := dao.DirCreate(chkpRoot); err != nil {
+// sheetDeleteCheckPointFile delete a checkpoint file in dfs with fid and cid
+func sheetDeleteCheckPointFile(fid uint, cid uint) (err error)  {
+	chkpPath := gdocFS.GetCheckPointPath("sheet", fid, cid)
+	if err := dao.Remove(chkpPath); err != nil {
 		return err
 	} else {
 		return nil
@@ -299,5 +288,36 @@ func sheetGetCheckPointNum(fid uint) (chkpNum int) {
 		return chkpNum
 	} else {
 		return 0
+	}
+}
+
+// sheetGetPickledLogFromDfs pickles a Log from dfs with fid and lid
+func sheetGetPickledLogFromDfs(fid uint, lid uint) (logs []gdocFS.SheetLogPickle, err error) {
+	path := gdocFS.GetLogPath("sheet", fid, lid)
+	if fileRaw, err := dao.FileGetAll(path); err != nil {
+		return nil, errors.WithStack(err)
+	} else {
+		logs, err = gdocFS.PickleSheetLogsFromContent(fileRaw)
+		return logs, errors.WithStack(err)
+	}
+}
+
+// sheetCreateLogFile create a empty Log in dfs with fid and lid
+func sheetCreateLogFile(fid uint, lid uint) (err error) {
+	logPath := gdocFS.GetLogPath("sheet", fid, lid)
+	if err := dao.FileCreate(logPath, 0); err != nil {
+		return err
+	} else {
+		return nil
+	}
+}
+
+// sheetDeleteLogFile delete a log file in dfs with fid and lid
+func sheetDeleteLogFile(fid uint, lid uint) (err error) {
+	logPath := gdocFS.GetLogPath("sheet", fid, lid)
+	if err := dao.Remove(logPath); err != nil {
+		return err
+	} else {
+		return nil
 	}
 }

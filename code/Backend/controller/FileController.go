@@ -92,6 +92,17 @@ func GetSheetLog(ctx iris.Context) {
 	utils.SendResponse(ctx, success, msg, data)
 }
 
+func RollbackSheet(ctx iris.Context) {
+	var params utils.RollbackSheetParams
+	if !utils.GetContextParams(ctx, &params) {
+		return
+	}
+
+	success, msg := service.RollbackSheet(params)
+
+	utils.SendResponse(ctx, success, msg, nil)
+}
+
 func GetChunk(ctx iris.Context) {
 	var params utils.GetChunkParams
 	if !utils.GetContextParams(ctx, &params) {
