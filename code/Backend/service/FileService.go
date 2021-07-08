@@ -315,15 +315,20 @@ func GetSheetLog(params utils.GetSheetLogParams) (success bool, msg int, data []
 	return success, msg, data
 }
 
-func RollbackSheet(params utils.RollbackSheetParams) (success bool, msg int) {
+func RollbackSheet(params utils.RollbackSheetParams) (success bool, msg int, redirect string) {
 	uid := CheckToken(params.Token)
 	if uid != 0 {
 		ownedFids := dao.GetSheetFidsByUid(uid)
 		if !utils.UintListContains(ownedFids, params.Fid) {
 			success, msg = false, utils.SheetNoPermission
 		} else {
+			sheet := dao.GetSheetByFid(params.Fid)
+			if addr, isMine := cluster.FileBelongsTo(sheet.Name, sheet.Fid); !isMine {
+				return false, msg, addr
+			}
+
 			if params.Cid > uint(sheetGetCheckPointNum(params.Fid)) || params.Cid <= 0 {
-				return false, utils.SheetChkpDoNotExist
+				return false, utils.SheetChkpDoNotExist, ""
 			} else {
 				chkp, err := sheetGetPickledCheckPointFromDfs(params.Fid, params.Cid)
 				if err != nil {
@@ -368,7 +373,7 @@ func RollbackSheet(params utils.RollbackSheetParams) (success bool, msg int) {
 		success, msg = false, utils.InvalidToken
 	}
 
-	return success, msg
+	return success, msg, redirect
 }
 
 func GetChunk(ctx iris.Context, params utils.GetChunkParams) (success bool, msg int) {

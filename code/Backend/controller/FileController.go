@@ -98,9 +98,13 @@ func RollbackSheet(ctx iris.Context) {
 		return
 	}
 
-	success, msg := service.RollbackSheet(params)
+	success, msg, addr := service.RollbackSheet(params)
 
-	utils.SendResponse(ctx, success, msg, nil)
+	if addr != "" {
+		utils.RequestRedirectTo(ctx, "http://", addr, "/rollbacksheet")
+	} else {
+		utils.SendResponse(ctx, success, msg, nil)
+	}
 }
 
 func GetChunk(ctx iris.Context) {
