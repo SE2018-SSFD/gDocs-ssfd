@@ -146,7 +146,7 @@ func DirFileNamesAll(path string) (filenames []string, err error) {
 		return nil, err
 	}
 
-	for i := 0; i < len(filenames); i += 1 {
+	for i := 0; i < len(fileInfos); i += 1 {
 		filenames = append(filenames, fileInfos[i].Name)
 	}
 
