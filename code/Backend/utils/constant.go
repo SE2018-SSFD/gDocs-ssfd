@@ -32,6 +32,7 @@ const (
 	SheetAlreadyRecovered	=	26
 	SheetNotInCache			=	27
 	SheetCommitSuccess		=	28
+	SheetNothingToCommit	=	29
 )
 
 var TokenTerm int64 = 30 * 60 // 30min
