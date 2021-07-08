@@ -85,7 +85,7 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 	return success, msg, data
 }
 
-func GetSheet(params utils.GetSheetParams) (success bool, msg int, data *model.Sheet, redirect string) {
+func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sheet, redirect string) {
 	redirect = ""
 
 	uid := CheckToken(params.Token)
@@ -101,7 +101,7 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data *model.S
 			}
 
 			if sheet.IsDeleted {
-				return true, utils.SheetIsInTrashBin, &sheet, ""
+				return true, utils.SheetIsInTrashBin, sheet, ""
 			}
 
 			if config.Get().WriteThrough {
@@ -147,7 +147,7 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data *model.S
 				}
 			}
 
-			success, msg, data = true, utils.SheetGetSuccess, &sheet
+			success, msg, data = true, utils.SheetGetSuccess, sheet
 		}
 	} else {
 		success, msg = false, utils.InvalidToken
