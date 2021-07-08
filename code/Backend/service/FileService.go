@@ -85,7 +85,7 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 	return success, msg, data
 }
 
-func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sheet, redirect string) {
+func GetSheet(params utils.GetSheetParams) (success bool, msg int, data *model.Sheet, redirect string) {
 	redirect = ""
 
 	uid := CheckToken(params.Token)
@@ -101,7 +101,7 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 			}
 
 			if sheet.IsDeleted {
-				return true, utils.SheetIsInTrashBin, sheet, ""
+				return true, utils.SheetIsInTrashBin, &sheet, ""
 			}
 
 			if config.Get().WriteThrough {
@@ -130,9 +130,24 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 					keys, evicted := getSheetCache().Put(sheet.Fid)
 					commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
 				}
+
+				for i := 1; i < sheet.CheckPointNum; i += 1 {
+					curCid := uint(i)
+					filePickled, err := sheetGetPickledCheckPointFromDfs(params.Fid, curCid)
+					if err != nil {
+						logger.Errorf("[fid(%d)\tcid(%d)\tuid(%d)] GetSheet: fail to pickle checkpoint\n%+v",
+							params.Fid, curCid, uid, err)
+						continue
+					}
+
+					sheet.CheckPointBrief = append(sheet.CheckPointBrief, model.ChkpBrief{
+						Cid: curCid,
+						TimeStamp: filePickled.Timestamp,
+					})
+				}
 			}
 
-			success, msg, data = true, utils.SheetGetSuccess, sheet
+			success, msg, data = true, utils.SheetGetSuccess, &sheet
 		}
 	} else {
 		success, msg = false, utils.InvalidToken
@@ -327,23 +342,23 @@ func RollbackSheet(params utils.RollbackSheetParams) (success bool, msg int) {
 				for i := 1; i <= chkpNum; i += 1 {
 					curCid := params.Cid + uint(i)
 					if err := sheetDeleteCheckPointFile(params.Fid, curCid); err != nil {
-						logger.Errorf("[fid(%d)\tcid(%d)\tuid(%d)] Rollback Sheet: fail to delete checkpoint file",
-							params.Fid, curCid, uid)
+						logger.Errorf("[fid(%d)\tcid(%d)\tuid(%d)] Rollback Sheet: fail to delete checkpoint file\n%+v",
+							params.Fid, curCid, uid, err)
 					}
 					if err := sheetDeleteLogFile(params.Fid, curCid); err != nil {
-						logger.Errorf("[fid(%d)\tlid(%d)\tuid(%d)] Rollback Sheet: fail to delete log file",
-							params.Fid, curCid, uid)
+						logger.Errorf("[fid(%d)\tlid(%d)\tuid(%d)] Rollback Sheet: fail to delete log file\n%+v",
+							params.Fid, curCid, uid, err)
 					}
 				}
 				lastLid := params.Cid + uint(chkpNum + 1)
 				if err := sheetDeleteLogFile(params.Fid, lastLid); err != nil {
-					logger.Errorf("[fid(%d)\tlid(%d)\tuid(%d)] Rollback Sheet: fail to delete log file",
-						params.Fid, lastLid, uid)
+					logger.Errorf("[fid(%d)\tlid(%d)\tuid(%d)] Rollback Sheet: fail to delete log file\n%+v",
+						params.Fid, lastLid, uid, err)
 				}
 
 				if err := sheetCreateLogFile(params.Fid, params.Cid + 1); err != nil {
-					logger.Errorf("[fid(%d)\tlid(%d)\tuid(%d)] Rollback Sheet: fail to create empty log file",
-						params.Fid, params.Cid + 1, uid)
+					logger.Errorf("[fid(%d)\tlid(%d)\tuid(%d)] Rollback Sheet: fail to create empty log file\n%+v",
+						params.Fid, params.Cid + 1, uid, err)
 				}
 
 				success, msg = true, utils.SheetRollbackSuccess

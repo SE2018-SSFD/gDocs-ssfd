@@ -27,7 +27,7 @@ func GetSheet(ctx iris.Context) {
 	if addr != "" {
 		utils.RequestRedirectTo(ctx, "http://", addr, "/getsheet")
 	} else {
-		utils.SendResponse(ctx, success, msg, data)
+		utils.SendResponse(ctx, success, msg, *data)
 	}
 }
 

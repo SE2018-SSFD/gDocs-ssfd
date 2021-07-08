@@ -7,6 +7,7 @@ type Sheet struct {
 	IsDeleted		bool			`gorm:"type:TINYINT;default:0" json:"isDeleted"`
 	Name			string			`gorm:"type:VARCHAR(100)" json:"name"`
 	CheckPointNum	int				`gorm:"-" json:"checkpoint_num"`
+	CheckPointBrief	[]ChkpBrief		`gorm:"-" json:"checkPointBrief"`
 	Users			[]User			`gorm:"many2many:users_sheets;constraint:OnDelete:CASCADE" json:"-"`
 	Columns			int				`gorm:"-" json:"columns"`
 	Owner			string			`json:"owner"`
@@ -15,4 +16,9 @@ type Sheet struct {
 	UpdatedAt		time.Time
 
 	Content			[]string		`gorm:"-" json:"content"`
+}
+
+type ChkpBrief struct {
+	Cid			uint		`json:"cid"`
+	TimeStamp	time.Time	`json:"timestamp"`
 }
