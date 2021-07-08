@@ -27,7 +27,8 @@ var handleCellPool *ants.PoolWithFunc
 
 func init() {
 	var err error
-	handleCellPool, err = ants.NewPoolWithFunc(handleCellPoolSize, handleCellPoolTask, ants.WithNonblocking(true))
+	handleCellPool, err = ants.NewPoolWithFunc(handleCellPoolSize, handleCellPoolTask,
+		ants.WithNonblocking(false))
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +46,7 @@ type sheetWSMetaEntry struct {
 }
 
 // wait - blocking until the state of specific fid becomes stable, all handleCell workers are blocking
-//     until leave is called
+// until leave is called
 func (meta *sheetWSMetaEntry) wait() {
 	meta.gLock.Lock()
 	meta.cellWg.Wait()
@@ -66,7 +67,7 @@ type sheetWSUserMetaEntry struct {
 type sheetWSCellMetaEntry struct {
 	cellKey				cellKey
 	cellLock			cellLock
-	workerSema			chan int
+	workerSema			chan int	// semaphore(chan without buffer), guarantees only one worker is in critical section
 	debugCnt			int32
 }
 
@@ -242,10 +243,22 @@ func SheetOnDisConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
 		logger.Errorf("![uid(%d)\tusername(%s)\tfid(%d)] No sheetWSMetaEntry on disconnection!", uid, username, fid)
 	} else {
 		meta := v.(*sheetWSMetaEntry)
+
+		meta.wait()
+		defer meta.leave()
+
 		if v, ok = meta.userMap.Load(uid); ok {
 			userMeta := v.(*sheetWSUserMetaEntry)
 			userMeta.stopChan <- 1
 			meta.userMap.Delete(uid)
+			meta.cellMap.Range(func(k interface{}, v interface{}) bool {
+				cellMeta := v.(*sheetWSCellMetaEntry)
+				ownerUid := uint(cellMeta.cellLock.owner)
+				if ownerUid == userMeta.uid {
+					cellMeta.cellLock.unLock(cellMeta.cellLock.owner)
+				}
+				return true
+			})
 		} else {
 			logger.Errorf("![uid(%d)\tusername(%s)\tfid(%d)] No sheetWSUserMetaEntry on disconnection!",
 				uid, username, fid)
@@ -254,9 +267,6 @@ func SheetOnDisConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
 		if curUserN := atomic.AddInt32(&meta.userN, -1); curUserN == 0 {	// TODO(bug): may delete sheetWSMetaEntry after onConn
 			logger.Infof("[uid(%d)\tusername(%s)\tfid(%d)\tuserN(%d)] Delete sheetWSMetaEntry!",
 				uid, username, fid, curUserN)
-
-			meta.wait()
-			defer meta.leave()		// TODO(flag): waiting
 
 			logger.Infof("[uid(%d)\tusername(%s)\tfid(%d)] Get Lock onDisConn!", uid, username, fid)
 
@@ -353,7 +363,7 @@ func SheetOnMessage(wss *wsWrap.WSServer, uid uint, username string, fid uint, b
 			})
 
 			// wg.Add here, cooperating with meta.wait() and meta.leave()
-			meta.cellWg.Add(1)	// TODO(flag): waiting
+			meta.cellWg.Add(1)
 
 			cellMeta := actual.(*sheetWSCellMetaEntry)
 			if !loaded {
