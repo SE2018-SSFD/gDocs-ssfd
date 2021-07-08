@@ -82,12 +82,7 @@ func FileGetAll(path string) (content string, err error) {
 		return "", errors.New("cannot get all the content of a directory")
 	}
 
-	fd, err := dfs.Open(path, false)
-	if err != nil {
-		return "", err
-	}
-
-	content, err = dfs.ReadAll(fd)
+	content, err = dfs.ReadAll(path)
 	if err != nil {
 		return "", err
 	}

@@ -36,12 +36,12 @@ type ScanArg struct {
 type WriteArg struct {
 	Fd			int			`json:"fd"`
 	Offset		int			`json:"offset"`
-	Data		[]byte		`json:"data"`
+	Data		string		`json:"data"`
 }
 
 type AppendArg struct {
 	Fd		int		`json:"fd"`
-	Data	[]byte	`json:"data"`
+	Data	string	`json:"data"`
 }
 
 type ReadArg struct {
@@ -70,6 +70,7 @@ type DeleteRet struct {
 type GetFileInfoRet struct {
 	Exist			bool	`json:"exist"`
 	IsDir			bool	`json:"is_dir"`
+	FileName		string	`json:"filename"`
 	UpperFileSize	int		`json:"upper_file_size"`
 }
 
@@ -86,10 +87,10 @@ type WriteRet struct {
 }
 
 type AppendRet struct {
-	BytesWritten	int		`json:"bytes_written"`
+	Offset			int		`json:"offset"`
 }
 
 type ReadRet struct {
 	Len			int			`json:"len"`
-	Data		[]byte		`json:"data"`
+	Data		string		`json:"data"`
 }

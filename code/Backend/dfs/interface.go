@@ -18,8 +18,10 @@ var (
 //	Open		=	dfsOpen
 //	Close		=	dfsClose
 //	Create		=	dfsCreate
+//	Mkdir		=	dfsMkdir
 //	Delete		=	dfsDelete
 //	Read		=	dfsRead
+//	ReadAll		=	dfsReadAll
 //	Write		=	dfsWrite
 //	Append		=	dfsAppend
 //	Scan		=	dfsScan

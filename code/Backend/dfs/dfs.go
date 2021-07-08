@@ -22,7 +22,7 @@ var (
 
 
 // interfaces
-func dfsOpen(path string) (fd int, err error) {
+func dfsOpen(path string, _ bool) (fd int, err error) {
 	absPath := checkPath(path)
 	if absPath == "" {
 		return 0, withStackedMessagef(InvalidPathErr, "[%s] dfsOpen", path)
@@ -68,36 +68,10 @@ func dfsCreate(path string) (fd int, err error) {
 	}
 
 	// create all parents (NameX)
-	levels := strings.Split(path[1:], "/")
-	curPath := ""
-	for _, l := range levels[:len(levels)-1] {
-		curPath += "/" + l
-		statReqBody := GetFileInfoArg{
-			Path: transPath(curPath),
-		}
-		statRespBody := GetFileInfoRet{}
 
-		err = post("fileInfo", statReqBody, &statRespBody)
-		if err != nil {
-			return 0, withStackedMessagef(err, "[%s] dfsCreate cannot stat parents \"%s\"", path, curPath)
-		}
-
-		if statRespBody.Exist {
-			if !statRespBody.IsDir {
-				return 0, withStackedMessagef(err, "[%s] dfsCreate parent \"%s\" is file", path, curPath)
-			} else {
-				continue
-			}
-		} else {
-			mkdirReqBody := MkdirArg{
-				Path: transPath(curPath),
-			}
-
-			err = post("mkdir", mkdirReqBody, nil)
-			if err != nil {
-				return 0, withStackedMessagef(err, "[%s] dfsCreate cannot create parents", path)
-			}
-		}
+	err = dfsNameX(path[:strings.LastIndex(path, "/")])
+	if err != nil {
+		return 0, errors.WithMessagef(err, "[%s] dfsCreate")
 	}
 
 	// create file
@@ -110,12 +84,21 @@ func dfsCreate(path string) (fd int, err error) {
 		return 0, withStackedMessagef(err, "[%s] dfsCreate cannot create leaf file", path)
 	}
 
-	fd, err = dfsOpen(path)
+	fd, err = dfsOpen(path, false)
 	if err != nil {
 		return 0, withStackedMessagef(err, "[%s] dfsCreate cannot open leaf file", path)
 	}
 
 	return fd, nil
+}
+
+func dfsMkdir(path string) (err error) {
+	err = dfsNameX(path)
+	if err != nil {
+		return errors.WithMessagef(err, "[%s] dfsMkdir")
+	}
+
+	return nil
 }
 
 // dfsDelete recursively delete all children if isDir
@@ -195,8 +178,42 @@ func dfsRead(fd int, off int64, len int64) (content string, err error) {
 		return "", withStackedMessagef(err, "[%d] dfsRead", fd)
 	}
 
-	content = string(respBody.Data)
+	content = filterAllPadding(respBody.Data)
 	return content, nil
+}
+
+func dfsReadAll(path string) (content string, err error) {
+	absPath := checkPath(path)
+	if absPath == "" {
+		return "", withStackedMessagef(InvalidPathErr, "[%s] dfsReadAll", path)
+	}
+
+	reqBody := GetFileInfoArg{
+		Path: absPath,
+	}
+	respBody := GetFileInfoRet{}
+
+	err = post("fileInfo", reqBody, &respBody)
+	if err != nil {
+		return "", withStackedMessagef(err, "[%s] dfsReadAll", path)
+	}
+
+	if !respBody.Exist {
+		return "", withStackedMessagef(StatNonExistentErr, "[%s] dfsReadAll", path)
+	} else {
+		sup := int64(respBody.UpperFileSize)
+		fd, err := dfsOpen(path, false)
+		if err != nil {
+			return "", withStackedMessagef(err, "[%s] dfsReadAll fail to open", path)
+		}
+
+		content, err := dfsRead(fd, 0, sup)
+		if err != nil {
+			return "", withStackedMessagef(err, "[%s] dfsReadAll fail to read", path)
+		}
+
+		return content, nil
+	}
 }
 
 func dfsWrite(fd int, off int64, content string) (bytesWritten int64, err error) {
@@ -204,10 +221,12 @@ func dfsWrite(fd int, off int64, content string) (bytesWritten int64, err error)
 		return 0, withStackedMessagef(InvalidFdErr, "[%d] dfsWrite", strconv.Itoa(fd))
 	}
 
+	logger.Info("write", content)
+
 	reqBody := WriteArg{
 		Fd: fd,
 		Offset: int(off),
-		Data: []byte(content),
+		Data: content,
 	}
 	respBody := WriteRet{}
 
@@ -227,7 +246,7 @@ func dfsAppend(fd int, content string) (bytesWritten int64, err error) {
 
 	reqBody := AppendArg{
 		Fd: fd,
-		Data: []byte(content),
+		Data: content,
 	}
 	respBody := AppendRet{}
 
@@ -236,7 +255,7 @@ func dfsAppend(fd int, content string) (bytesWritten int64, err error) {
 		return 0, withStackedMessagef(err, "[%d] dfsAppend", fd)
 	}
 
-	bytesWritten = int64(respBody.BytesWritten)
+	bytesWritten = int64(len(content))
 	return bytesWritten, nil
 }
 
@@ -349,10 +368,59 @@ func withStackedMessagef(before error, format string, args ...interface{}) (afte
 func respFileInfos2FileInfos(name string, before []GetFileInfoRet) (after []FileInfo) {
 	for i := 0; i < len(before); i += 1 {
 		after = append(after, FileInfo{
-			Name: name,
+			Name: before[i].FileName,
 			IsDir: before[i].IsDir,
 		})
 	}
 
 	return after
+}
+
+func filterAllPadding(before string) (after string) {
+	raw := []byte(before)
+	i := 0
+	for _, val := range raw {
+		if val != 0 {
+			raw[i] = val
+			i += 1
+		}
+	}
+
+	return string(raw[:i])
+}
+
+func dfsNameX(path string) (err error) {
+	levels := strings.Split(path[1:], "/")
+	curPath := ""
+	for _, l := range levels {
+		curPath += "/" + l
+		statReqBody := GetFileInfoArg{
+			Path: transPath(curPath),
+		}
+		statRespBody := GetFileInfoRet{}
+
+		err = post("fileInfo", statReqBody, &statRespBody)
+		if err != nil {
+			return withStackedMessagef(err, "[%s] dfsNameX cannot stat parents \"%s\"", path, curPath)
+		}
+
+		if statRespBody.Exist {
+			if !statRespBody.IsDir {
+				return withStackedMessagef(err, "[%s] dfsNameX parent \"%s\" is file", path, curPath)
+			} else {
+				continue
+			}
+		} else {
+			mkdirReqBody := MkdirArg{
+				Path: transPath(curPath),
+			}
+
+			err = post("mkdir", mkdirReqBody, nil)
+			if err != nil {
+				return withStackedMessagef(err, "[%s] dfsNameX cannot create parents", path)
+			}
+		}
+	}
+
+	return nil
 }

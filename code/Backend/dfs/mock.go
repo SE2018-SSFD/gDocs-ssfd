@@ -96,13 +96,12 @@ func mockRead(fd int, off int64, len int64) (string, error) {
 	return string(raw[0:n]), nil
 }
 
-func mockReadAll(fd int) (content string, err error) {
-	f, ok := fdMap.Load(fd)
-	if !ok {
-		return "", NoFdErr
+func mockReadAll(path string) (content string, err error) {
+	file, err := os.OpenFile(root+path, os.O_RDWR, os.ModePerm)
+	if err != nil {
+		return "", withStackedMessagef(err, "mockOpen fails")
 	}
 
-	file := f.(*os.File)
 	fileInfo, err := file.Stat()
 	if err != nil {
 		return "", withStackedMessagef(err, "mockReadAll fails when doing Stat")
