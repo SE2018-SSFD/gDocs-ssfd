@@ -132,6 +132,14 @@ func commitOneSheetWithCache(fid uint, memSheet *cache.MemSheet) (cid uint) {
 	// update model Sheet
 	curCid := uint(sheetGetCheckPointNum(fid))
 
+	// empty log
+	lid := curCid + 1
+	if logs, err := sheetGetPickledLogFromDfs(fid, lid); err != nil {
+		if len(logs) == 0 {
+			return curCid
+		}
+	}
+
 	// write checkpoint to curCid+1
 	cid = curCid + 1
 	rows, cols := memSheet.Shape()
@@ -146,7 +154,6 @@ func commitOneSheetWithCache(fid uint, memSheet *cache.MemSheet) (cid uint) {
 	}
 
 	// write commit entry to log with lid=curCid+1
-	lid := curCid + 1
 	appendOneSheetLog(fid, lid, &logCommitEntry)
 
 	// create log with lid=curCid+2

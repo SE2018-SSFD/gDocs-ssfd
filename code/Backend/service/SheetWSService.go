@@ -448,30 +448,36 @@ func doSheetModify(meta *sheetWSMetaEntry, cellMeta *sheetWSCellMetaEntry, cellM
 			}
 		}
 
-		// log
-		lid := curCid + 1
 		row, col := cellMeta.cellKey.Row, cellMeta.cellKey.Col
-		appendOneSheetLog(fid, lid, &gdocFS.SheetLogPickle{
-			Lid: lid,
-			Timestamp: time.Now(),
-			Row: row,
-			Col: col,
-			Old: memSheet.Get(row, col),
-			New: cellMsg.Content,
-			Uid: cellMsg.Uid,
-			Username: cellMsg.Username,
-		})
+		if memSheet.Get(row, col) != cellMsg.Content {
+			// log
+			lid := curCid + 1
+			appendOneSheetLog(fid, lid, &gdocFS.SheetLogPickle{
+				Lid: lid,
+				Timestamp: time.Now(),
+				Row: row,
+				Col: col,
+				Old: memSheet.Get(row, col),
+				New: cellMsg.Content,
+				Uid: cellMsg.Uid,
+				Username: cellMsg.Username,
+			})
 
-		// cache
-		memSheet.Set(row, col, cellMsg.Content)
-		if !inCache {
-			commitOneSheetWithCache(fid, memSheet)
-		} else {
+			// cache
+			memSheet.Set(row, col, cellMsg.Content)
+			if !inCache {
+				commitOneSheetWithCache(fid, memSheet)
+			}
+
+			sheetModifyBroadcast(meta, cellMeta, cellMsg)
+		}
+
+		if inCache {
 			keys, evicted := getSheetCache().Put(fid)
 			commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
 		}
 
-		sheetModifyBroadcast(meta, cellMeta, cellMsg)
+
 	} else {
 		logger.Warnf("[fid(%d)\trow(%d)\tcol(%d)\tuid(%d)\tusername(%s)] " +
 			"handleCell: modifying a cell locked by others",

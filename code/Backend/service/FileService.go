@@ -236,7 +236,11 @@ func CommitSheet(params utils.CommitSheetParams) (success bool, msg int, data ui
 					cid := commitOneSheetWithCache(sheet.Fid, memSheet)
 					keys, evicted := getSheetCache().Put(sheet.Fid)
 					commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
-					return true, utils.SheetCommitSuccess, cid, ""
+					if cid == 0 {
+						return false, utils.SheetNothingToCommit, 0, ""
+					} else {
+						return true, utils.SheetCommitSuccess, cid, ""
+					}
 				}
 			}
 		}
