@@ -3,9 +3,12 @@ package dao
 import (
 	"backend/dfs"
 	"backend/utils"
+	"backend/utils/logger"
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 
@@ -153,15 +156,24 @@ func DirFileNamesAll(path string) (filenames []string, err error) {
 	return filenames, err
 }
 
-// DirFilenamesAllSorted returns names of all files in the directory in increasing order
-func DirFilenamesAllSorted(path string) (filenames []string, err error) {
-	filenames, err = DirFileNamesAll(path)
+// DirFilenameIndexesAllSorted returns indexes names of all files in the directory in increasing order
+func DirFilenameIndexesAllSorted(path string) (indexes []int, err error) {
+	filenames, err := DirFileNamesAll(path)
 	if err != nil {
 		return nil, err
 	}
 
-	sort.Strings(filenames)
-	return filenames, nil
+
+	for _, filename := range filenames {
+		if index, err := strconv.Atoi(strings.Split(filename, ".")[0]); err == nil {
+			indexes = append(indexes, index)
+		} else {
+			logger.Errorf("[filename(%s)] Filename is not int!", filename)
+		}
+	}
+
+	sort.Ints(indexes)
+	return indexes, nil
 }
 
 func RemoveAll(path string) (err error) {
