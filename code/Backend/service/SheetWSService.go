@@ -5,12 +5,14 @@ import (
 	"backend/lib/cluster"
 	"backend/lib/gdocFS"
 	"backend/lib/wsWrap"
+	"backend/lib/zkWrap"
 	"backend/model"
 	"backend/utils"
 	"backend/utils/logger"
 	"encoding/json"
 	"github.com/panjf2000/ants/v2"
 	"github.com/pkg/errors"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -43,6 +45,8 @@ type sheetWSMetaEntry struct {
 
 	gLock				sync.RWMutex			// to lock events of specific fid
 	cellWg				sync.WaitGroup			// waiting for handleCell to get all in-hand tasks done
+
+	zkMutex				*zkWrap.Mutex			// distributed mutex to prevent service partition when adding new nodes
 }
 
 // wait - blocking until the state of specific fid becomes stable, all handleCell workers are blocking
@@ -152,13 +156,26 @@ func SheetOnConnEstablished(token string, fid uint) (bool, int, *model.User, str
 
 			user := dao.GetUserByUid(uid)
 
+			zkMutex, err := zkWrap.NewMutex("sheet" + strconv.Itoa(int(fid)))
+			if err != nil {
+				panic(err)
+			}
+
 			if actual, loaded := sheetWSMeta.LoadOrStore(fid, &sheetWSMetaEntry{
 				fid: fid,
+				zkMutex: zkMutex,
 			}); loaded {
 				meta := actual.(*sheetWSMetaEntry)
 				if _, ok := meta.userMap.Load(uid); ok {
 					return false, utils.SheetDupConnection, nil, ""
 				}
+			} else {	// get zkMutex for once
+				logger.Infof("[fid(%d)\tuid(%d)] Trying to get ZK mutex!", fid, uid)
+				// locking this file by fid for exclusive websocket service
+				if err := zkMutex.Lock(); err != nil {
+					panic(err)
+				}
+				logger.Infof("[fid(%d)\tuid(%d)] Get ZK mutex!", fid, uid)
 			}
 
 			return true, 0, &user, ""
@@ -272,6 +289,12 @@ func SheetOnDisConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
 
 			// delete group entry
 			sheetWSMeta.Delete(fid)
+
+			// unlock zkMutex
+			if err := meta.zkMutex.Unlock(); err != nil {
+				logger.Errorf("[uid(%d)\tusername(%s)\tfid(%d)] Fail to unlock zkMutex!",uid, username, fid)
+			}
+			logger.Infof("[uid(%d)\tusername(%s)\tfid(%d)] Unlock zkMutex!", uid, username, fid)
 
 			//// persist in dfs
 			//if memSheet := getSheetCache().Get(fid); memSheet != nil {

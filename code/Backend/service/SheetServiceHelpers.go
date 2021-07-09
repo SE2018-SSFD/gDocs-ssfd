@@ -4,12 +4,14 @@ import (
 	"backend/dao"
 	"backend/lib/cache"
 	"backend/lib/gdocFS"
+	"backend/lib/reentrantMutex"
 	"backend/utils"
 	"backend/utils/logger"
 	"encoding/json"
 	"github.com/pkg/errors"
-	"strconv"
-	"strings"
+	"runtime/debug"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -40,7 +42,7 @@ func SheetFSCheck(fid uint, fullChk bool) (cid uint, lid uint, err error) {
 	chkpRoot := gdocFS.GetCheckPointRootPath("sheet", fid)
 
 	// check log-only consistency
-	logFileNames, err := dao.DirFilenamesAllSorted(logRoot)
+	logFileNames, err := dao.DirFilenameIndexesAllSorted(logRoot)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -49,7 +51,7 @@ func SheetFSCheck(fid uint, fullChk bool) (cid uint, lid uint, err error) {
 	for expect, actual := range logFileNames {
 		curLid := uint(expect + 1)
 		// check name == curLid without holes
-		if strconv.Itoa(int(curLid)) != actual {
+		if int(curLid) != actual {
 			// TODO: recover - hole in log files
 			return 0, 0, SheetFSUnrecoverableErr
 		}
@@ -85,7 +87,7 @@ func SheetFSCheck(fid uint, fullChk bool) (cid uint, lid uint, err error) {
 	}
 
 	// check checkpoint-only consistency
-	chkpFileNames, err := dao.DirFilenamesAllSorted(chkpRoot)
+	chkpFileNames, err := dao.DirFilenameIndexesAllSorted(chkpRoot)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -94,7 +96,7 @@ func SheetFSCheck(fid uint, fullChk bool) (cid uint, lid uint, err error) {
 	for expect, actual := range chkpFileNames {
 		curCid := uint(expect) + 1
 		// check name == curCid without holes
-		if strconv.Itoa(int(curCid)) != actual {
+		if int(curCid) != actual {
 			// TODO: recover - hole in checkpoint files
 			return 0, 0, SheetFSUnrecoverableErr
 		}
@@ -128,7 +130,8 @@ func appendOneSheetLog(fid uint, lid uint, log *gdocFS.SheetLogPickle) {
 }
 
 func commitOneSheetWithCache(fid uint, memSheet *cache.MemSheet) (cid uint) {
-	memSheet.Lock()
+	lockOnFid(fid); defer unlockOnFid(fid)
+	memSheet.Lock(); defer memSheet.Unlock()
 
 	// update model Sheet
 	curCid := uint(sheetGetCheckPointNum(fid))
@@ -161,8 +164,6 @@ func commitOneSheetWithCache(fid uint, memSheet *cache.MemSheet) (cid uint) {
 	if err := sheetCreateLogFile(fid, lid + 1); err != nil {
 		logger.Errorf("%+v", err)
 	}
-
-	memSheet.Unlock()
 
 	return cid
 }
@@ -218,6 +219,7 @@ func recoverSheetFromLog(fid uint) (memSheet *cache.MemSheet, inCache bool) {
 
 // sheetGetPickledCheckPointFromDfs pickles a CheckPoint from dfs with fid and cid
 func sheetGetPickledCheckPointFromDfs(fid uint, cid uint) (chkp *gdocFS.SheetCheckPointPickle, err error) {
+	lockOnFid(fid); defer unlockOnFid(fid)
 	path := gdocFS.GetCheckPointPath("sheet", fid, cid)
 	if fileRaw, err := dao.FileGetAll(path); err != nil {
 		return nil, errors.WithStack(err)
@@ -229,6 +231,7 @@ func sheetGetPickledCheckPointFromDfs(fid uint, cid uint) (chkp *gdocFS.SheetChe
 
 // sheetWritePickledCheckPointToDfs writes a CheckPoint to a EXISTENT file in dfs with fid and cid
 func sheetWritePickledCheckPointToDfs(fid uint, cid uint, chkp *gdocFS.SheetCheckPointPickle) (err error) {
+	lockOnFid(fid); defer unlockOnFid(fid)
 	path := gdocFS.GetCheckPointPath("sheet", fid, cid)
 	fileRaw, _ := json.Marshal(*chkp)
 	if err = dao.FileOverwriteAll(path, string(fileRaw)); err != nil {
@@ -240,6 +243,7 @@ func sheetWritePickledCheckPointToDfs(fid uint, cid uint, chkp *gdocFS.SheetChec
 
 // sheetCreatePickledCheckPointInDfs create a CheckPoint in a NONEXISTENT file in dfs with fid and cid
 func sheetCreatePickledCheckPointInDfs(fid uint, cid uint, chkp *gdocFS.SheetCheckPointPickle) (err error) {
+	lockOnFid(fid); defer unlockOnFid(fid)
 	path := gdocFS.GetCheckPointPath("sheet", fid, cid)
 	if err := dao.FileCreate(path, 0); err != nil {
 		return errors.WithStack(err)
@@ -260,6 +264,7 @@ func sheetCreateCheckPointDir(fid uint) (err error) {
 
 // sheetDeleteCheckPointFile delete a checkpoint file in dfs with fid and cid
 func sheetDeleteCheckPointFile(fid uint, cid uint) (err error)  {
+	lockOnFid(fid); defer unlockOnFid(fid)
 	chkpPath := gdocFS.GetCheckPointPath("sheet", fid, cid)
 	if err := dao.Remove(chkpPath); err != nil {
 		return err
@@ -269,24 +274,20 @@ func sheetDeleteCheckPointFile(fid uint, cid uint) (err error)  {
 }
 
 func sheetGetCheckPointNum(fid uint) (chkpNum int) {
+	//lockOnFid(fid); defer unlockOnFid(fid)	// for accuracy, but would dramatically slow down in-cache performance
 	path := gdocFS.GetCheckPointRootPath("sheet", fid)
-	fileNames, err := dao.DirFilenamesAllSorted(path)
+	fileNames, err := dao.DirFilenameIndexesAllSorted(path)
 	if err != nil {
 		panic(err)
 	}
 
 	if len(fileNames) != 0 {
-		latestChkpName := fileNames[len(fileNames)-1]
-		chkpNum, err = strconv.Atoi(strings.Split(latestChkpName, ".")[0])
-		if err != nil {
-			logger.Errorf("[%s] bad checkpoint name, use length of children instead", latestChkpName)
-			return len(fileNames)
-		}
+		chkpNum := fileNames[len(fileNames)-1]
 
 		if len(fileNames) != chkpNum {
-			logger.Errorf("[name(%s)\tchkpNum(%d)] len(children) != latest checkpoint's name, use the latter",
-				latestChkpName, chkpNum)
+			logger.Errorf("[chkpNum(%d)] len(children) != latest checkpoint's name, use the latter", chkpNum)
 		}
+
 		return chkpNum
 	} else {
 		return 0
@@ -295,6 +296,7 @@ func sheetGetCheckPointNum(fid uint) (chkpNum int) {
 
 // sheetGetPickledLogFromDfs pickles a Log from dfs with fid and lid
 func sheetGetPickledLogFromDfs(fid uint, lid uint) (logs []gdocFS.SheetLogPickle, err error) {
+	lockOnFid(fid); defer unlockOnFid(fid)
 	path := gdocFS.GetLogPath("sheet", fid, lid)
 	if fileRaw, err := dao.FileGetAll(path); err != nil {
 		return nil, errors.WithStack(err)
@@ -306,6 +308,7 @@ func sheetGetPickledLogFromDfs(fid uint, lid uint) (logs []gdocFS.SheetLogPickle
 
 // sheetCreateLogFile create a empty Log in dfs with fid and lid
 func sheetCreateLogFile(fid uint, lid uint) (err error) {
+	lockOnFid(fid); defer unlockOnFid(fid)
 	logPath := gdocFS.GetLogPath("sheet", fid, lid)
 	if err := dao.FileCreate(logPath, 0); err != nil {
 		return err
@@ -316,10 +319,35 @@ func sheetCreateLogFile(fid uint, lid uint) (err error) {
 
 // sheetDeleteLogFile delete a log file in dfs with fid and lid
 func sheetDeleteLogFile(fid uint, lid uint) (err error) {
+	lockOnFid(fid); defer unlockOnFid(fid)
 	logPath := gdocFS.GetLogPath("sheet", fid, lid)
 	if err := dao.Remove(logPath); err != nil {
 		return err
 	} else {
 		return nil
+	}
+}
+
+// reentrant lock on fid
+var fidLockMap sync.Map
+func lockOnFid(fid uint) {
+	logger.Debugf("[fid(%d)\tgoId(%d)] Trying to Lock on fid!",
+		fid, reentrantMutex.GetGoroutineId())
+	actual, _ := fidLockMap.LoadOrStore(fid, reentrantMutex.NewReentrantMutex())
+	mutex := actual.(*reentrantMutex.ReentrantMutex)
+	mutex.Lock()
+	logger.Debugf("[fid(%d)\tgoId(%d)\tcnt(%d)] Successfully Lock on fid!\n%s",
+		fid, reentrantMutex.GetGoroutineId(), atomic.LoadInt32(&mutex.HoldCount), debug.Stack())
+}
+
+func unlockOnFid(fid uint) {
+	logger.Debugf("[fid(%d)\tgoId(%d)] Trying to Unlock on fid!", fid, reentrantMutex.GetGoroutineId())
+	if v, ok := fidLockMap.Load(fid); ok {
+		mutex := v.(*reentrantMutex.ReentrantMutex)
+		mutex.Unlock()
+		logger.Debugf("[fid(%d)\tgoId(%d)\tcnt(%d)] Successfully Unlock on fid!\n%s",
+			fid, reentrantMutex.GetGoroutineId(), atomic.LoadInt32(&mutex.HoldCount), debug.Stack())
+	} else {
+		logger.Errorf("[fid(%d)] Trying to unlock a fid without lock")
 	}
 }

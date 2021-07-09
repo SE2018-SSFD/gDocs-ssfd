@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"backend/lib/zkWrap"
+	"backend/utils/logger"
 	"stathat.com/c/consistent"
 	"strconv"
 	"strings"
@@ -36,6 +37,9 @@ func onHeartbeatConn(_ string, who string) {
 	for i := 0; i < num; i += 1 {
 		consistentHash.Add(marshalHashName(addr, i))
 	}
+
+	logger.Infof("[addr(%s)\tnum(%d)] Backend enter!", addr, num)
+	logger.Infof("Current members: %+v", consistentHash.Members())
 }
 
 func onHeartbeatDisConn(_ string, who string) {
@@ -44,6 +48,9 @@ func onHeartbeatDisConn(_ string, who string) {
 	for i := 0; i < num; i += 1 {
 		consistentHash.Remove(marshalHashName(addr, i))
 	}
+
+	logger.Infof("[addr(%s)\tnum(%d)] Backend leave!", addr, num)
+	logger.Infof("Current members: %+v", consistentHash.Members())
 }
 
 func RegisterNodes(addr string, num int) {
