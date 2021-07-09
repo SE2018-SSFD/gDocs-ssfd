@@ -1,7 +1,7 @@
 import React from 'react';
 import {Link, withRouter} from "react-router-dom";
 import {commitSheet, getSheet, getSheetCkpt, getSheetLog, rollbackSheet, testWS} from "../api/sheetService";
-import {MSG_WORDS, WS_URL} from "../api/common";
+import {MSG_WORDS, GET_WS_URL} from "../api/common";
 import {Button, Card, Col, Divider, Drawer, Layout, message, Row, Tooltip} from "antd";
 import {
     CheckCircleOutlined,
@@ -44,12 +44,12 @@ class SheetView extends React.Component {
         this.fid = fid;
 
         const callback = (data) => {
-            console.log(data)
             if (data.success === true) {
                 this.checkpoint_now = data.data.checkpoint_num;
+                const checkPointBrief = data.data.checkPointBrief === null? []:data.data.checkPointBrief.reverse()
                 this.setState({
                     checkpoint_num: data.data.checkpoint_num,
-                    checkpoint: data.data.checkPointBrief.reverse()
+                    checkpoint: checkPointBrief
                 })
             } else {
                 console.log(MSG_WORDS[data.msg]);
@@ -62,9 +62,10 @@ class SheetView extends React.Component {
 
     getSheetCallback = (data) => {
         if (data.success === true) {
+            const checkPointBrief = data.data.checkPointBrief === null? []:data.data.checkPointBrief.reverse()
             this.setState({
                 checkpoint_num: data.data.checkpoint_num,
-                checkpoint: data.data.checkPointBrief.reverse()
+                checkpoint: checkPointBrief
             })
         } else {
             console.log(MSG_WORDS[data.msg]);
@@ -290,7 +291,7 @@ class SheetView extends React.Component {
                 message.error(MSG_WORDS[data.msg])
             }
         } else {
-            this.url = WS_URL + 'sheetws?token=' + token + "&fid=" + this.fid;
+            this.url = GET_WS_URL() + 'sheetws?token=' + token + "&fid=" + this.fid;
         }
 
         socket = new WebSocket(this.url);

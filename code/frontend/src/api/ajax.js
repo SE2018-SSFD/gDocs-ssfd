@@ -1,4 +1,5 @@
 import {message} from "antd";
+import {CHANGE_PORT} from "./common";
 
 let getRequest = (url, callback) => {
     let opts = {
@@ -15,13 +16,13 @@ let getRequest = (url, callback) => {
             return response.json()
         })
         .then((data) => {
-            // return data;
             callback(data);
         })
         .catch((error) => {
-            message.error("请求错误").then(() => {
+            message.error("请求错误,已更换地址，请重试").then(() => {
             })
             console.log(error);
+            CHANGE_PORT();
         });
 };
 
@@ -44,9 +45,10 @@ let postRequest = (url, json, callback) => {
             callback(data);
         })
         .catch((error) => {
-            message.error("请求错误").then(() => {
+            message.error("请求错误,已更换地址，请重试").then(() => {
             })
             console.log(error);
+            CHANGE_PORT();
         });
 };
 
