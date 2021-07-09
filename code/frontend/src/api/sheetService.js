@@ -15,7 +15,13 @@ export const newSheet = (callback) => {
     postRequest(url, data, callback);
 }
 
-export const getSheet = (url, data, callback) => {
+export const getSheet = (fid, callback) => {
+    const url = HTTP_URL + 'getsheet';
+    const token = JSON.parse(localStorage.getItem("token"));
+    let data = {
+        fid: fid,
+        token: token
+    }
     postRequest(url, data, callback);
 }
 
@@ -49,7 +55,6 @@ export const commitSheet = (fid, callback) => {
     postRequest(url, data, callback);
 }
 
-
 // need token fid chuck
 export const getChuck = (data, callback) => {
     const url = HTTP_URL + 'getchunk';
@@ -61,7 +66,13 @@ export const getSheetCkpt = (data,callback) =>{
     postRequest(url, data, callback);
 }
 
-export const getSheetLog = (data,callback) =>{
+export const getSheetLog = (fid,lid,callback) =>{
+    const token = JSON.parse(localStorage.getItem("token"));
+    const data = {
+        token: token,
+        fid: fid,
+        lid: lid
+    }
     const url = HTTP_URL + 'getsheetlog';
     postRequest(url, data, callback);
 }
@@ -70,4 +81,15 @@ export const testWS = (fid, callback) => {
     const token = JSON.parse(localStorage.getItem("token"));
     const url = HTTP_URL + 'sheetws?token=' + token + "&fid=" + fid + "&query=1";
     getRequest(url, callback)
+}
+
+export const rollbackSheet = (fid, cid, callback) => {
+    const url = HTTP_URL + 'rollbacksheet';
+    const token = JSON.parse(localStorage.getItem("token"));
+    let data = {
+        fid: fid,
+        token: token,
+        cid:cid,
+    }
+    postRequest(url, data, callback);
 }

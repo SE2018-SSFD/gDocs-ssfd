@@ -1,7 +1,7 @@
 import React from 'react';
 import {Link, withRouter} from "react-router-dom";
-import {commitSheet, getSheet, getSheetCkpt, getSheetLog, testWS} from "../api/sheetService";
-import {HTTP_URL, MSG_WORDS, WS_URL} from "../api/common";
+import {commitSheet, getSheet, getSheetCkpt, getSheetLog, rollbackSheet, testWS} from "../api/sheetService";
+import {MSG_WORDS, WS_URL} from "../api/common";
 import {Button, Card, Col, Divider, Drawer, Layout, message, Row, Tooltip} from "antd";
 import {
     CheckCircleOutlined,
@@ -21,95 +21,82 @@ let locking_row = -1, locking_col = -1, locked_row = -1, locked_col = -1;
 
 class SheetView extends React.Component {
 
-
     constructor(props) {
         super(props);
         this.fid = 0;
-        this.columns = 0;
-        this.content = [];
-        this.checkpoint_num = 0;
-        this.checkpoint = [];
         this.url = "";
         this.checkpoint_now = 0;
         this.state = {
-            log:[],
+            checkpoint_num: 0,
+            checkpoint: [],
+            log: [],
             name: "",
             logVisible: false,
             ckptVisible: false,
         }
     }
 
-    componentWillUnmount() {
-        socket.close();
-    }
-
-
     componentDidMount() {
         const query = this.props.location.search;
         const arr = query.split('&');
-        this.fid = parseInt(arr[0].substr(4));
+        const fid = parseInt(arr[0].substr(4));
 
-        const token = JSON.parse(localStorage.getItem("token"));
+        this.fid = fid;
 
-        const get_data = {
-            token: token,
-            fid: this.fid,
-        }
         const callback = (data) => {
+            console.log(data)
             if (data.success === true) {
-                this.checkpoint_num = data.data.checkpoint_num;
-                this.checkpoint_now = this.checkpoint_num;
-                let checkpoint = [];
-                for (let i = this.checkpoint_num; i >= 1; i--) {
-                    checkpoint.push(i);
-                }
-                this.checkpoint = checkpoint;
+                this.checkpoint_now = data.data.checkpoint_num;
+                this.setState({
+                    checkpoint_num: data.data.checkpoint_num,
+                    checkpoint: data.data.checkPointBrief.reverse()
+                })
             } else {
                 console.log(MSG_WORDS[data.msg]);
             }
         }
+        getSheet(fid, callback)
 
-        getSheet(HTTP_URL + 'getsheet', get_data, callback)
+        testWS(fid, this.connectWS);
+    }
 
-        testWS(this.fid, this.connectWS);
+    getSheetCallback = (data) => {
+        if (data.success === true) {
+            this.setState({
+                checkpoint_num: data.data.checkpoint_num,
+                checkpoint: data.data.checkPointBrief.reverse()
+            })
+        } else {
+            console.log(MSG_WORDS[data.msg]);
+        }
+    }
+
+
+    componentWillUnmount() {
+        socket.close();
     }
 
     openLogDrawer = () => {
-        const token = JSON.parse(localStorage.getItem("token"));
-        const data = {
-            token:token,
-            fid:this.fid,
-            lid:this.checkpoint_now
-        }
-        console.log(data);
-        const callback = (data) =>{
-            console.log(data);
+        const callback = (data) => {
             const msg_word = MSG_WORDS[data.msg];
             if (data.success === true) {
-                message.success(msg_word);
-                let log = data.data;
-                // log.sort(function (a,b){
-                //     let date1 = new Date(a.timestamp),date2 =new Date(b.timestamp);
-                //     return date2-date1;
-                // })
+                const log = data.data;
                 let log_new = [];
-                for(let i = log.length-1;i >= 0 ; i--)
-                {
-                    if(log[i].new!==log[i].old&&log[i].lid!==0)
-                    {
+                for (let i = log.length - 1; i >= 0; i--) {
+                    if (log[i].new !== log[i].old && log[i].lid !== 0) {
                         log_new.push(log[i]);
                     }
                 }
                 this.setState({
                     logVisible: true,
-                    log:log_new
+                    log: log_new
                 })
+                message.success(msg_word);
             } else {
-                console.log(MSG_WORDS[data.msg]);
                 message.error(msg_word);
             }
         }
-        getSheetLog(data,callback)
+        getSheetLog(this.fid, this.checkpoint_now, callback)
     }
 
     closeLogDrawer = () => {
@@ -119,6 +106,7 @@ class SheetView extends React.Component {
     }
 
     openCkptDrawer = () => {
+        getSheet(this.fid, this.getSheetCallback)
         this.setState({
             ckptVisible: true,
         })
@@ -136,16 +124,9 @@ class SheetView extends React.Component {
 
     handleSave = () => {
         const callback = (data) => {
-            console.log(data)
             let msg_word = MSG_WORDS[data.msg];
             if (data.success === true) {
-                if(this.checkpoint_now===this.checkpoint_num) {
-                    this.checkpoint_now++;
-                }
-                this.checkpoint_num++;
-
-                this.checkpoint.unshift(this.checkpoint_num);
-
+                getSheet(this.fid, this.getSheetCallback);
                 message.success(msg_word).then(() => {
                 });
             } else {
@@ -157,31 +138,61 @@ class SheetView extends React.Component {
         commitSheet(this.fid, callback)
     }
 
+    handleRollback = () => {
+        const callback = (data) => {
+            console.log(data);
+            let msg_word = MSG_WORDS[data.msg];
+            if (data.success === true) {
+
+                let checkpoint = this.state.checkpoint;
+                let new_checkpoint = [];
+
+                for (let i = 0; i < checkpoint.length; i++) {
+                    if (checkpoint[i].cid <= this.checkpoint_now) {
+                        new_checkpoint.push(checkpoint[i]);
+                    }
+                }
+                this.setState({
+                    checkpoint_num: this.checkpoint_now,
+                    checkpoint: new_checkpoint,
+                })
+
+                message.success(msg_word).then(() => {
+                });
+            } else {
+                message.error(msg_word).then(() => {
+                });
+            }
+        }
+
+        rollbackSheet(this.fid, this.checkpoint_now, callback)
+    }
+
     handleRecoverCkpt = (cid) => {
-        console.log(cid);
         const callback = (data) => {
             let msg_word = MSG_WORDS[data.msg];
             if (data.success === true) {
                 this.cid = data.data.cid;
                 this.timestamp = data.data.timestamp;
                 this.rows = data.data.rows;
-                this.columns = data.data.columns;
-                this.content = data.data.content;
-                this.checkpoint_now=cid;
+                const columns = data.data.columns;
+                this.checkpoint_now = cid;
+                const content = data.data.content;
+                const username = JSON.parse(localStorage.getItem("username"));
                 this.setState({
                     ckptVisible: false
                 })
-                const username = JSON.parse(localStorage.getItem("username"));
+
                 let j = 0, k = 0;
                 let celldata = [];
-                for (let i = 0; i < this.content.length; i++) {
-                    j = Math.floor(i / this.columns);
-                    k = i % this.columns;
-                    if (this.content[i] !== "") {
+                for (let i = 0; i < content.length; i++) {
+                    j = Math.floor(i / columns);
+                    k = i % columns;
+                    if (content[i] !== "") {
                         celldata.push({
                                 "r": j,
                                 "c": k,
-                                "v": this.content[i],
+                                "v": content[i],
                             }
                         )
                     }
@@ -221,7 +232,6 @@ class SheetView extends React.Component {
                             for (let i = 0; i < cellLocks.length; i++) {
                                 if (row === cellLocks[i].Row && col === cellLocks[i].Col) {
                                     if (username !== cellLocks.Username) {
-                                        console.log("other is writing");
                                         message.error(cellLocks.Username + "正在输入，请稍等再点击")
                                     }
                                 }
@@ -248,56 +258,9 @@ class SheetView extends React.Component {
                                         content: value
                                     }
                                 }
-                                console.log(data)
                                 socket.send(JSON.stringify(data))
                             }
                         },
-
-                        //更新这个单元格后触发
-                        // cellUpdated: (r, c, oldValue, newValue, isRefresh) => {
-                        //     console.info('cellUpdated', r, c, oldValue, newValue, isRefresh);
-                        //     if (r === locked_row && c === locked_col) {
-                        //         const data = {
-                        //             msgType: "release",
-                        //             body: {
-                        //                 row: r,
-                        //                 col: c,
-                        //             }
-                        //         }
-                        //         console.log(data);
-                        //         locked_col = -1;
-                        //         locked_row = -1;
-                        //         socket.send(JSON.stringify(data))
-                        //     }
-                        //     let content;
-                        //     if (newValue.ct.t === "inlineStr") {
-                        //         content = newValue.ct.s[0].v;
-                        //     } else if (newValue.ct.t === "n") {
-                        //         content = newValue.v.toString();
-                        //     } else if (newValue.ct.t === "g") {
-                        //         content = newValue.v;
-                        //     }
-                        //     if (content.indexOf(" 正在输入 ") === -1) {
-                        //         const data1 = {
-                        //             msgType: "modify",
-                        //             body: {
-                        //                 row: r,
-                        //                 col: c,
-                        //                 content: content
-                        //             }
-                        //         }
-                        //         console.log(data1)
-                        //         socket.send(JSON.stringify(data1))
-                        //         const data2 = {
-                        //             msgType: "release",
-                        //             body: {
-                        //                 row: r,
-                        //                 col: c,
-                        //             }
-                        //         }
-                        //         socket.send(JSON.stringify(data2))
-                        //     }
-                        // },
                     }
                 });
                 message.success(msg_word).then(() => {
@@ -318,17 +281,16 @@ class SheetView extends React.Component {
     }
 
     connectWS = (data) => {
-        console.log(data);
         const token = JSON.parse(localStorage.getItem("token"));
         const username = JSON.parse(localStorage.getItem("username"));
 
-        this.url = WS_URL + 'sheetws?token=' + token + "&fid=" + this.fid;
         if (data.success === false) {
             this.url = data.data;
             if (data.msg !== 19) {
                 message.error(MSG_WORDS[data.msg])
             }
         } else {
+            this.url = WS_URL + 'sheetws?token=' + token + "&fid=" + this.fid;
         }
 
         socket = new WebSocket(this.url);
@@ -336,9 +298,8 @@ class SheetView extends React.Component {
             console.log('WebSocket open: ', event);
         });
         socket.addEventListener('message', (event) => {
-            // console.log('WebSocket message: ', event);
+            console.log('WebSocket message: ', event);
             let data = JSON.parse(event.data);
-            console.log(data);
             switch (data.msgType) {
                 case "onConn": {
                     let cellLocks = data.body.cellLocks;
@@ -346,22 +307,22 @@ class SheetView extends React.Component {
                         cellLocks = [];
                     }
                     localStorage.setItem("cellLocks", JSON.stringify(cellLocks));
-                    this.columns = data.body.columns;
-                    this.content = data.body.content;
+                    const columns = data.body.columns;
+                    const content = data.body.content;
                     this.name = data.body.name;
                     this.setState({
                         name: data.body.name,
                     })
                     let j = 0, k = 0;
                     let celldata = [];
-                    for (let i = 0; i < this.content.length; i++) {
-                        j = Math.floor(i / this.columns);
-                        k = i % this.columns;
-                        if (this.content[i] !== "") {
+                    for (let i = 0; i < content.length; i++) {
+                        j = Math.floor(i / columns);
+                        k = i % columns;
+                        if (content[i] !== "") {
                             celldata.push({
                                     "r": j,
                                     "c": k,
-                                    "v": this.content[i],
+                                    "v": content[i],
                                 }
                             )
                         }
@@ -409,7 +370,6 @@ class SheetView extends React.Component {
                                 for (let i = 0; i < cellLocks.length; i++) {
                                     if (row === cellLocks[i].Row && col === cellLocks[i].Col) {
                                         if (username !== cellLocks[i].Username) {
-                                            console.log("other is writing");
                                             message.error(cellLocks[i].Username + "正在输入，请稍等再点击")
                                         }
                                     }
@@ -436,56 +396,10 @@ class SheetView extends React.Component {
                                             content: value
                                         }
                                     }
-                                    console.log(data)
                                     socket.send(JSON.stringify(data))
                                 }
                             },
 
-                            //更新这个单元格后触发
-                            // cellUpdated: (r, c, oldValue, newValue, isRefresh) => {
-                            //     console.info('cellUpdated', r, c, oldValue, newValue, isRefresh);
-                            //     if (r === locked_row && c === locked_col) {
-                            //         const data = {
-                            //             msgType: "release",
-                            //             body: {
-                            //                 row: r,
-                            //                 col: c,
-                            //             }
-                            //         }
-                            //         console.log(data);
-                            //         locked_col = -1;
-                            //         locked_row = -1;
-                            //         socket.send(JSON.stringify(data))
-                            //     }
-                            //     let content;
-                            //     if (newValue.ct.t === "inlineStr") {
-                            //         content = newValue.ct.s[0].v;
-                            //     } else if (newValue.ct.t === "n") {
-                            //         content = newValue.v.toString();
-                            //     } else if (newValue.ct.t === "g") {
-                            //         content = newValue.v;
-                            //     }
-                            //     if (content.indexOf(" 正在输入 ") === -1) {
-                            //         const data1 = {
-                            //             msgType: "modify",
-                            //             body: {
-                            //                 row: r,
-                            //                 col: c,
-                            //                 content: content
-                            //             }
-                            //         }
-                            //         console.log(data1)
-                            //         socket.send(JSON.stringify(data1))
-                            //         const data2 = {
-                            //             msgType: "release",
-                            //             body: {
-                            //                 row: r,
-                            //                 col: c,
-                            //             }
-                            //         }
-                            //         socket.send(JSON.stringify(data2))
-                            //     }
-                            // },
                         }
                     })
                     break;
@@ -502,7 +416,6 @@ class SheetView extends React.Component {
                             locked_row = row;
                             locked_col = col;
                         } else {
-                            console.log("not acquired");
                             message.error(username + " 正在编辑，请稍等再点击");
                             locked_row = -1;
                             locked_col = -1;
@@ -580,27 +493,30 @@ class SheetView extends React.Component {
             top: '60px',
         }
 
-        const {name,log} = this.state;
+        const {name, log, checkpoint} = this.state;
+        console.log(this.state.checkpoint_num,this.checkpoint_now);
 
         let logContent = log.map(
             (item) =>
-                <Card hoverable style={{width: 300}} title={item.username + " - " + new Date(item.timestamp).toLocaleString()}>
+                <Card hoverable style={{width: 300}}
+                      title={item.username + " - " + new Date(item.timestamp).toLocaleString()}>
                     <div>
                         {
-                            item.old===""?
-                                (<p> 设置 {ColMap(item.col) + RowMap(item.row)} 为 {item.new}</p>):
-                                item.new===""?
-                                    (<p> 清空 {ColMap(item.col) + RowMap(item.row)}</p>):
+                            item.old === "" ?
+                                (<p> 设置 {ColMap(item.col) + RowMap(item.row)} 为 {item.new}</p>) :
+                                item.new === "" ?
+                                    (<p> 清空 {ColMap(item.col) + RowMap(item.row)}</p>) :
                                     (<p> 将 {ColMap(item.col) + RowMap(item.row)} 从 {item.old} 修改为 {item.new}</p>)
                         }
                         {/*<Button onClick={() => this.handleRecoverLog(item)}>恢复到此处</Button>*/}
                     </div>
                 </Card>);
-        let ckptContent = this.checkpoint.map(
+
+        let ckptContent = checkpoint.map(
             (item) =>
                 <Card hoverable style={{width: 300}}
-                      title={"恢复点" + item.toString()}>
-                    <Button onClick={() => this.handleRecoverCkpt(item)}>恢复到此处</Button>
+                      title={"存档" + item.cid + " - " + new Date(item.timestamp).toLocaleString()}>
+                    <Button onClick={() => this.handleRecoverCkpt(item.cid)}>查看存档</Button>
                 </Card>
         );
 
@@ -655,13 +571,21 @@ class SheetView extends React.Component {
                             </Tooltip>
                         </Col>
                         <Col span={1}>
-                            <Button type={'primary'} onClick={this.openLogDrawer}>Log</Button>
+                            <Button type={'primary'} onClick={this.openLogDrawer}>历史</Button>
                         </Col>
                         <Col span={1}>
-                            <Button type={'primary'} onClick={this.openCkptDrawer}>Ckpt</Button>
+                            <Button type={'primary'} onClick={this.openCkptDrawer}>存档</Button>
                         </Col>
                         <Col span={1}>
-                            <Button type={'primary'} onClick={this.handleSave}>Save</Button>
+                            {this.state.checkpoint_num === this.checkpoint_now ?
+                                (
+                                    <Button type={'primary'} onClick={this.handleSave}>保存</Button>
+                                ) :
+                                (
+                                    <Button type={'primary'} onClick={this.handleRollback}>恢复</Button>
+                                )
+                            }
+
                         </Col>
                         <Divider type={"vertical"}/>
                         <Col span={1}>
