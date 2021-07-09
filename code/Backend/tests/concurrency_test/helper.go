@@ -1,4 +1,4 @@
-package concurrency_test
+package concurrency
 
 import (
 	"backend/utils"
@@ -11,10 +11,8 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
-	"testing"
 	"time"
 )
 
@@ -31,18 +29,18 @@ var (
 
 	loginParams = []utils.LoginParams{
 		{"test", "test"},
-		{"test1", "test1"},
-		{"test2", "test2"},
 	}
 )
 
-func TestMain(m *testing.M) {
+func init() {
 	rand.Seed(time.Now().UnixNano())
 	logger.SetLogger(golog.New())
 	logger.SetLevel("Info")
 
-	exitCode := m.Run()
-	os.Exit(exitCode)
+	for i := 1; i < 10; i += 1 {
+		user := "test" + strconv.Itoa(i)
+		loginParams = append(loginParams, utils.LoginParams{Username: user, Password: user})
+	}
 }
 
 func randomHost() string {
@@ -180,14 +178,50 @@ func getWSAddr(token string, fid uint) string {
 	}
 }
 
-func login(t *testing.T, params utils.LoginParams) (token string) {
+type TestingT interface {
+	Errorf(format string, args ...interface{})
+	Error(args ...interface{})
+	Log(args ...interface{})
+}
+
+func login(t TestingT, params utils.LoginParams) (token string) {
 	loginRet := LoginRet{}
 	err := getPostRet(randomHostHttp(), "login", params, &loginRet)
 	if assert.NoError(t, err) {
 		return loginRet.Token
 	} else {
-		t.Fatal(err)
 		return ""
+	}
+}
+
+func getSheet(t TestingT, token string, fid uint) (getSheetRet GetSheetRet) {
+	params := utils.GetSheetParams {
+		Token: token,
+		Fid: fid,
+	}
+	err := getPostRet(randomHostHttp(), "getsheet", params, &getSheetRet)
+	if assert.NoError(t, err) {
+		assert.EqualValues(t, fid, getSheetRet.Fid)
+		row, col := len(getSheetRet.Content) / getSheetRet.Columns, getSheetRet.Columns
+		assert.Equal(t, len(getSheetRet.Content), row*col)
+	}
+	return getSheetRet
+}
+
+func newSheet(t TestingT, token string, name string) (fid uint) {
+	newSheetArg := utils.NewSheetParams{
+		Token: token,
+		Name:  name,
+	}
+	raw, err := getPostRaw(randomHostHttp(), "newsheet", newSheetArg)
+	if assert.NoError(t, err) {
+		if fidInt, err := strconv.Atoi(string(raw)); assert.NoError(t, err) {
+			return uint(fidInt)
+		} else {
+			return 0
+		}
+	} else {
+		return 0
 	}
 }
 
@@ -258,7 +292,7 @@ type sheetOnConnNotify struct {
 	CellLocks		[]cellLockNotify	`json:"cellLocks"`
 }
 
-func NewWebSocket(t *testing.T, addr string,
+func NewWebSocket(t TestingT, addr string,
 	func1 onAcquireFunc, func2 onModifyFunc, func3 onReleaseFunc, func4 onConnFunc) (ws *myWS) {
 
 	ws = &myWS{
@@ -270,6 +304,7 @@ func NewWebSocket(t *testing.T, addr string,
 		UseCompression: true,
 	}
 
+	t.Log(addr)
 	t.Log(ws.ws.RequestHeader.Clone())
 
 	ws.ws.OnTextMessage = func(content string, socket gowebsocket.Socket) {
@@ -361,6 +396,7 @@ type GetSheetRet struct {
 	IsDeleted				bool		`json:"isDeleted"`
 	Name					string		`json:"name"`
 	CheckPointNum			int			`json:"checkpoint_num"`
+	CheckPointBrief			[]ChkpBrief	`json:"checkPointBrief"`
 	Columns					int			`json:"columns"`
 	Owner					string		`json:"owner"`
 
@@ -368,4 +404,9 @@ type GetSheetRet struct {
 	UpdatedAt 				time.Time	`json:"UpdatedAt"`
 
 	Content					[]string	`json:"content"`
+}
+
+type ChkpBrief struct {
+	Cid			uint		`json:"cid"`
+	TimeStamp	time.Time	`json:"timestamp"`
 }
