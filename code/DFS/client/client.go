@@ -92,6 +92,8 @@ func (c *Client) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	logrus.Debugf("Client Create : path %v",arg.Path)
+
 	err = util.Call(string(c.masterAddr), "Master.CreateRPC", arg, &ret)
 	if err != nil {
 		logrus.Warnln("CreateRPC failed:", err)
@@ -110,6 +112,7 @@ func (c *Client) Mkdir(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	logrus.Debugf("Client Mkdir : path %v",arg.Path)
 	err = util.Call(string(c.masterAddr), "Master.MkdirRPC", arg, &ret)
 	if err != nil {
 		logrus.Warnln("MkdirRPC failed:", err)
@@ -131,6 +134,7 @@ func (c *Client) Open(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	logrus.Debugf("Client close : path %v",argO.Path)
 	argF.Path = argO.Path
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
 	if err != nil || !retF.Exist {
@@ -173,6 +177,7 @@ func (c *Client) Close(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	logrus.Debugf("Client close : fd %v",arg.Fd)
 	c.fdLock.Lock()
 	defer c.fdLock.Unlock()
 	_, exist := c.fdTable[arg.Fd]
@@ -188,7 +193,7 @@ func (c *Client) Close(w http.ResponseWriter, r *http.Request) {
 }
 
 // func (c *Client) _Read(path util.DFSPath, offset int, len int, fileSize int) (readBytes int, buf []byte, err error) {
-func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes int, buf []byte, err error) {
+func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes int, buf string, err error) {
 	var argR util.GetReplicasArg
 	var retR util.GetReplicasRet
 	var argRCK util.ReadChunkArgs
@@ -218,7 +223,7 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes in
 			logrus.Panicln("Client should read %v,buf only read %v", roundReadBytes, retRCK.Len)
 			return
 		}
-		buf = append(buf, retRCK.Buf...)
+		buf = buf+string(retRCK.Buf)
 		readBytes += roundReadBytes
 		realReadBytes += retRCK.Len
 		logrus.Debugf(" Read %d bytes from chunkserver %s, bytes read %d\n", roundReadBytes, string(retR.ChunkServerAddrs[0]), readBytes)
@@ -241,6 +246,7 @@ func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
+	logrus.Debugf("Client read : fd %v,len %v,offset %v",argR.Fd,argR.Len,argR.Offset)
 
 	// Get the file metadata and check
 	//c.fdLock.RLock()
@@ -302,6 +308,8 @@ func (c *Client) Delete(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
+
+	logrus.Debugf("Client delete : path %v",argD.Path)
 
 	// Get the file metadata and check
 	argF.Path = argD.Path
@@ -403,6 +411,7 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
+	logrus.Debugf("Client append : fd %v",argA.Fd)
 
 	//Check append length
 	if len(argA.Data) > util.MAXAPPENDSIZE { // append size cannot exist half a chunk
@@ -446,7 +455,7 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenBytes int, err error) {
+func (c *Client) _Write(path util.DFSPath, offset int, data string) (writtenBytes int, err error) {
 	var argR util.GetReplicasArg
 	var retR util.GetReplicasRet
 	var argL util.LoadDataArgs
@@ -470,7 +479,7 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenByte
 		var cid = c.newCacheID(retR.ChunkHandle)
 
 		argL.CID = cid
-		argL.Data = data[writtenBytes:(writtenBytes + roundWrittenBytes)]
+		argL.Data = []byte(data[writtenBytes:(writtenBytes + roundWrittenBytes)])
 		// TODO: make it random , now is fixed order
 		argL.Addrs = retR.ChunkServerAddrs
 
@@ -519,6 +528,7 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	var argF util.GetFileMetaArg
 	var retF util.GetFileMetaRet
 	var argW util.WriteArg
+	var retW util.WriteRet
 
 	// Decode the params
 	err := json.NewDecoder(r.Body).Decode(&argW)
@@ -527,6 +537,7 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
+	logrus.Debugf("Client write : fd %v, offset %v",argW.Fd,argW.Offset)
 
 	// Get the file metadata and check
 	//c.fdLock.RLock()
@@ -558,7 +569,8 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
-	msg, _ := json.Marshal(writtenBytes)
+	retW.BytesWritten = writtenBytes
+	msg, _ := json.Marshal(retW)
 	w.Write(msg)
 	return
 }
@@ -575,6 +587,8 @@ func (c *Client) GetFileInfo(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
+	logrus.Debugf("Client getFileInfo : path %v",arg.Path)
+
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", arg, &ret)
 	if err != nil {
 		logrus.Warnln("Client getFileInfo failed :", err)
@@ -596,10 +610,12 @@ func (c *Client) List(w http.ResponseWriter, r *http.Request) {
 	// Decode the params
 	err := json.NewDecoder(r.Body).Decode(&arg)
 	if err != nil {
-		logrus.Warnln("Client getFileInfo failed :", err)
+		logrus.Warnln("Client list failed :", err)
 		w.WriteHeader(400)
 		return
 	}
+	logrus.Debugf("Client list : path %v",arg.Path)
+
 	err = util.Call(string(c.masterAddr), "Master.ListRPC", arg, &ret)
 	msg, _ := json.Marshal(ret)
 	w.Write(msg)
@@ -617,6 +633,7 @@ func (c *Client) Scan(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
+	logrus.Debugf("Client scan : path %v",argS.Path)
 	err = util.Call(string(c.masterAddr), "Master.ScanRPC", argS, &retS)
 	if err != nil {
 		logrus.Warnln("Client Scan failed :", err)
@@ -628,12 +645,12 @@ func (c *Client) Scan(w http.ResponseWriter, r *http.Request) {
 }
 
 // helper method for ConcurrentAppend
-func (c *Client) _ConcurrentAppend(index int, data []byte) (int, error) {
+func (c *Client) _ConcurrentAppend(index int, data string) (int, error) {
 	return 0, nil
 }
 
 // helper method for Append
-func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error) {
+func (c *Client) _Append(path util.DFSPath, data string) (offset int, err error) {
 	var argR util.GetReplicasArg
 	var retR util.GetReplicasRet
 	var argL util.LoadDataArgs
@@ -660,7 +677,7 @@ func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error)
 		// roundWrittenBytes := int(math.Min(float64(util.MAXCHUNKSIZE-(offset+writtenBytes)%util.MAXCHUNKSIZE), float64(len(data)-writtenBytes)))
 		var cid = c.newCacheID(retR.ChunkHandle)
 		argL.CID = cid
-		argL.Data = data
+		argL.Data = []byte(data)
 
 		// TODO: make it random , now is fixed order
 		argL.Addrs = retR.ChunkServerAddrs

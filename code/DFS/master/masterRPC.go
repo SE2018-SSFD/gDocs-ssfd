@@ -181,7 +181,8 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 	// Find the target chunk, if not exists, create one
 	// Note that ChunkIndex <= len(fs.chunks) should be checked by client
 	var targetChunk *chunkState
-	if args.ChunkIndex == len(fs.chunks) {
+	// when args.ChunkIndex == -1 at this stage, the append is requested on a empty file
+	if args.ChunkIndex == len(fs.chunks) || args.ChunkIndex == -1 {
 		// randomly choose servers to store chunk replica
 		var addrs []util.Address
 		addrs, err = m.css.randomServers(util.REPLICATIONTIMES)

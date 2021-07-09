@@ -44,9 +44,12 @@ type SerialChunkState struct{
 
 // Serialize a chunkstates
 func (s* ChunkStates) getChunkNum(path util.DFSPath) int{
+	s.RLock()
 	s.file[path].RLock()
-	defer s.file[path].RUnlock()
-	return len(s.file[path].chunks)
+	chunkNum := len(s.file[path].chunks)
+	s.file[path].RUnlock()
+	s.RUnlock()
+	return chunkNum
 }
 func (s* ChunkStates) Serialize() SerialChunkStates {
 	s.RLock()
