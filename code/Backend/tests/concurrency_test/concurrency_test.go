@@ -1,4 +1,4 @@
-package concurrency_test
+package concurrency
 
 import (
 	"backend/lib/cache"
@@ -13,12 +13,37 @@ import (
 	"time"
 )
 
-func TestSingleFile(t *testing.T) {
-	goTestWorkFlowInterrupt(t, 0)
+
+// BenchMark
+func TestBenchmarkSingleFile(t *testing.T) {
+	wg := sync.WaitGroup{}
+	testSec := 180
+	toTestN := len(loginParams)
+	wg.Add(toTestN)
+	sends, recvs := make([]int, toTestN), make([]int, toTestN)
+	fid := newSheet(t, login(t, loginParams[0]), "test")
+	for idx, param := range loginParams {
+		go func(idx int, param utils.LoginParams) {
+			sends[idx], recvs[idx] = benchNewUserConnectOnFid(t, fid, param, idx, 0, time.Duration(testSec) * time.Second)
+			wg.Done()
+		}(idx, param)
+	}
+	wg.Wait()
+	totSend, totRecv := 0, 0
+	for i := 0; i < toTestN; i += 1 {
+		totSend += sends[i]
+		totRecv += recvs[i]
+	}
+	t.Logf("\nDuration:\t%ds\nSend:\t%d op/s\nRecv:\t%d op/s", testSec, totSend/testSec, totRecv/testSec)
 }
 
+// Correctness
+//func TestSingleFile(t *testing.T) {
+//	goTestWorkFlowInterrupt(t, 0)
+//}
+
 //func TestMultiFile(t *testing.T) {
-//	testRoomN := 30
+//	testRoomN := 200
 //	wg := sync.WaitGroup{}
 //	wg.Add(testRoomN)
 //	for i := 0; i < testRoomN; i += 1 {
@@ -30,6 +55,8 @@ func TestSingleFile(t *testing.T) {
 //	}
 //	wg.Wait()
 //}
+
+
 
 func goTestWorkFlowInterrupt(t *testing.T, pause time.Duration) {
 	testWsNum := 20
@@ -75,7 +102,7 @@ func goTestWorkFlowInterrupt(t *testing.T, pause time.Duration) {
 			cnt := 0
 			onAcquireS := func(msg sheetPrepareNotify) {}
 			onModifyS := func(msg sheetModifyNotify) {
-				logger.Info(cnt)
+				//logger.Info(cnt)
 				cnt++
 				logger.Debugf("[%+v] onModify", msg)
 				msSender.Set(msg.Row, msg.Col, msg.Content)
@@ -273,7 +300,7 @@ func goTestWorkFlowNoInterrupt(t *testing.T, pause time.Duration) {
 			time.Sleep(30 * time.Second)
 			stopChanS <- 1
 			stopChanR <- 1
-			time.Sleep(15 * time.Second)
+			time.Sleep(800 * time.Second)
 			ssS, ssR := msSender.ToStringSlice(), msReceiver.ToStringSlice()
 			colS, rowS := msSender.Shape()
 			colR, rowR := msReceiver.Shape()
@@ -298,4 +325,58 @@ func goTestWorkFlowNoInterrupt(t *testing.T, pause time.Duration) {
 			wsReceiver.ws.Close()
 		}
 	}
+}
+
+func benchNewUserConnectOnFid(t *testing.T, fid uint, loginParam utils.LoginParams, myRow int,
+	pause time.Duration, duration time.Duration) (sendCnt int, recvCnt int) {
+
+	token := login(t, loginParam)
+	getSheet(t, token, fid)
+
+	onAcquire := func(msg sheetPrepareNotify) {
+		recvCnt += 1
+	}
+	onModify := func(msg sheetModifyNotify) {
+		recvCnt += 1
+	}
+	onRelease := func(msg sheetPrepareNotify) {
+		recvCnt += 1
+	}
+	onConn := func(msg sheetOnConnNotify) {
+		recvCnt += 1
+	}
+
+	wsUser := NewWebSocket(t, getWSAddr(token, fid), onAcquire, onModify, onRelease, onConn)
+	stopChan := make(chan int)
+	go func(ws *myWS, stopChan chan int) {
+		for {
+			select {
+			case <- stopChan:
+				return
+			default:
+				col := rand.Int() % 100
+				content := strings.Repeat("test", rand.Int() % 30)
+
+				err := ws.SendJson("modify", sheetModifyMessage{
+					Row:     myRow,
+					Col:     col,
+					Content: content,
+					Info:    nil,
+				})
+
+				sendCnt += 1
+
+				if !assert.NoError(t, err) {
+					break
+				}
+				time.Sleep(pause)
+			}
+		}
+	}(wsUser, stopChan)
+
+	time.Sleep(duration)
+	close(stopChan)
+	time.Sleep(20 * time.Second)
+
+	return sendCnt, recvCnt
 }
