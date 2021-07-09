@@ -32,47 +32,34 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 		user := dao.GetUserByUid(uid)
 		sheet.Owner = user.Username
 
-		if config.Get().WriteThrough {
-			if err := sheetCreatePickledCheckPointInDfs(fid, 0, &gdocFS.SheetCheckPointPickle{
-				Cid: 0,
-				Timestamp: time.Now(),
-				Rows: int(params.InitRows),
-				Columns: int(params.InitColumns),
-				Content: make([]string, params.InitRows * params.InitColumns),
-			}); err != nil {
-				panic(err)
-			}
-		} else {
-			// create initial log file
-			if err := sheetCreateLogFile(fid, 1); err != nil {
-				panic(err)
-			}
-
-			// create initial checkpoint directory
-			if err := sheetCreateCheckPointDir(fid); err != nil {
-				panic(err)
-			}
-
-			// write one log at (rows - 1, cols - 1) to initialize a rows x cols sheet
-			rows, cols := int(params.InitRows), int(params.InitColumns)
-			if rows < minRows {
-				rows = minRows
-			}
-			if cols < minCols {
-				cols = minCols
-			}
-			appendOneSheetLog(fid, 1, &gdocFS.SheetLogPickle{
-				Lid: 1,
-				Timestamp: time.Now(),
-				Row: rows - 1,
-				Col: cols - 1,
-				Old: "",
-				New: "",
-				Uid: uid,
-				Username: user.Username,
-			})
+		// create initial log file
+		if err := sheetCreateLogFile(fid, 1); err != nil {
+			panic(err)
 		}
 
+		// create initial checkpoint directory
+		if err := sheetCreateCheckPointDir(fid); err != nil {
+			panic(err)
+		}
+
+		// write one log at (rows - 1, cols - 1) to initialize a rows x cols sheet
+		rows, cols := int(params.InitRows), int(params.InitColumns)
+		if rows < minRows {
+			rows = minRows
+		}
+		if cols < minCols {
+			cols = minCols
+		}
+		appendOneSheetLog(fid, 1, &gdocFS.SheetLogPickle{
+			Lid: 1,
+			Timestamp: time.Now(),
+			Row: rows - 1,
+			Col: cols - 1,
+			Old: "",
+			New: "",
+			Uid: uid,
+			Username: user.Username,
+		})
 
 		dao.SetSheet(sheet)
 		dao.AddSheetToUser(uid, fid)
@@ -104,47 +91,38 @@ func GetSheet(params utils.GetSheetParams) (success bool, msg int, data model.Sh
 				return true, utils.SheetIsInTrashBin, sheet, ""
 			}
 
-			if config.Get().WriteThrough {
-				filePickled, err := sheetGetPickledCheckPointFromDfs(params.Fid, 0)
+			if addr, isMine := cluster.FileBelongsTo(sheet.Name, sheet.Fid); !isMine {
+				return success, msg, data, addr
+			}
+
+			inCache := true
+			memSheet := getSheetCache().Get(sheet.Fid)
+			if memSheet == nil {
+				if memSheet, inCache = recoverSheetFromLog(sheet.Fid); memSheet == nil {
+					panic("recoverSheetFromLog fails")
+				}
+			}
+			sheet.CheckPointNum = sheetGetCheckPointNum(params.Fid)
+			sheet.Content = memSheet.ToStringSlice()
+			_, sheet.Columns = memSheet.Shape()
+			if inCache {
+				keys, evicted := getSheetCache().Put(sheet.Fid)
+				commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
+			}
+
+			for i := 1; i <= sheet.CheckPointNum; i += 1 {
+				curCid := uint(i)
+				filePickled, err := sheetGetPickledCheckPointFromDfs(params.Fid, curCid)
 				if err != nil {
-					panic(err)
-				}
-				sheet.Columns = filePickled.Columns
-				sheet.Content = filePickled.Content
-			} else {
-				if addr, isMine := cluster.FileBelongsTo(sheet.Name, sheet.Fid); !isMine {
-					return success, msg, data, addr
+					logger.Errorf("[fid(%d)\tcid(%d)\tuid(%d)] GetSheet: fail to pickle checkpoint\n%+v",
+						params.Fid, curCid, uid, err)
+					continue
 				}
 
-				inCache := true
-				memSheet := getSheetCache().Get(sheet.Fid)
-				if memSheet == nil {
-					if memSheet, inCache = recoverSheetFromLog(sheet.Fid); memSheet == nil {
-						panic("recoverSheetFromLog fails")
-					}
-				}
-				sheet.CheckPointNum = sheetGetCheckPointNum(params.Fid)
-				sheet.Content = memSheet.ToStringSlice()
-				_, sheet.Columns = memSheet.Shape()
-				if inCache {
-					keys, evicted := getSheetCache().Put(sheet.Fid)
-					commitSheetsWithCache(utils.InterfaceSliceToUintSlice(keys), evicted)
-				}
-
-				for i := 1; i <= sheet.CheckPointNum; i += 1 {
-					curCid := uint(i)
-					filePickled, err := sheetGetPickledCheckPointFromDfs(params.Fid, curCid)
-					if err != nil {
-						logger.Errorf("[fid(%d)\tcid(%d)\tuid(%d)] GetSheet: fail to pickle checkpoint\n%+v",
-							params.Fid, curCid, uid, err)
-						continue
-					}
-
-					sheet.CheckPointBrief = append(sheet.CheckPointBrief, model.ChkpBrief{
-						Cid: curCid,
-						TimeStamp: filePickled.Timestamp,
-					})
-				}
+				sheet.CheckPointBrief = append(sheet.CheckPointBrief, model.ChkpBrief{
+					Cid: curCid,
+					TimeStamp: filePickled.Timestamp,
+				})
 			}
 
 			success, msg, data = true, utils.SheetGetSuccess, sheet
@@ -169,31 +147,18 @@ func DeleteSheet(params utils.DeleteSheetParams) (success bool, msg int, redirec
 			if sheet.Fid == 0 {
 				success, msg = false, utils.SheetDoNotExist
 			} else {
-				if config.Get().WriteThrough {
-					if !sheet.IsDeleted {
-						sheet.IsDeleted = true
-						dao.SetSheet(sheet)
-					} else {
-						sheetRoot := gdocFS.GetRootPath("sheet", sheet.Fid)
-						dao.DeleteSheet(sheet.Fid)
-						if err := dao.RemoveAll(sheetRoot); err != nil {
-							panic(err)
-						}
-					}
-				} else {
-					if addr, isMine := cluster.FileBelongsTo(sheet.Name, sheet.Fid); !isMine {
-						return success, msg, addr
-					}
+				if addr, isMine := cluster.FileBelongsTo(sheet.Name, sheet.Fid); !isMine {
+					return success, msg, addr
+				}
 
-					if !sheet.IsDeleted {
-						sheet.IsDeleted = true
-						dao.SetSheet(sheet)
-					} else {
-						sheetRoot := gdocFS.GetRootPath("sheet", sheet.Fid)
-						dao.DeleteSheet(sheet.Fid)
-						if err := dao.RemoveAll(sheetRoot); err != nil {
-							panic(err)
-						}
+				if !sheet.IsDeleted {
+					sheet.IsDeleted = true
+					dao.SetSheet(sheet)
+				} else {
+					sheetRoot := gdocFS.GetRootPath("sheet", sheet.Fid)
+					dao.DeleteSheet(sheet.Fid)
+					if err := dao.RemoveAll(sheetRoot); err != nil {
+						panic(err)
 					}
 				}
 

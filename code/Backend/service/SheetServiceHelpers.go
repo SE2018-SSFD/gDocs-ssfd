@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"github.com/pkg/errors"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -200,7 +201,7 @@ func recoverSheetFromLog(fid uint) (memSheet *cache.MemSheet, inCache bool) {
 		logger.Errorf("%+v", err)
 		return nil, false
 	} else {
-		for li := 0; li < len(logs); li += 1 {
+		for li := 0; li < len(logs) - 1; li += 1 {	// without logCommitEntry, which is in the end
 			log := &logs[li]
 			memSheet.Set(log.Row, log.Col, log.New)
 		}
@@ -276,14 +277,15 @@ func sheetGetCheckPointNum(fid uint) (chkpNum int) {
 
 	if len(fileNames) != 0 {
 		latestChkpName := fileNames[len(fileNames)-1]
-		chkpNum, err = strconv.Atoi(latestChkpName)
+		chkpNum, err = strconv.Atoi(strings.Split(latestChkpName, ".")[0])
 		if err != nil {
 			logger.Errorf("[%s] bad checkpoint name, use length of children instead", latestChkpName)
 			return len(fileNames)
 		}
 
 		if len(fileNames) != chkpNum {
-			logger.Errorf("[%s] len(children) != latest checkpoint's name, use the latter", latestChkpName)
+			logger.Errorf("[name(%s)\tchkpNum(%d)] len(children) != latest checkpoint's name, use the latter",
+				latestChkpName, chkpNum)
 		}
 		return chkpNum
 	} else {

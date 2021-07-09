@@ -5,10 +5,9 @@ import (
 	"github.com/jinzhu/configor"
 )
 
-type config struct{
-	MaxSheetCache	int64		`default:"3"`
+type config struct {
+	MaxSheetCache	int64		`default:"2"`
 	UnitCache		int64		`default:"1"`
-	WriteThrough	bool		`default:"true"`
 	ZKRoot			string		`default:"/backend"`
 	ZKAddr			string		`required:"true"`
 	Addr			string		`required:"true"`
@@ -26,7 +25,7 @@ func LoadConfig() {
 	cfg.MaxSheetCache <<= 20
 	cfg.UnitCache <<= 20
 
-	logger.Debug(cfg)
+	logger.Infof("Config: %+v", cfg)
 }
 
 func Get() *config {

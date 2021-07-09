@@ -27,12 +27,14 @@ func NewApp() *iris.Application {
 
 	repository.InitDBConn()
 
-	if !config.Get().WriteThrough {
-		if err := zkWrap.Chroot(config.Get().ZKRoot); err != nil {
-			panic(err)
-		}
-		cluster.RegisterNodes(config.Get().Addr, int(config.Get().MaxSheetCache/config.Get().UnitCache))
+	if err := zkWrap.Chroot(config.Get().ZKRoot); err != nil {
+		panic(err)
 	}
+	nodeNum := int(config.Get().MaxSheetCache / config.Get().UnitCache)
+	if config.Get().MaxSheetCache == 0 {
+		nodeNum = 1
+	}
+	cluster.RegisterNodes(config.Get().Addr, nodeNum)
 
 	return app
 }
