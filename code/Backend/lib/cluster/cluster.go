@@ -62,7 +62,7 @@ func RegisterNodes(addr string, num int) {
 
 	hb, err := zkWrap.RegisterHeartbeat(
 		"cache",
-		15 * time.Second,
+		7 * time.Second,
 		addr + "#" + strconv.Itoa(num),
 		onHeartbeatConn,
 		onHeartbeatDisConn,
