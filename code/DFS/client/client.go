@@ -221,8 +221,8 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes in
 			if strings.Contains(err.Error(),"EOF"){
 				logrus.Warnln("Client read EOF")
 				buf = buf+string(retRCK.Buf)
-				paddingLen := len - realReadBytes
-				buf = buf+string(make([]byte,paddingLen))
+				//paddingLen := len - realReadBytes
+				//buf = buf+string(make([]byte,paddingLen))
 				err = nil
 			}else{
 				logrus.Panicln("Client read failed :", err)

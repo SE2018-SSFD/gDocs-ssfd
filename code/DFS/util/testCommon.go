@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
 	"testing"
 )
 
@@ -122,7 +121,9 @@ func HTTPOpen(addr string,path string)(fd int,err error){
 	if err != nil {
 		return
 	}
-	fd,err = strconv.Atoi(string(body))
+	var ret OpenRet
+	err = json.NewDecoder(bytes.NewReader(body)).Decode(&ret)
+	fd = ret.Fd
 	return
 }
 
