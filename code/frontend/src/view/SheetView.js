@@ -174,7 +174,7 @@ class SheetView extends React.Component {
             const msg_word = MSG_WORDS[data.msg];
             if (data.success === true) {
                 this.setState({
-                    picList: data.data,
+                    picList: data.data === null ? [] : data.data,
                     picDrawerVisible: true,
                 })
                 message.success(msg_word);
@@ -347,6 +347,14 @@ class SheetView extends React.Component {
                         },
                     }
                 });
+                for (let i = 0; i < content.length; i++) {
+                    j = Math.floor(i / columns);
+                    k = i % columns;
+                    if (content[i].indexOf("getchunk") !== -1) {
+                        console.log("image");
+                        luckysheet.insertImage(content[i],0, j, k)
+                    }
+                }
                 message.success(msg_word).then(() => {
                 });
             } else {
@@ -486,6 +494,14 @@ class SheetView extends React.Component {
 
                         }
                     })
+                    for (let i = 0; i < content.length; i++) {
+                        j = Math.floor(i / columns);
+                        k = i % columns;
+                        if (content[i].indexOf("getchunk") !== -1) {
+                            console.log("image");
+                            luckysheet.insertImage(content[i],0, j, k, )
+                        }
+                    }
                     break;
                 }
                 case "acquire": {
@@ -535,6 +551,10 @@ class SheetView extends React.Component {
                         console.log("others modify this");
                         luckysheet.setCellValue(row, col, content);
                     }
+                    if (content.indexOf("getchunk") !== -1) {
+                        console.log("image")
+                        luckysheet.insertImage(content,0,row,col);
+                    }
                     break;
                 }
                 case "release": {
@@ -558,6 +578,7 @@ class SheetView extends React.Component {
                             cellLocks.splice(i, 1);
                         }
                     }
+
                     localStorage.setItem("cellLocks", JSON.stringify(cellLocks));
                     break;
                 }
@@ -614,8 +635,8 @@ class SheetView extends React.Component {
             (item) =>
                 <Card hoverable style={{width: 300}}
                       title={item}>
-                    <p>URL: {GET_HTTP_URL()+"getchunk?fid="+fid+"&chunk="+item}</p>
-                    <img src={GET_HTTP_URL()+"getchunk?fid="+fid+"&chunk="+item}/>
+                    <p>{GET_HTTP_URL() + "getchunk?fid=" + fid + "&chunk=" + item}</p>
+                    <img src={GET_HTTP_URL() + "getchunk?fid=" + fid + "&chunk=" + item}/>
                 </Card>
         );
 
@@ -761,7 +782,7 @@ class SheetView extends React.Component {
                 </Drawer>
 
                 <Drawer
-                    title="图片"
+                    title="复制URL到单元格来插入图片"
                     onClose={this.closePicDrawer}
                     visible={this.state.picDrawerVisible}
                     bodyStyle={{paddingBottom: 80}}
@@ -796,7 +817,6 @@ class SheetView extends React.Component {
                         {uploading ? 'Uploading' : 'Start Upload'}
                     </Button>
                 </Modal>
-
             </div>
         )
     }

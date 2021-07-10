@@ -1,6 +1,7 @@
 import {CHANGE_PORT, GET_PORT} from "./common";
 
 const TIMEOUT = 3000;
+let ERROR_NUM = 3;
 let getRequest = (url, callback) => {
     let opts = {
         method: "GET",
@@ -25,12 +26,19 @@ let getRequest = (url, callback) => {
         }).catch((error) => {
         // message.error("请求错误,自动更新后端地址").then(() => {
         // })
+
         console.log(error)
         let port_old = GET_PORT();
         CHANGE_PORT();
+
         let port_new = GET_PORT();
         let new_url = url.replace(port_old, port_new);
-        postRequest(new_url, callback);
+
+        if(ERROR_NUM > 0)
+        {
+            postRequest(new_url, callback);
+            ERROR_NUM--;
+        }
     });
 };
 
@@ -64,7 +72,11 @@ let postRequest = (url, json, callback) => {
         CHANGE_PORT();
         let port_new = GET_PORT();
         let new_url = url.replace(port_old, port_new);
-        postRequest(new_url, json, callback);
+        if(ERROR_NUM > 0)
+        {
+            postRequest(new_url, json, callback);
+            ERROR_NUM--;
+        }
     });
 };
 
@@ -102,7 +114,11 @@ let postRequestForm = (url, data, callback) => {
         CHANGE_PORT();
         let port_new = GET_PORT();
         let new_url = url.replace(port_old, port_new);
-        // postRequestForm(new_url, data, callback);
+        if(ERROR_NUM > 0)
+        {
+            postRequestForm(new_url, data, callback);
+            ERROR_NUM--;
+        }
     });
 };
 

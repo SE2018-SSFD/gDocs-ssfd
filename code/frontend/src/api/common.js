@@ -4,9 +4,9 @@ const PORTS = ['10086', '10087', '10088']
 export function GET_PORT() {
     let PORT_COUNT = localStorage.getItem("PORT_COUNT");
     if (PORT_COUNT === null) {
-        let PORT_COUNT = 0;
+        let PORT_COUNT = Math.floor(Math.random() * 2);
         localStorage.setItem("PORT_COUNT", JSON.stringify(PORT_COUNT));
-        return PORTS[0];
+        return PORTS[PORT_COUNT];
     } else {
         PORT_COUNT = JSON.parse(PORT_COUNT);
 
