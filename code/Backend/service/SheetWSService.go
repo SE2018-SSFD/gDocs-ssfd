@@ -501,9 +501,9 @@ func doSheetModify(meta *sheetWSMetaEntry, cellMeta *sheetWSCellMetaEntry, cellM
 			if !inCache {
 				commitOneSheetWithCache(fid, memSheet)
 			}
-
-			sheetModifyBroadcast(meta, cellMeta, cellMsg)
 		}
+
+		sheetModifyBroadcast(meta, cellMeta, cellMsg)
 
 		if inCache {
 			keys, evicted := getSheetCache().Put(fid)
