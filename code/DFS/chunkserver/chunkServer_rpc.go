@@ -4,6 +4,7 @@ import (
 	"DFS/util"
 	"DFS/util/zkWrap"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/rpc"
@@ -111,8 +112,8 @@ func (cs *ChunkServer) ReadChunkRPC(args util.ReadChunkArgs, reply *util.ReadChu
 	defer ck.RUnlock()
 
 	len, err := cs.GetChunk(args.Handle, args.Off, buf)
-	if err != nil {
-		log.Fatalf("get chunk error : %v",err)
+	if err != nil && err != io.EOF {
+		log.Fatalf("get chunk error : %v", err)
 	}
 
 	reply.Buf = buf[:len]
@@ -166,7 +167,7 @@ func (cs *ChunkServer) SyncRPC(args util.SyncArgs, reply *util.SyncReply) error 
 		if off == util.MAXCHUNKSIZE {
 			reply.ErrorCode = util.NOSPACE
 			pad = true // pad other chunkServer
-		}else{
+		} else {
 			reply.ErrorCode = 0
 		}
 		args.Off = off
