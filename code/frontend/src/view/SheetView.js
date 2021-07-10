@@ -763,7 +763,7 @@ class SheetView extends React.Component {
                 <Drawer
                     title="存档"
                     onClose={this.closeCkptDrawer}
-                    visible={picDrawerVisible}
+                    visible={this.state.ckptVisible}
                     bodyStyle={{paddingBottom: 80}}
                     width={320}
                     footer={
@@ -805,7 +805,7 @@ class SheetView extends React.Component {
 
                 <Modal title="上传图片" visible={picVisible} onCancel={this.closePic}>
                     <Upload {...props}>
-                        <Button icon={<UploadOutlined/>}>Select File</Button>
+                        <Button icon={<UploadOutlined/>}>选择文件</Button>
                     </Upload>
                     <Button
                         type="primary"
@@ -814,7 +814,7 @@ class SheetView extends React.Component {
                         loading={uploading}
                         style={{marginTop: 16}}
                     >
-                        {uploading ? 'Uploading' : 'Start Upload'}
+                        {uploading ? '上传中' : '开始上传'}
                     </Button>
                 </Modal>
             </div>
