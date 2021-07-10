@@ -6,6 +6,7 @@ import (
 	"backend/utils/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"strconv"
 )
 
 var db *gorm.DB
@@ -30,10 +31,10 @@ func InitDBConn() {
 
 func testPrepare() {
 	db.Create(&model.User{Uid: 1, Username: "test"})
-	db.Create(&model.User{Uid: 2, Username: "test1"})
-	db.Create(&model.User{Uid: 3, Username: "test2"})
-
 	db.Create(&model.UserAuth{Uid: 1, Username: "test", Password: "test"})
-	db.Create(&model.UserAuth{Uid: 2, Username: "test1", Password: "test1"})
-	db.Create(&model.UserAuth{Uid: 3, Username: "test2", Password: "test2"})
+	for i := 1; i < 10; i += 1 {
+		username := "test"+strconv.Itoa(i)
+		db.Create(&model.User{Uid: uint(i+1), Username: username})
+		db.Create(&model.UserAuth{Uid: uint(i+1), Username: username, Password: username})
+	}
 }

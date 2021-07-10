@@ -9,7 +9,10 @@ import (
 	"backend/utils"
 	"backend/utils/config"
 	"backend/utils/logger"
+	"bytes"
 	"github.com/kataras/iris/v12"
+	"io/ioutil"
+	"strconv"
 	"time"
 )
 
@@ -341,11 +344,77 @@ func RollbackSheet(params utils.RollbackSheetParams) (success bool, msg int, red
 	return success, msg, redirect
 }
 
-func GetChunk(ctx iris.Context, params utils.GetChunkParams) (success bool, msg int) {
-	return
+func GetChunk(ctx iris.Context) {
+	chunk := ctx.URLParam("chunk")
+	fid := uint(ctx.URLParamUint64("fid"))
+
+	if chunk == "" || dao.GetSheetByFid(fid).Fid != fid {
+		ctx.ServeContent(bytes.NewReader([]byte("")), chunk, time.Now())
+	} else {
+		if content, err := dao.FileGetAll(gdocFS.GetChunkPath(fid, chunk)); err != nil {
+			ctx.ServeContent(bytes.NewReader([]byte("")), chunk, time.Now())
+		} else {
+			ctx.ServeContent(bytes.NewReader([]byte(content)), chunk, time.Time{})
+		}
+	}
 }
 
-func UploadChunk(ctx iris.Context, params utils.UploadChunkParams) (success bool, msg int) {
+func UploadChunk(ctx iris.Context) (success bool, msg int, data string) {
 	ctx.SetMaxRequestBodySize(ctx.GetContentLength() + 1 << 20)
-	return
+
+	logger.Infof("[%+v] UploadChunk", ctx.FormValues())
+
+	file, info, err := ctx.FormFile("uploadfile")
+	if err != nil {
+		return false, utils.ChunkUploadCantGetFile, ""
+	}
+
+	fidU64, err := strconv.ParseUint(ctx.FormValue("fid"), 10, 64)
+	if err != nil {
+		return false, utils.ChunkUploadBadFormValue, ""
+	}
+
+	fid := uint(fidU64)
+	if dao.GetSheetByFid(fid).Fid != fid {
+		return false, utils.SheetDoNotExist, ""
+	}
+
+	raw, err := ioutil.ReadAll(file)
+	if err != nil {
+		return false, utils.ChunkUploadCantGetFile, ""
+	}
+
+	path := gdocFS.GetChunkPath(fid, info.Filename)
+	err = dao.FileCreate(path, 0)
+	if err != nil {
+		panic(err)
+	}
+
+	err = dao.FileOverwriteAll(path, string(raw))
+	if err != nil {
+		panic(err)
+	}
+
+	return true, utils.ChunkUploadSuccess, info.Filename
+}
+
+func GetAllChunks(params utils.GetAllChunksParams) (success bool, msg int, data []string) {
+	uid := CheckToken(params.Token)
+	if uid != 0 {
+		ownedFids := dao.GetSheetFidsByUid(uid)
+		if !utils.UintListContains(ownedFids, params.Fid) {
+			success, msg, data = false, utils.SheetNoPermission, nil
+		} else {
+			path := gdocFS.GetChunkRootPath(params.Fid)
+			if fileNames, err := dao.DirFileNamesAll(path); err != nil {
+				panic(err)
+			} else {
+				success, msg, data = true, utils.ChunkGetAllSuccess, fileNames
+			}
+		}
+	} else {
+		success, msg, data = false, utils.InvalidToken, nil
+	}
+
+	return success, msg, data
 }
