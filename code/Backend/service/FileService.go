@@ -367,8 +367,6 @@ func GetChunk(ctx iris.Context) {
 func UploadChunk(ctx iris.Context) (success bool, msg int, data string) {
 	ctx.SetMaxRequestBodySize(ctx.GetContentLength() + 1 << 20)
 
-	logger.Infof("[%+v] UploadChunk", ctx.FormValues())
-
 	file, info, err := ctx.FormFile("uploadfile")
 	if err != nil {
 		return false, utils.ChunkUploadCantGetFile, ""
