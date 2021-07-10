@@ -67,12 +67,12 @@ func TestDfs(t *testing.T) {
 			if assert.NoError(t, err) {
 				repeat := rand.Int() % 10 + 1
 				toWrite := strings.Repeat(testStr, repeat)
-				bytesWritten, err := dfs.Write(fd, 0, toWrite)
+				bytesWritten, err := dfs.Write(fd, 0, []byte(toWrite))
 				if assert.NoError(t, err) {
 					assert.EqualValues(t, len(testStr)*repeat, bytesWritten)
-					content, err := dfs.ReadAll(path)
+					data, err := dfs.ReadAll(path)
 					if assert.NoError(t, err) {
-						assert.Equal(t, toWrite, content)
+						assert.Equal(t, toWrite, string(data))
 					}
 				}
 			}
@@ -85,12 +85,12 @@ func TestDfs(t *testing.T) {
 			if assert.NoError(t, err) {
 				repeat := rand.Int() % 10 + 1
 				toAppend := strings.Repeat(testStr, repeat)
-				bytesWritten, err := dfs.Append(fd, toAppend)
+				bytesWritten, err := dfs.Append(fd, []byte(toAppend))
 				if assert.NoError(t, err) {
 					assert.EqualValues(t, len(testStr)*repeat, bytesWritten)
-					content, err := dfs.ReadAll(path)
+					data, err := dfs.ReadAll(path)
 					if assert.NoError(t, err) {
-						assert.Equal(t, toAppend, content)
+						assert.Equal(t, toAppend, string(data))
 					}
 				}
 			}

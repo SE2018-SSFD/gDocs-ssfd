@@ -36,12 +36,12 @@ type ScanArg struct {
 type WriteArg struct {
 	Fd			int			`json:"fd"`
 	Offset		int			`json:"offset"`
-	Data		string		`json:"data"`
+	Data		[]byte		`json:"data"`
 }
 
 type AppendArg struct {
 	Fd		int		`json:"fd"`
-	Data	string	`json:"data"`
+	Data	[]byte	`json:"data"`
 }
 
 type ReadArg struct {
@@ -92,5 +92,5 @@ type AppendRet struct {
 
 type ReadRet struct {
 	Len			int			`json:"len"`
-	Data		string		`json:"data"`
+	Data		[]byte		`json:"data"`
 }

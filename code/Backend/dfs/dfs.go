@@ -161,9 +161,9 @@ func dfsDelete(path string) (err error) {
 	return nil
 }
 
-func dfsRead(fd int, off int64, len int64) (content string, err error) {
+func dfsRead(fd int, off int64, len int64) (data []byte, err error) {
 	if fd <= 0 {
-		return "", withStackedMessagef(InvalidFdErr, "[%d] dfsRead", strconv.Itoa(fd))
+		return nil, withStackedMessagef(InvalidFdErr, "[%d] dfsRead", strconv.Itoa(fd))
 	}
 
 	reqBody := ReadArg{
@@ -175,17 +175,17 @@ func dfsRead(fd int, off int64, len int64) (content string, err error) {
 
 	err = post("read", reqBody, &respBody)
 	if err != nil {
-		return "", withStackedMessagef(err, "[%d] dfsRead", fd)
+		return nil, withStackedMessagef(err, "[%d] dfsRead", fd)
 	}
 
-	content = filterAllPadding(respBody.Data)
-	return content, nil
+	data = filterAllPadding(respBody.Data)
+	return data, nil
 }
 
-func dfsReadAll(path string) (content string, err error) {
+func dfsReadAll(path string) (data []byte, err error) {
 	absPath := checkPath(path)
 	if absPath == "" {
-		return "", withStackedMessagef(InvalidPathErr, "[%s] dfsReadAll", path)
+		return nil, withStackedMessagef(InvalidPathErr, "[%s] dfsReadAll", path)
 	}
 
 	reqBody := GetFileInfoArg{
@@ -195,38 +195,36 @@ func dfsReadAll(path string) (content string, err error) {
 
 	err = post("fileInfo", reqBody, &respBody)
 	if err != nil {
-		return "", withStackedMessagef(err, "[%s] dfsReadAll", path)
+		return nil, withStackedMessagef(err, "[%s] dfsReadAll", path)
 	}
 
 	if !respBody.Exist {
-		return "", withStackedMessagef(StatNonExistentErr, "[%s] dfsReadAll", path)
+		return nil, withStackedMessagef(StatNonExistentErr, "[%s] dfsReadAll", path)
 	} else {
 		sup := int64(respBody.UpperFileSize)
 		fd, err := dfsOpen(path, false)
 		if err != nil {
-			return "", withStackedMessagef(err, "[%s] dfsReadAll fail to open", path)
+			return nil, withStackedMessagef(err, "[%s] dfsReadAll fail to open", path)
 		}
 
-		content, err := dfsRead(fd, 0, sup)
+		data, err := dfsRead(fd, 0, sup)
 		if err != nil {
-			return "", withStackedMessagef(err, "[%s] dfsReadAll fail to read", path)
+			return nil, withStackedMessagef(err, "[%s] dfsReadAll fail to read", path)
 		}
 
-		return content, nil
+		return data, nil
 	}
 }
 
-func dfsWrite(fd int, off int64, content string) (bytesWritten int64, err error) {
+func dfsWrite(fd int, off int64, data []byte) (bytesWritten int64, err error) {
 	if fd <= 0 {
 		return 0, withStackedMessagef(InvalidFdErr, "[%d] dfsWrite", strconv.Itoa(fd))
 	}
 
-	logger.Info("write", content)
-
 	reqBody := WriteArg{
 		Fd: fd,
 		Offset: int(off),
-		Data: content,
+		Data: data,
 	}
 	respBody := WriteRet{}
 
@@ -239,14 +237,14 @@ func dfsWrite(fd int, off int64, content string) (bytesWritten int64, err error)
 	return bytesWritten, nil
 }
 
-func dfsAppend(fd int, content string) (bytesWritten int64, err error) {
+func dfsAppend(fd int, data []byte) (bytesWritten int64, err error) {
 	if fd <= 0 {
 		return 0, withStackedMessagef(InvalidFdErr, "[%d] dfsSppend", strconv.Itoa(fd))
 	}
 
 	reqBody := AppendArg{
 		Fd: fd,
-		Data: content,
+		Data: data,
 	}
 	respBody := AppendRet{}
 
@@ -255,7 +253,7 @@ func dfsAppend(fd int, content string) (bytesWritten int64, err error) {
 		return 0, withStackedMessagef(err, "[%d] dfsAppend", fd)
 	}
 
-	bytesWritten = int64(len(content))
+	bytesWritten = int64(len(data))
 	return bytesWritten, nil
 }
 
@@ -376,17 +374,16 @@ func respFileInfos2FileInfos(name string, before []GetFileInfoRet) (after []File
 	return after
 }
 
-func filterAllPadding(before string) (after string) {
-	raw := []byte(before)
+func filterAllPadding(before []byte) (after []byte) {
 	i := 0
-	for _, val := range raw {
+	for _, val := range before {
 		if val != 0 {
-			raw[i] = val
+			before[i] = val
 			i += 1
 		}
 	}
 
-	return string(raw[:i])
+	return before[:i]
 }
 
 func dfsNameX(path string) (err error) {

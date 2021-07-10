@@ -167,8 +167,7 @@ func SheetFSCheck(fid uint, fullChk bool) (cid uint, lid uint, err error) {
 
 func appendOneSheetLog(fid uint, lid uint, log *gdocFS.SheetLogPickle) {
 	path := gdocFS.GetLogPath("sheet", fid, lid)
-	fileRawByte, _ := json.Marshal(*log)
-	fileRaw := string(fileRawByte)
+	fileRaw, _ := json.Marshal(*log)
 	if err := dao.FileAppend(path, fileRaw); err != nil {
 		logger.Errorf("[%s] Log file append fails!\n%+v", path, err)
 		return
@@ -285,7 +284,7 @@ func sheetGetPickledCheckPointFromDfs(fid uint, cid uint) (chkp *gdocFS.SheetChe
 	if fileRaw, err := dao.FileGetAll(path); err != nil {
 		return nil, errors.WithStack(err)
 	} else {
-		chkp, err = gdocFS.PickleSheetCheckPointFromContent(fileRaw)
+		chkp, err = gdocFS.PickleSheetCheckPointFromContent(string(fileRaw))
 		return chkp, errors.WithStack(err)
 	}
 }
@@ -295,7 +294,7 @@ func sheetWritePickledCheckPointToDfs(fid uint, cid uint, chkp *gdocFS.SheetChec
 	lockOnFid(fid); defer unlockOnFid(fid)
 	path := gdocFS.GetCheckPointPath("sheet", fid, cid)
 	fileRaw, _ := json.Marshal(*chkp)
-	if err = dao.FileOverwriteAll(path, string(fileRaw)); err != nil {
+	if err = dao.FileOverwriteAll(path, fileRaw); err != nil {
 		return errors.WithStack(err)
 	} else {
 		return nil
@@ -362,7 +361,7 @@ func sheetGetPickledLogFromDfs(fid uint, lid uint) (logs []gdocFS.SheetLogPickle
 	if fileRaw, err := dao.FileGetAll(path); err != nil {
 		return nil, errors.WithStack(err)
 	} else {
-		logs, err = gdocFS.PickleSheetLogsFromContent(fileRaw)
+		logs, err = gdocFS.PickleSheetLogsFromContent(string(fileRaw))
 		return logs, errors.WithStack(err)
 	}
 }
