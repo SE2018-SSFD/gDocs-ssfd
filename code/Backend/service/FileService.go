@@ -45,6 +45,11 @@ func NewSheet(params utils.NewSheetParams) (success bool, msg int, data uint) {
 			panic(err)
 		}
 
+		// create initial chunk directory
+		if err := chunkCreateDir(fid); err != nil {
+			panic(err)
+		}
+
 		// write one log at (rows - 1, cols - 1) to initialize a rows x cols sheet
 		rows, cols := int(params.InitRows), int(params.InitColumns)
 		if rows < minRows {

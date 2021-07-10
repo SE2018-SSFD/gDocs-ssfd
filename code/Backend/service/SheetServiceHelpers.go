@@ -389,6 +389,17 @@ func sheetDeleteLogFile(fid uint, lid uint) (err error) {
 	}
 }
 
+
+// chunkCreateDir create a empty chunk directory in dfs with fid
+func chunkCreateDir(fid uint) (err error) {
+	chunkRoot := gdocFS.GetChunkRootPath(fid)
+	if err := dao.DirCreate(chunkRoot); err != nil {
+		return err
+	} else {
+		return nil
+	}
+}
+
 // reentrant lock on fid
 var fidLockMap sync.Map
 func lockOnFid(fid uint) {
