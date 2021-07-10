@@ -174,7 +174,11 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 
 	//if offset == -1 , return the last one
 	if args.ChunkIndex == -1 {
-		args.ChunkIndex = len(fs.chunks) - 1
+		if len(fs.chunks)==0{
+			args.ChunkIndex = 0
+		}else{
+			args.ChunkIndex = len(fs.chunks) - 1
+		}
 		reply.ChunkIndex = len(fs.chunks) - 1
 	}
 
