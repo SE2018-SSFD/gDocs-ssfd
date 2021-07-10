@@ -216,12 +216,14 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes in
 		argRCK.Len = roundReadBytes
 		argRCK.Off = roundOff
 		err = util.Call(string(retR.ChunkServerAddrs[0]), "ChunkServer.ReadChunkRPC", argRCK, &retRCK)
+		realReadBytes += retRCK.Len
 		if err != nil {
 			if strings.Contains(err.Error(),"EOF"){
 				logrus.Warnln("Client read EOF")
 				buf = buf+string(retRCK.Buf)
-				paddingLen := len - realReadBytes - retRCK.Len
+				paddingLen := len - realReadBytes
 				buf = buf+string(make([]byte,paddingLen))
+				err = nil
 			}else{
 				logrus.Panicln("Client read failed :", err)
 			}
@@ -233,7 +235,6 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes in
 		}
 		buf = buf+string(retRCK.Buf)
 		readBytes += roundReadBytes
-		realReadBytes += retRCK.Len
 		logrus.Debugf(" Read %d bytes from chunkserver %s, bytes read %d\n", roundReadBytes, string(retR.ChunkServerAddrs[0]), readBytes)
 		//logrus.Debugf("read:%s",retRCK.Buf)
 	}

@@ -4,10 +4,10 @@ import (
 	"DFS/util"
 	"DFS/util/zkWrap"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"net/rpc"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -112,7 +112,7 @@ func (cs *ChunkServer) ReadChunkRPC(args util.ReadChunkArgs, reply *util.ReadChu
 	defer ck.RUnlock()
 
 	len, err := cs.GetChunk(args.Handle, args.Off, buf)
-	if err != nil && err != io.EOF {
+	if err != nil && !strings.Contains(err.Error(),"EOF") {
 		log.Fatalf("get chunk error : %v", err)
 	}
 
@@ -123,7 +123,7 @@ func (cs *ChunkServer) ReadChunkRPC(args util.ReadChunkArgs, reply *util.ReadChu
 		logrus.Printf("ChunkServer %v: read chunk len %v,but actual len %v\n", cs.addr, args.Len, len)
 		// return fmt.Errorf("ChunkServer %v: read chunk len %v,but actual len %v", cs.addr, args.Len, len)
 	}
-	return nil
+	return err
 }
 
 func (cs *ChunkServer) CreateChunkRPC(args util.CreateChunkArgs, reply *util.CreateChunkReply) error {
