@@ -8,6 +8,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -216,8 +217,13 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes in
 		argRCK.Off = roundOff
 		err = util.Call(string(retR.ChunkServerAddrs[0]), "ChunkServer.ReadChunkRPC", argRCK, &retRCK)
 		if err != nil {
-			logrus.Panicln("Client read failed :", err)
-			return
+			if !strings.Contains(err.Error(),"EOF"){
+				logrus.Warnln("Client read EOF")
+			}else{
+				logrus.Panicln("Client read failed :", err)
+				return
+			}
+
 		}
 		if retRCK.Len != roundReadBytes {
 			logrus.Panicln("Client should read %v,buf only read %v", roundReadBytes, retRCK.Len)
