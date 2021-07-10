@@ -14,7 +14,7 @@ var wss *wsWrap.WSServer
 var onMessagePool *ants.PoolWithFunc
 
 const (
-	onMessagePoolSize = 2000
+	onMessagePoolSize = 6000
 )
 
 func init() {

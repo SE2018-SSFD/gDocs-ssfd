@@ -72,7 +72,6 @@ type sheetWSCellMetaEntry struct {
 	cellKey				cellKey
 	cellLock			cellLock
 	workerSema			chan int	// semaphore(chan without buffer), guarantees only one worker is in critical section
-	debugCnt			int32
 }
 
 type cellKey struct {
@@ -273,7 +272,14 @@ func SheetOnDisConn(wss *wsWrap.WSServer, uid uint, username string, fid uint) {
 				ownerUid := uint(cellMeta.cellLock.owner)
 				if ownerUid == userMeta.uid {
 					cellMeta.cellLock.unLock(cellMeta.cellLock.owner)
+
+					sheetPrepareBroadcast("release", meta, cellMeta, &cellChanMarshal{
+						MsgCode: MsgRelease,
+						Uid: userMeta.uid,
+						Username: userMeta.username,
+					})
 				}
+
 				return true
 			})
 		} else {
@@ -501,9 +507,9 @@ func doSheetModify(meta *sheetWSMetaEntry, cellMeta *sheetWSCellMetaEntry, cellM
 			if !inCache {
 				commitOneSheetWithCache(fid, memSheet)
 			}
-
-			sheetModifyBroadcast(meta, cellMeta, cellMsg)
 		}
+
+		sheetModifyBroadcast(meta, cellMeta, cellMsg)
 
 		if inCache {
 			keys, evicted := getSheetCache().Put(fid)

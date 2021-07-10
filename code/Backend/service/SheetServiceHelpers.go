@@ -38,17 +38,72 @@ var (
 //   current maximum cid and lid are returned.
 // Or if the sheet filesystem is inconsistent and cannot not be recovered, error SheetFSUnrecoverableErr is returned.
 func SheetFSCheck(fid uint, fullChk bool) (cid uint, lid uint, err error) {
+	lockOnFid(fid); defer unlockOnFid(fid)
 	logRoot := gdocFS.GetLogRootPath("sheet", fid)
 	chkpRoot := gdocFS.GetCheckPointRootPath("sheet", fid)
 
-	// check log-only consistency
-	logFileNames, err := dao.DirFilenameIndexesAllSorted(logRoot)
+	logIndexes, err := dao.DirFilenameIndexesAllSorted(logRoot)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	expectLid := uint(len(logFileNames))
-	for expect, actual := range logFileNames {
+	chkpFileNames, err := dao.DirFilenameIndexesAllSorted(chkpRoot)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	expectLid := uint(len(logIndexes))
+	expectCid := uint(len(chkpFileNames))
+
+	// check consistency between log and checkpoint
+	if expectCid + 1 < expectLid {
+		// miss checkpoints - recover from the log and make a checkpoint
+		if chkp, err := sheetGetPickledCheckPointFromDfs(fid, expectCid); err != nil {
+			return 0, 0, SheetFSUnrecoverableErr
+		} else {
+			// starting from loading the last checkpoint in checkpoint root path
+			memSheet := cache.NewMemSheetFromStringSlice(chkp.Content, chkp.Columns)
+
+			// for every missing checkpoint
+			for curCid := expectCid + 1; curCid < expectLid; curCid += 1 {
+				logger.Warnf("[expectCid(%d)\texpectLid(%d)\tcurCid(%d)] recover missing checkpoints",
+					expectCid, expectLid, curCid)
+				// redo with pickled logs
+				logs, err := sheetGetPickledLogFromDfs(fid, curCid)
+				if err != nil {
+					return 0, 0, SheetFSUnrecoverableErr
+				}
+				for _, log := range logs {
+					if log == logCommitEntry {	// skip commit log entry
+						continue
+					} else {
+						memSheet.Set(log.Row, log.Col, log.New)
+					}
+				}
+
+				// make checkpoint
+				rows, cols := memSheet.Shape()
+				if err := sheetCreatePickledCheckPointInDfs(fid, curCid, &gdocFS.SheetCheckPointPickle{
+					Cid: cid,
+					Timestamp: time.Now(),
+					Rows: rows,
+					Columns: cols,
+					Content: memSheet.ToStringSlice(),
+				}); err != nil {
+					logger.Errorf("%+v", err)
+				}
+			}
+
+			expectCid = expectLid - 1
+		}
+	} else if expectCid + 1 > expectLid {
+		// miss one log, should not happen because new log is created before checkpoint
+		return 0, 0, SheetFSUnrecoverableErr
+	}
+
+
+	// check log-only consistency
+	for expect, actual := range logIndexes {
 		curLid := uint(expect + 1)
 		// check name == curLid without holes
 		if int(curLid) != actual {
@@ -81,18 +136,15 @@ func SheetFSCheck(fid uint, fullChk bool) (cid uint, lid uint, err error) {
 		if logs, err := sheetGetPickledLogFromDfs(fid, expectLid); err != nil {
 			// TODO: recover - log is invalid
 			return 0, 0, SheetFSUnrecoverableErr
-		} else if lastLog := logs[len(logs)-1]; lastLog != logCommitEntry {
-			// TODO: !!! recover last uncommitted log !!!
+		} else if len(logs) != 0 {
+			if lastLog := logs[len(logs)-1]; lastLog != logCommitEntry {
+				// recover last uncommitted log - just commit it
+				appendOneSheetLog(fid, expectLid, &logCommitEntry)
+			}
 		}
 	}
 
 	// check checkpoint-only consistency
-	chkpFileNames, err := dao.DirFilenameIndexesAllSorted(chkpRoot)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	expectCid := uint(len(chkpFileNames))
 	for expect, actual := range chkpFileNames {
 		curCid := uint(expect) + 1
 		// check name == curCid without holes
@@ -108,12 +160,6 @@ func SheetFSCheck(fid uint, fullChk bool) (cid uint, lid uint, err error) {
 				return 0, 0, SheetFSUnrecoverableErr
 			}
 		}
-	}
-
-	// check consistency between log and checkpoint
-	if expectCid + 1 != expectLid {
-		// TODO: recover - cid + 1 != lid
-		return 0, 0, SheetFSUnrecoverableErr
 	}
 
 	return expectCid, expectLid, nil
@@ -144,9 +190,19 @@ func commitOneSheetWithCache(fid uint, memSheet *cache.MemSheet) (cid uint) {
 		}
 	}
 
-	// write checkpoint to curCid+1
-	cid = curCid + 1
+
 	rows, cols := memSheet.Shape()
+
+	// 1. commit log: write commit entry to log with lid=curCid+1
+	appendOneSheetLog(fid, lid, &logCommitEntry)
+
+	// 2. create new log file: create log with lid=curCid+2
+	if err := sheetCreateLogFile(fid, lid + 1); err != nil {
+		logger.Errorf("%+v", err)
+	}
+
+	// 3. make checkpoint: write checkpoint to curCid+1
+	cid = curCid + 1
 	if err := sheetCreatePickledCheckPointInDfs(fid, cid, &gdocFS.SheetCheckPointPickle{
 		Cid: cid,
 		Timestamp: time.Now(),
@@ -157,13 +213,6 @@ func commitOneSheetWithCache(fid uint, memSheet *cache.MemSheet) (cid uint) {
 		logger.Errorf("%+v", err)
 	}
 
-	// write commit entry to log with lid=curCid+1
-	appendOneSheetLog(fid, lid, &logCommitEntry)
-
-	// create log with lid=curCid+2
-	if err := sheetCreateLogFile(fid, lid + 1); err != nil {
-		logger.Errorf("%+v", err)
-	}
 
 	return cid
 }
@@ -180,10 +229,12 @@ func commitSheetsWithCache(fids []uint, memSheets []*cache.MemSheet) {
 // BUT log can be *UNCOMMITTED* if the server it belonged to crashed, for which we need to thoroughly handle
 //   all possible circumstances here in order to achieve crash consistency.
 func recoverSheetFromLog(fid uint) (memSheet *cache.MemSheet, inCache bool) {
-	curCid := uint(sheetGetCheckPointNum(fid))
-
 	// TODO: determine whether sheet is from crashed server and call SheetFSCheck
-	// SheetFSCheck(fid, isFromCrashServer)
+	curCid, _, err := SheetFSCheck(fid, false)
+	if err != nil {
+		logger.Errorf("[fid(%d)] FSCheck not passed!")
+		return nil, false
+	}
 
 	// get memSheet from scratch or latest checkpoint
 	if curCid == 0 {
@@ -202,9 +253,13 @@ func recoverSheetFromLog(fid uint) (memSheet *cache.MemSheet, inCache bool) {
 		logger.Errorf("%+v", err)
 		return nil, false
 	} else {
-		for li := 0; li < len(logs) - 1; li += 1 {	// without logCommitEntry, which is in the end
-			log := &logs[li]
-			memSheet.Set(log.Row, log.Col, log.New)
+		for li := 0; li < len(logs); li += 1 {	// without logCommitEntry, which is in the end
+			if logs[li] == logCommitEntry {
+				continue
+			} else {
+				log := &logs[li]
+				memSheet.Set(log.Row, log.Col, log.New)
+			}
 		}
 
 		// do eviction
@@ -220,6 +275,12 @@ func recoverSheetFromLog(fid uint) (memSheet *cache.MemSheet, inCache bool) {
 // sheetGetPickledCheckPointFromDfs pickles a CheckPoint from dfs with fid and cid
 func sheetGetPickledCheckPointFromDfs(fid uint, cid uint) (chkp *gdocFS.SheetCheckPointPickle, err error) {
 	lockOnFid(fid); defer unlockOnFid(fid)
+	if cid == 0 {
+		return &gdocFS.SheetCheckPointPickle{
+			Columns: minCols,
+			Content: make([]string, minRows * minCols),
+		}, nil
+	}
 	path := gdocFS.GetCheckPointPath("sheet", fid, cid)
 	if fileRaw, err := dao.FileGetAll(path); err != nil {
 		return nil, errors.WithStack(err)

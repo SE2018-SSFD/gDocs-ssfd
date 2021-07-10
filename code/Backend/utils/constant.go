@@ -34,6 +34,10 @@ const (
 	SheetCommitSuccess		=	28
 	SheetNothingToCommit	=	29
 	SheetRollbackSuccess	=	30
+	ChunkUploadCantGetFile	=	31
+	ChunkUploadBadFormValue	=	32
+	ChunkUploadSuccess		=	33
+	ChunkGetAllSuccess		=	34
 )
 
 var TokenTerm int64 = 30 * 60 // 30min
@@ -132,6 +136,7 @@ type GetChunkParams struct {
 	ChunkName	string		`json:"chunkName"`
 }
 
-type UploadChunkParams struct {
-
+type GetAllChunksParams struct {
+	Token		string		`json:"token"`
+	Fid			uint		`json:"fid"`
 }

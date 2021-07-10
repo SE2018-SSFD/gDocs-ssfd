@@ -108,23 +108,22 @@ func RollbackSheet(ctx iris.Context) {
 }
 
 func GetChunk(ctx iris.Context) {
-	var params utils.GetChunkParams
+	service.GetChunk(ctx)
+}
+
+func GetAllChunks(ctx iris.Context) {
+	var params utils.GetAllChunksParams
 	if !utils.GetContextParams(ctx, &params) {
 		return
 	}
 
-	success, msg:= service.GetChunk(ctx, params)
+	success, msg, data := service.GetAllChunks(params)
 
-	utils.SendResponse(ctx, success, msg, nil)
+	utils.SendResponse(ctx, success, msg, data)
 }
 
 func UploadChunk(ctx iris.Context) {
-	var params utils.UploadChunkParams
-	if !utils.GetContextParams(ctx, &params) {
-		return
-	}
+	success, msg, data := service.UploadChunk(ctx)
 
-	success, msg:= service.UploadChunk(ctx, params)
-
-	utils.SendResponse(ctx, success, msg, nil)
+	utils.SendResponse(ctx, success, msg, data)
 }
