@@ -115,7 +115,7 @@ class HomeSider extends React.Component {
                 </Col>
             </Row>
             <Row>
-                <Col span={20} offset={2}>
+                <Col span={24} offset={2}>
                     <Space direction="vertical">
                         <Button size="large" type="primary" icon={<PlusOutlined/>} onClick={this.handleNew}
                                 block={true}>新建</Button>

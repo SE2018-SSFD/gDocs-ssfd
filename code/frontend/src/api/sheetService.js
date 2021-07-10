@@ -1,4 +1,4 @@
-import {getRequest, postRequest} from "./ajax";
+import {getRequest, postRequest, postRequestForm} from "./ajax";
 import {GET_HTTP_URL} from "./common";
 
 export const newSheet = (callback) => {
@@ -92,4 +92,26 @@ export const rollbackSheet = (fid, cid, callback) => {
         cid:cid,
     }
     postRequest(url, data, callback);
+}
+
+export const uploadImage = (fid,file,callback) =>{
+    const url = GET_HTTP_URL() + 'uploadchunk';
+    const token = JSON.parse(localStorage.getItem("token"));
+    let data = {
+        fid: fid,
+        token: token,
+        uploadfile:file,
+    }
+    console.log(data);
+    postRequestForm(url, data, callback);
+}
+
+export const getAll = (fid,callback) => {
+    const url = GET_HTTP_URL()+'getallchunks';
+    const token = JSON.parse(localStorage.getItem("token"));
+    let data = {
+        fid:fid,
+        token:token,
+    }
+    postRequest(url,data,callback);
 }
