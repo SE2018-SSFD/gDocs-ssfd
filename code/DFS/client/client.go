@@ -134,7 +134,7 @@ func (c *Client) Open(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	logrus.Debugf("Client close : path %v",argO.Path)
+	logrus.Debugf("Client Open : path %v",argO.Path)
 	argF.Path = argO.Path
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
 	if err != nil || !retF.Exist {

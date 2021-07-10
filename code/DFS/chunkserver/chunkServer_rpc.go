@@ -100,7 +100,6 @@ func (cs *ChunkServer) LoadDataRPC(args util.LoadDataArgs, reply *util.LoadDataR
 
 func (cs *ChunkServer) ReadChunkRPC(args util.ReadChunkArgs, reply *util.ReadChunkReply) error {
 	buf := make([]byte, args.Len)
-
 	cs.RLock()
 	ck, exist := cs.chunks[args.Handle]
 	if !exist {
