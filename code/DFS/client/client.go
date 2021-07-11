@@ -6,8 +6,10 @@ import (
 	json "encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -236,7 +238,7 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes in
 // should contact the master first, then get the data directly from chunkserver
 func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
 	var argR util.ReadArg
-	var retR util.ReadRet
+	//var retR util.ReadRet
 	var argF util.GetFileMetaArg
 	var retF util.GetFileMetaRet
 	// Decode the params
@@ -277,17 +279,18 @@ func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
 	// Read to chunk
 
 	// readBytes, buf, err := c._Read(path, argR.Offset, argR.Len, fileSize)
-	readBytes, buf, err := c._Read(pathh, argR.Offset, argR.Len)
+	_, buf, err := c._Read(pathh, argR.Offset, argR.Len)
 
 	if err != nil {
 		logrus.Warnln("Client read failed :", err)
 		w.WriteHeader(400)
 		return
 	}
-	retR.Data = buf
-	retR.Len = readBytes
-	msg, _ := json.Marshal(retR)
-	w.Write(msg)
+	//retR.Data = buf
+	//retR.Len = readBytes
+	//msg, _ := json.Marshal(retR)
+	//w.Write(msg)
+	w.Write(buf) // return unmarshal dadta
 	return
 
 }
@@ -405,13 +408,42 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 	var retF util.GetFileMetaRet
 
 	// Decode the params
-	err := json.NewDecoder(r.Body).Decode(&argA)
-	if err != nil {
-		logrus.Warnln("Client append failed :", err)
-		w.WriteHeader(400)
+	//err := json.NewDecoder(r.Body).Decode(&argA)
+	//if err != nil {
+	//	logrus.Warnln("Client append failed :", err)
+	//	w.WriteHeader(400)
+	//	return
+	//}
+	//logrus.Debugf("Client append : fd %v",argA.Fd)
+
+	mr,err := r.MultipartReader()
+	if err != nil{
+		fmt.Println("r.MultipartReader() err,",err)
 		return
 	}
-	logrus.Debugf("Client append : fd %v",argA.Fd)
+	for{
+		p ,err := mr.NextPart()
+		if err == io.EOF{
+			break
+		}
+		if err != nil{
+			fmt.Println("mr.NextPart() err,",err)
+			break
+		}
+		//fmt.Println("part header:",p.Header)
+		formName := p.FormName()
+		fileName := p.FileName()
+		if formName == "fd" && fileName == ""{
+			formValue,_:= ioutil.ReadAll(p)
+			argA.Fd,_ = strconv.Atoi(string(formValue))
+		}
+		if fileName != "" {
+			fileData,_:=ioutil.ReadAll(p)
+			argA.Data = fileData
+		}
+	}
+
+
 
 	//Check append length
 	if len(argA.Data) > util.MAXAPPENDSIZE { // append size cannot exist half a chunk
@@ -426,14 +458,14 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 	//c.fdLock.RUnlock()
 
 	if pathh== "" {
-		err = fmt.Errorf("Client write failed : fd %d is not opened\n", argA.Fd)
+		err = fmt.Errorf("Client append failed : fd %d is not opened\n", argA.Fd)
 		return
 	}
 
 	argF.Path = pathh
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
 	if !retF.Exist {
-		logrus.Warnln("Client write failed :", err)
+		logrus.Warnln("Client append failed GetFileMetaErr :", err)
 		return
 	}
 	// fileSize := retF.Size
@@ -443,7 +475,7 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 
 	offset, err := c._Append(pathh, argA.Data)
 	if err != nil {
-		logrus.Warnln("Client write failed :", err)
+		logrus.Warnln("Client append failed :", err)
 		w.WriteHeader(400)
 		return
 	}
@@ -490,7 +522,7 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenByte
 		// Send to Master now
 		err = util.Call(string(argL.Addrs[0]), "ChunkServer.LoadDataRPC", argL, &retL)
 		if err != nil {
-			logrus.Warnln("Client write failed :", err)
+			logrus.Warnln("Client write failed LoadData :", err)
 			return
 		}
 		argC = util.SyncArgs{
@@ -501,7 +533,7 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenByte
 		}
 		err = util.Call(string(argL.Addrs[0]), "ChunkServer.SyncRPC", argC, &retC)
 		if err != nil {
-			logrus.Warnln("Client write failed :", err)
+			logrus.Warnln("Client write failed Sync :", err)
 			return
 		}
 
@@ -531,13 +563,51 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	var argW util.WriteArg
 	var retW util.WriteRet
 
-	// Decode the params
-	err := json.NewDecoder(r.Body).Decode(&argW)
-	if err != nil {
-		logrus.Warnln("Client write failed :", err)
-		w.WriteHeader(400)
+	mr,err := r.MultipartReader()
+	if err != nil{
+		fmt.Println("r.MultipartReader() err,",err)
 		return
 	}
+	for{
+		p ,err := mr.NextPart()
+		if err == io.EOF{
+			break
+		}
+		if err != nil{
+			fmt.Println("mr.NextPart() err,",err)
+			break
+		}
+		//fmt.Println("part header:",p.Header)
+		formName := p.FormName()
+		fileName := p.FileName()
+		if formName == "fd" && fileName == ""{
+			formValue,_:= ioutil.ReadAll(p)
+			argW.Fd,_ = strconv.Atoi(string(formValue))
+		}
+		if formName == "offset" && fileName == ""{
+			formValue,_:= ioutil.ReadAll(p)
+			argW.Offset,_ = strconv.Atoi(string(formValue))
+		}
+		if fileName != "" {
+			fileData,_:=ioutil.ReadAll(p)
+			argW.Data = fileData
+		}
+	}
+	// Decode the params
+	//var inter map[string]interface{}
+	//err := json.NewDecoder(r.Body).Decode(&inter)
+	//argW.Fd = int(inter["fd"].(float64))
+	//argW.Offset = int(inter["offset"].(float64))
+	//logrus.Warnln(inter)
+	//logrus.Warnln("-----")
+	//argW.Data = []byte(strings.TrimSpace(inter["data"].(string)))
+	//logrus.Warnln(argW.Data)
+	//if err != nil {
+	//	logrus.Warnln("Client write failed decode :", err)
+	//	w.WriteHeader(400)
+	//	return
+	//}
+
 	logrus.Debugf("Client write : fd %v, offset %v",argW.Fd,argW.Offset)
 
 	// Get the file metadata and check
@@ -551,7 +621,7 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	argF.Path = pathh
 	err = util.Call(string(c.masterAddr), "Master.GetFileMetaRPC", argF, &retF)
 	if !retF.Exist {
-		logrus.Warnln("Client write failed :", err)
+		logrus.Warnln("Client write failed GetFileMeta :", err)
 		return
 	}
 	logrus.Debugf("client write path:%v,offset:%v,datasize:%v", pathh, argW.Offset, len(argW.Data))
@@ -566,7 +636,7 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 	// writtenBytes, err := c._Write(path, argW.Offset, argW.Data, fileSize)
 	writtenBytes, err := c._Write(pathh, argW.Offset, argW.Data)
 	if err != nil {
-		logrus.Warnln("Client write failed :", err)
+		logrus.Warnln("Client write failed _write :", err)
 		w.WriteHeader(400)
 		return
 	}
@@ -689,7 +759,7 @@ func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error)
 		// Send to Master now
 		err = util.Call(string(argL.Addrs[0]), "ChunkServer.LoadDataRPC", argL, &retL)
 		if err != nil {
-			logrus.Warnln("Client write failed :", err)
+			logrus.Warnln("Client append failed LoadFata :", err)
 			return
 		}
 		argC = util.SyncArgs{
@@ -705,7 +775,7 @@ func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error)
 			return
 		} else if retC.ErrorCode != util.NOSPACE {
 			//TODO: we should retry append
-			logrus.Warnln("Client write failed :", err)
+			logrus.Warnln("Client append failed sync :", err)
 			break
 		}
 
