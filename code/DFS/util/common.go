@@ -21,8 +21,8 @@ const (
 	GETREPLICASOPS = 1006
 	ADDSERVEROPS   = 1007
 	DELSERVEROPS   = 1008
-	INITIALVERSION    =  1
-	HERETRYTIMES = 3
+	INITIALVERSION = 1
+	HERETRYTIMES   = 3
 )
 
 // ChunkServer
@@ -35,12 +35,12 @@ type ChunkState struct {
 
 // Client
 const (
-	//MAXCHUNKSIZE = 64 << 20 // 64MB
-	MAXCHUNKSIZE      = 1024 // 64B
+	MAXCHUNKSIZE = 64 << 20 // 64MB
+	// MAXCHUNKSIZE      = 1024 // 64B
 	REPLICATIONTIMES  = 3
 	MAXAPPENDSIZE     = MAXCHUNKSIZE / 2 // TODO: according to GFS docs, we should set it to MAXCHUNKSIZE / 4
 	MAXFD             = 65535
-	MINFD 			  = 1
+	MINFD             = 1
 	HEARTBEATDURATION = 2000 * time.Millisecond // 2s
 	DELETEPREFIX      = "_delete_"
 )
