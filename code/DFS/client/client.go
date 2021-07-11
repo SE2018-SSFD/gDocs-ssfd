@@ -193,7 +193,7 @@ func (c *Client) Close(w http.ResponseWriter, r *http.Request) {
 }
 
 // func (c *Client) _Read(path util.DFSPath, offset int, len int, fileSize int) (readBytes int, buf []byte, err error) {
-func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes int, buf string, err error) {
+func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes int, buf []byte, err error) {
 	var argR util.GetReplicasArg
 	var retR util.GetReplicasRet
 	var argRCK util.ReadChunkArgs
@@ -220,7 +220,7 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes in
 			logrus.Panicln("Client read failed :", err)
 			return
 		}
-		buf = buf+string(retRCK.Buf)
+		buf = append(buf,retRCK.Buf...)
 		if retRCK.Len != roundReadBytes {
 			logrus.Warnf("Client should read %v,buf only read %v", roundReadBytes, retRCK.Len)
 			return
@@ -455,7 +455,7 @@ func (c *Client) Append(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (c *Client) _Write(path util.DFSPath, offset int, data string) (writtenBytes int, err error) {
+func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenBytes int, err error) {
 	var argR util.GetReplicasArg
 	var retR util.GetReplicasRet
 	var argL util.LoadDataArgs
@@ -504,6 +504,7 @@ func (c *Client) _Write(path util.DFSPath, offset int, data string) (writtenByte
 			logrus.Warnln("Client write failed :", err)
 			return
 		}
+
 		writtenBytes += roundWrittenBytes
 		//logrus.Debugf(" Write %d bytes : %v, bytes written %d offset %d\n", roundWrittenBytes, argL.Data, writtenBytes,argC.Off)
 	}
@@ -650,7 +651,7 @@ func (c *Client) _ConcurrentAppend(index int, data string) (int, error) {
 }
 
 // helper method for Append
-func (c *Client) _Append(path util.DFSPath, data string) (offset int, err error) {
+func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error) {
 	var argR util.GetReplicasArg
 	var retR util.GetReplicasRet
 	var argL util.LoadDataArgs

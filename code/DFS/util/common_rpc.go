@@ -134,14 +134,14 @@ type ScanRet struct {
 type WriteArg struct {
 	Fd     int    `json:"fd"`
 	Offset int    `json:"offset"`
-	Data   string `json:"data"`
+	Data   []byte `json:"data"`
 }
 type WriteRet struct {
 	BytesWritten int `json:"bytes_written"`
 }
 type AppendArg struct {
 	Fd   int    `json:"fd"`
-	Data string `json:"data"`
+	Data []byte `json:"data"`
 }
 
 type AppendRet struct {
@@ -150,7 +150,7 @@ type AppendRet struct {
 
 type CAppendArg struct {
 	Fd   int    `json:"fd"`
-	Data string `json:"data"`
+	Data []byte `json:"data"`
 }
 type CAppendRet struct {
 	Offset int `json:"offset"`
@@ -191,7 +191,7 @@ type ReadArg struct {
 
 type ReadRet struct {
 	Len  int    `json:"len"`
-	Data string `json:"data"`
+	Data []byte `json:"data"`
 }
 
 // client
