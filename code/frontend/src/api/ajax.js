@@ -1,6 +1,6 @@
 import {CHANGE_PORT, GET_PORT} from "./common";
 
-const TIMEOUT = 3000;
+const TIMEOUT = 10000;
 let ERROR_NUM = 3;
 let getRequest = (url, callback) => {
     let opts = {

@@ -78,6 +78,15 @@ class SheetView extends React.Component {
                 });
                 message.success(msg_word);
             }
+            else{
+                this.setState({
+                    fileList: [],
+                    uploading: false,
+                    picVisible: false,
+                    picDrawerVisible: false,
+                });
+                message.error(msg_word);
+            }
         }
         uploadImage(this.fid, fileList[0], callback)
     }
