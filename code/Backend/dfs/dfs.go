@@ -4,8 +4,11 @@ import (
 	"backend/utils/logger"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 	"strings"
@@ -171,14 +174,14 @@ func dfsRead(fd int, off int64, len int64) (data []byte, err error) {
 		Offset: int(off),
 		Len: int(len),
 	}
-	respBody := ReadRet{}
 
-	err = post("read", reqBody, &respBody)
+	var respBody []byte
+	err = post("read", reqBody, respBody, true)
 	if err != nil {
 		return nil, withStackedMessagef(err, "[%d] dfsRead", fd)
 	}
 
-	data = filterAllPadding(respBody.Data)
+	data = filterAllPadding(respBody)
 	return data, nil
 }
 
@@ -221,14 +224,14 @@ func dfsWrite(fd int, off int64, data []byte) (bytesWritten int64, err error) {
 		return 0, withStackedMessagef(InvalidFdErr, "[%d] dfsWrite", strconv.Itoa(fd))
 	}
 
-	reqBody := WriteArg{
-		Fd: fd,
-		Offset: int(off),
-		Data: data,
+	reqBody := map[string]string {
+		"fd": strconv.Itoa(fd),
+		"offset": strconv.FormatInt(off, 10),
 	}
 	respBody := WriteRet{}
 
-	err = post("write", reqBody, &respBody)
+	//err = post("write", reqBody, &respBody)
+	err = postForm("write", data, reqBody, &respBody)
 	if err != nil {
 		return 0, withStackedMessagef(err, "[%d] dfsWrite", fd)
 	}
@@ -242,13 +245,13 @@ func dfsAppend(fd int, data []byte) (bytesWritten int64, err error) {
 		return 0, withStackedMessagef(InvalidFdErr, "[%d] dfsSppend", strconv.Itoa(fd))
 	}
 
-	reqBody := AppendArg{
-		Fd: fd,
-		Data: data,
+	reqBody := map[string]string {
+		"fd": strconv.Itoa(fd),
 	}
 	respBody := AppendRet{}
 
-	err = post("append", reqBody, &respBody)
+	//err = post("append", reqBody, &respBody)
+	err = postForm("write", data, reqBody, &respBody)
 	if err != nil {
 		return 0, withStackedMessagef(err, "[%d] dfsAppend", fd)
 	}
@@ -317,7 +320,7 @@ var (
 	clientAddr	=	"http://1.15.127.43:1333"
 )
 
-func post(api string, reqBody interface{}, respBody interface{}) (err error) {
+func post(api string, reqBody interface{}, respBody interface{}, returnRaw ...bool) (err error) {
 	url := clientAddr + "/" + api
 	reqBodyRaw, _ := json.Marshal(reqBody)
 
@@ -335,6 +338,11 @@ func post(api string, reqBody interface{}, respBody interface{}) (err error) {
 
 	logger.Debugf("[%s] Get Post Raw: %s", url, respBodyRaw)
 
+	if len(returnRaw) > 0 && returnRaw[0] {
+		respBody = respBodyRaw
+		return nil
+	}
+
 	if respBody != nil {
 		err = json.Unmarshal(respBodyRaw, respBody)
 		if err != nil {
@@ -343,6 +351,90 @@ func post(api string, reqBody interface{}, respBody interface{}) (err error) {
 	}
 
 	logger.Debugf("[%s] Get Post Json Response: %v", url, respBody)
+
+	return nil
+}
+
+func postForm(api string, data []byte, params map[string]string, respBody interface{}) (err error) {
+	url := clientAddr + "/" + api
+
+	logger.Debugf("[%s] Send Post: %+v", url, params)
+
+	bodyBuf := bytes.Buffer{}
+	bodyWrite := multipart.NewWriter(&bodyBuf)
+	file, err := bodyWrite.CreateFormFile("file", "raw")
+	if err != nil {
+		return err
+	}
+
+	err = ioWriteAll(file, data)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range params {
+		field, err := bodyWrite.CreateFormField(k)
+		if err != nil {
+			return err
+		}
+
+		err = ioWriteAll(field, []byte(v))
+		if err != nil {
+			return err
+		}
+	}
+
+	err = bodyWrite.Close()
+	if err != nil {
+		return err
+	}
+
+	client := http.Client{}
+	req, err := http.NewRequest(http.MethodPost, url, &bodyBuf)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", bodyWrite.FormDataContentType())
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	respBodyRaw, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf("[%s] Get PostForm Raw: %s", url, respBodyRaw)
+
+	if respBody != nil {
+		err = json.Unmarshal(respBodyRaw, respBody)
+		if err != nil {
+			return err
+		}
+	}
+
+	logger.Debugf("[%s] Get PostForm Json Response: %v", url, respBody)
+
+	return nil
+
+}
+
+func ioWriteAll(writer io.Writer, data []byte) (err error) {
+	written, total := 0, len(data)
+	for written < total {
+		n, err := writer.Write(data[written:])
+		if err != nil {
+			return err
+		}
+
+		written += n
+	}
+
+	if written != total {
+		return fmt.Errorf("in postForm, expect to write %d bytes, actually it is %d", total, written)
+	}
 
 	return nil
 }
