@@ -176,7 +176,7 @@ func dfsRead(fd int, off int64, len int64) (data []byte, err error) {
 	}
 
 	var respBody []byte
-	err = post("read", reqBody, respBody, true)
+	err = post("read", reqBody, &respBody, true)
 	if err != nil {
 		return nil, withStackedMessagef(err, "[%d] dfsRead", fd)
 	}
@@ -339,7 +339,7 @@ func post(api string, reqBody interface{}, respBody interface{}, returnRaw ...bo
 	logger.Debugf("[%s] Get Post Raw: %s", url, respBodyRaw)
 
 	if len(returnRaw) > 0 && returnRaw[0] {
-		respBody = respBodyRaw
+		*respBody.(*[]byte) = respBodyRaw
 		return nil
 	}
 
