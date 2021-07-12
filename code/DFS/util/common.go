@@ -51,3 +51,15 @@ type ErrorCode int32
 const (
 	NOSPACE ErrorCode = -11
 )
+
+var MasterTopicName string = "my_topic3"
+
+type OperationType int32
+
+type MasterLog struct {
+	OpType OperationType
+	Path   DFSPath
+	Size   int       // for setFileMetaRPC
+	Addrs  []Address // for GetReplicasRPC
+	Addr   Address   // for register & unregister RPC
+}

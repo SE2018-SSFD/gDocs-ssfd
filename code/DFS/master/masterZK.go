@@ -17,16 +17,16 @@ func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 		var argG util.GetChunkStatesArgs
 		var retG util.GetChunkStatesReply
 		count := util.HERETRYTIMES
-		for count>0{
+		for count > 0 {
 			err := util.Call(string(chunkServerAddr), "ChunkServer.GetChunkStatesRPC", argG, &retG)
 			if err != nil {
 				logrus.Warnf("Master addServer error : %v,retry", err)
-				count --
-			}else{
+				count--
+			} else {
 				break
 			}
 		}
-		if count==0{
+		if count == 0 {
 			logrus.Fatal("Master addServer error : cannot connect to chunkServer RPC  ")
 		}
 
@@ -126,13 +126,17 @@ func (m *Master) RegisterElectionNodes() {
 	cb := func(el *zkWrap.Elector) {
 		//become leader, join heartbeat
 		logrus.Print("master " + m.addr + " become leader!")
+		//kafka producer
+		m.ap, err = kafka.MakeProducer(string(m.addr))
+		if err != nil {
+			logrus.Fatal("kafka make producer error :", err)
+		}
 		m.RegisterClusterNodes()
 		m.RegisterLeaderNodes()
-
 	}
 	m.el, err = zkWrap.NewElector("MasterLeaderElection", string(m.addr), cb)
 	if err != nil {
-		logrus.Fatal("new elector error : ",err)
+		logrus.Fatal("new elector error : ", err)
 		return
 	}
 }

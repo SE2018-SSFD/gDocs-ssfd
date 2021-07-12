@@ -27,9 +27,11 @@ type Master struct {
 	cs               *ChunkStates
 	ns               *NamespaceState
 	shutdown         chan interface{}
-	clusterHeartbeat *zkWrap.Heartbeat //this heartbeat contains one master and some chunkservers, when master become leader, join this heartbeat
-	leaderHeartbeat  *zkWrap.Heartbeat //this heartbeat contains one master and some clients, when master become leader, join this heartbeat
-	el               *zkWrap.Elector   // use for leader election
+	clusterHeartbeat *zkWrap.Heartbeat     //this heartbeat contains one master and some chunkservers, when master become leader, join this heartbeat
+	leaderHeartbeat  *zkWrap.Heartbeat     //this heartbeat contains one master and some clients, when master become leader, join this heartbeat
+	el               *zkWrap.Elector       // use for leader election
+	cg               *sarama.ConsumerGroup // kafka consumer group, use for logging
+	ap               *sarama.AsyncProducer // kafka producer, use for logging
 }
 
 type OperationType int32
@@ -79,7 +81,6 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error
 	// Init Kafka client
 	//config := sarama.NewConfig()
 
-
 	// Init metadata manager
 	m.ns = newNamespaceState()
 	m.cs = newChunkStates()
@@ -96,6 +97,9 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error
 
 	// Wait until other masters are ready
 	// err = implicitWait(util.MAXWAITINGTIME*time.Second, &wg)
+	//kafka consumer
+	m.cg, err = kafka.MakeConsumerGroup(string(m.addr))
+	go kafka.Consume(m.cg, string(m.metaPath))
 
 	//zookeeper election
 	m.RegisterElectionNodes()
@@ -208,4 +212,3 @@ func (m *Master) UnregisterServer(addr util.Address) error {
 func (m *Master) GetStatusString() string {
 	return "Master address :" + string(m.addr) + ",metaPath :" + string(m.metaPath)
 }
-
