@@ -4,6 +4,7 @@ import (
 	"DFS/util"
 	"container/heap"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"math/rand"
 	"sync"
 	"time"
@@ -16,11 +17,6 @@ type ChunkServerStates struct {
 	servers map[util.Address]*ChunkServerState
 }
 
-type serialChunkServerStates struct {
-	Addr  util.Address
-	State ChunkServerState
-}
-
 type ChunkServerState struct {
 	sync.RWMutex
 	LastHeartbeat time.Time
@@ -28,6 +24,14 @@ type ChunkServerState struct {
 }
 type ChunkServerHeap struct{
 	Addr  util.Address
+	ChunkNum int
+}
+type serialChunkServerStates struct {
+	Addr  util.Address
+	State SerialChunkServerState
+}
+type SerialChunkServerState struct {
+	LastHeartbeat time.Time
 	ChunkNum int
 }
 
@@ -55,8 +59,13 @@ func (s *ChunkServerStates) Serialize() []serialChunkServerStates {
 	s.RLock()
 	defer s.RUnlock()
 	var scss = make([]serialChunkServerStates, 0)
-	for key, value := range s.servers {
-		scss = append(scss, serialChunkServerStates{Addr: key, State: *value})
+	for key, state := range s.servers {
+		state.RLock()
+		scss = append(scss, serialChunkServerStates{Addr: key, State: SerialChunkServerState{
+			ChunkNum: state.ChunkNum,
+			LastHeartbeat: state.LastHeartbeat,
+		}})
+		state.RUnlock()
 	}
 	return scss
 }
@@ -64,7 +73,11 @@ func (s *ChunkServerStates) Deserialize(scss []serialChunkServerStates) error {
 	s.Lock()
 	defer s.Unlock()
 	for _, _scss := range scss {
-		s.servers[_scss.Addr] = &_scss.State
+		s.servers[_scss.Addr] = &ChunkServerState{
+			RWMutex:       sync.RWMutex{},
+			LastHeartbeat: _scss.State.LastHeartbeat,
+			ChunkNum:      _scss.State.ChunkNum,
+		}
 	}
 	return nil
 }
@@ -97,14 +110,16 @@ func (s *ChunkServerStates) balanceServers(times int) (addrs []util.Address, err
 	h := &IntHeap{}
 	heap.Init(h)
 	for addr, state := range s.servers {
+		state.RLock()
 		hea := ChunkServerHeap{ChunkNum: state.ChunkNum,Addr: addr}
 		heap.Push(h,&hea)
+		state.RUnlock()
 	}
 	for times > 0{
 		times --
 		addrs = append(addrs,heap.Pop(h).(ChunkServerHeap).Addr)
 	}
-
+	logrus.Debugf("Balanced choosed ")
 	return
 }
 
