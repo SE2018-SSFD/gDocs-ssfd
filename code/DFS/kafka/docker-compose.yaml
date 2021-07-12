@@ -1,0 +1,73 @@
+version: '3.1'
+
+services:
+  kafka1:
+    image: wurstmeister/kafka
+    restart: unless-stopped
+    container_name: kafka1
+    hostname: kafka1
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://1.15.127.43:9092    ## 宿主机IP
+      KAFKA_ADVERTISED_HOST_NAME: kafka1
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_ZOOKEEPER_CONNECT: "123.57.65.161:12086,123.57.65.161:12087,123.57.65.161:12088"
+    volumes:
+      - "./kafka/kafka1/data/:/kafka"
+
+
+  kafka2:
+    image: wurstmeister/kafka
+    restart: unless-stopped
+    container_name: kafka2
+    hostname: kafka2
+    ports:
+      - "9093:9092"
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://1.15.127.43:9093    ## 宿主机IP
+      KAFKA_ADVERTISED_HOST_NAME: kafka2
+      KAFKA_ADVERTISED_PORT: 9093
+      KAFKA_ZOOKEEPER_CONNECT: "123.57.65.161:12086,123.57.65.161:12087,123.57.65.161:12088"
+    volumes:
+      - "./kafka/kafka2/data/:/kafka"
+
+  kafka3:
+    image: wurstmeister/kafka
+    restart: unless-stopped
+    container_name: kafka3
+    hostname: kafka3
+    ports:
+      - "9094:9092"
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://1.15.127.43:9094   ## 宿主机IP
+      KAFKA_ADVERTISED_HOST_NAME: kafka3
+      KAFKA_ADVERTISED_PORT: 9094
+      KAFKA_ZOOKEEPER_CONNECT: "123.57.65.161:12086,123.57.65.161:12087,123.57.65.161:12088"
+    volumes:
+      - "./kafka/kafka3/data/:/kafka"
+
+  kafka-manager: # Kafka 图形管理界面
+    image: sheepkiller/kafka-manager:latest
+    restart: unless-stopped
+    container_name: kafka-manager
+    hostname: kafka-manager
+    ports:
+      - "9000:9000"
+    links:            # 连接本compose文件创建的container
+      - kafka1
+      - kafka2
+      - kafka3
+    external_links:   # 连接外部compose文件创建的container
+      - zoo1
+      - zoo2
+      - zoo3
+    environment:
+      ZK_HOSTS: 123.57.65.161:12086,123.57.65.161:12087,123.57.65.161:12088
+      KAFKA_BROKERS: kafka1:9092,kafka2:9093,kafka3:9094

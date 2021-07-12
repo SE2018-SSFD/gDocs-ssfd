@@ -1,9 +1,11 @@
 package master
 
 import (
+	"DFS/kafka"
 	"DFS/util"
 	"DFS/util/zkWrap"
 	"fmt"
+	"github.com/Shopify/sarama"
 	"github.com/sirupsen/logrus"
 	"net"
 	"net/rpc"
@@ -30,6 +32,8 @@ type Master struct {
 	clusterHeartbeat *zkWrap.Heartbeat //this heartbeat contains one master and some chunkservers, when master become leader, join this heartbeat
 	leaderHeartbeat  *zkWrap.Heartbeat //this heartbeat contains one master and some clients, when master become leader, join this heartbeat
 	el               *zkWrap.Elector   // use for leader election
+	cg 				 *sarama.ConsumerGroup // kafka consumer group, use for logging
+	ap               *sarama.AsyncProducer // kafka producer, use for logging
 }
 
 type OperationType int32
@@ -96,12 +100,17 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error
 
 	// Wait until other masters are ready
 	// err = implicitWait(util.MAXWAITINGTIME*time.Second, &wg)
-
+	//kafka consumer
+	m.cg,err = kafka.MakeConsumerGroup(string(m.addr))
+	go kafka.Consume(m.cg,string(m.metaPath))
 	//zookeeper election
 	m.RegisterElectionNodes()
+
+
 	if err == nil {
 		logrus.Infoln("master " + addr + ": init success")
 	}
+
 	return m, err
 }
 func InitMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error) {

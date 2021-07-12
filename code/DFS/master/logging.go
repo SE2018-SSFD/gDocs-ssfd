@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"github.com/Shopify/sarama"
 	"github.com/sirupsen/logrus"
 	"os"
 	"path"
@@ -25,26 +26,60 @@ type MasterLog struct {
 	Addrs  []util.Address // for GetReplicasRPC
 	Addr util.Address   // for register & unregister RPC
 }
+func PushMessage(ap *sarama.AsyncProducer,value util.MasterLog) {
+	//topic := "my_topic2"
+	data, err := json.Marshal(value)
+	if err != nil {
+		logrus.Error("[kafka_producer][sendMessage]:%s", err.Error())
+		return
+	}
+
+	msg := &sarama.ProducerMessage{
+		Topic: util.MasterTopicName,
+		Value: sarama.ByteEncoder(data),
+	}
+
+	(*ap).Input() <- msg
+	select {
+	case suc := <-(*ap).Successes():
+		fmt.Printf("offset: %d,  timestamp: %s\n", suc.Offset, suc.Timestamp.String())
+	case fail := <-(*ap).Errors():
+		fmt.Printf("err: %s\n", fail.Err.Error())
+	}
+}
 
 // AppendLog appends a log structure to persistent file
 func (m *Master) AppendLog(ml MasterLog) error {
 	m.logLock.Lock()
 	defer m.logLock.Unlock()
-	logrus.Debugf("AppendLog : %d", ml.OpType)
-	filename := path.Join(string(m.metaPath), "log.dat")
-	fd, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
-	if err != nil {
-		logrus.Warnf("AppendLogError :%s\n", err)
-		return err
+	if m.ap == nil {
+		logrus.Fatal("producer is nil")
+		return nil
 	}
-	defer fd.Close()
-	enc := json.NewEncoder(fd)
-	logrus.Infoln(ml)
-	err = enc.Encode(ml)
-	if err != nil {
-		logrus.Warnf("AppendLogError :%s", err)
-		return err
+	uml := util.MasterLog{
+		OpType: util.OperationType(ml.OpType),
+		Path: ml.Path,
+		Size: ml.Size,
+		Addrs: ml.Addrs,
+		Addr: ml.Addr,
 	}
+	PushMessage(m.ap,uml)
+	//logrus.Debugf("AppendLog : %d", ml.OpType)
+	//filename := path.Join(string(m.metaPath), "log.dat")
+	//fd, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
+	//if err != nil {
+	//	logrus.Warnf("AppendLogError :%s\n", err)
+	//	return err
+	//}
+	//defer fd.Close()
+	//enc := json.NewEncoder(fd)
+	//logrus.Infoln(ml)
+	//err = enc.Encode(ml)
+	//if err != nil {
+	//	logrus.Warnf("AppendLogError :%s", err)
+	//	return err
+	//}
+	//return nil
 	return nil
 }
 

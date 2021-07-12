@@ -1,6 +1,7 @@
 package master
 
 import (
+	"DFS/kafka"
 	"DFS/util"
 	"DFS/util/zkWrap"
 	"github.com/sirupsen/logrus"
@@ -126,9 +127,13 @@ func (m *Master) RegisterElectionNodes() {
 	cb := func(el *zkWrap.Elector) {
 		//become leader, join heartbeat
 		logrus.Print("master " + m.addr + " become leader!")
+		//kafka producer
+		m.ap,err = kafka.MakeProducer(string(m.addr))
+		if err != nil {
+			logrus.Fatal("kafka make producer error :",err)
+		}
 		m.RegisterClusterNodes()
 		m.RegisterLeaderNodes()
-
 	}
 	m.el, err = zkWrap.NewElector("MasterLeaderElection", string(m.addr), cb)
 	if err != nil {

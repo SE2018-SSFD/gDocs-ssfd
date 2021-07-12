@@ -270,7 +270,7 @@ func TestReadWriteMulti(t *testing.T){
 		offset := i * util.MAXCHUNKSIZE
 		result,err := util.HTTPRead(string(cList[0].GetClientAddr()),fdList[i][1],offset,util.MAXCHUNKSIZE)
 		util.AssertNil(t,err)
-		util.AssertSameData(t,result.Data)
+		util.AssertSameData(t, []byte(result.Data))
 	}
 	logrus.Infoln("score : 100")
 }
@@ -291,6 +291,14 @@ func CClear() {
 }
 func TestOpenClose(t *testing.T) {
 	c,m,cs := InitTest()
+	defer func() {
+		m.Exit()
+		c.Exit()
+		CClear()
+		for _,_cs := range cs{
+			_cs.Exit()
+		}
+	}()
 	err := util.HTTPCreate(util.CLIENTADDR,"/file1")
 	util.AssertNil(t,err)
 	err = util.HTTPCreate(util.CLIENTADDR,"/file2")
@@ -308,12 +316,7 @@ func TestOpenClose(t *testing.T) {
 	util.AssertNil(t,err)
 	code,err = util.HTTPClose(util.CLIENTADDR,fd)
 	util.AssertEqual(t,code,400)
-	m.Exit()
-	c.Exit()
-	CClear()
-	for _,_cs := range cs{
-		_cs.Exit()
-	}
+
 }
 
 func TestClientConcurrentAppend(t *testing.T){
