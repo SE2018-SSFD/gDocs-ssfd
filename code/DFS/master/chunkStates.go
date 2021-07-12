@@ -135,7 +135,6 @@ func (s* ChunkStates) CreateChunkAndReplica(fs *fileState,addrs []util.Address) 
 		Handle: newHandle,
 	}
 	fs.chunks = append(fs.chunks,newChunk)
-
 	newChunk.Lock()
 	defer newChunk.Unlock()
 	fs.Unlock()

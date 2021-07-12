@@ -179,17 +179,17 @@ func (ns *NamespaceState) Serialize()[]SerialTreeNode{
 	ns.root.RLock()
 	defer ns.root.RUnlock()
 	nodes := make([]SerialTreeNode,0)
-	ns.tree2array(&nodes,ns.root)
+	ns.serialize(&nodes,ns.root)
 	return nodes
 }
 
 // tree2array transforms the namespace tree into an array for serialization
-func (ns *NamespaceState) tree2array(array *[]SerialTreeNode, node *treeNode) int {
+func (ns *NamespaceState) serialize(array *[]SerialTreeNode, node *treeNode) int {
 	n := SerialTreeNode{IsDir: node.isDir}
 	if node.isDir {
 		n.Children = make(map[string]int)
 		for k, v := range node.treeNodes {
-			n.Children[k] = ns.tree2array(array, v)
+			n.Children[k] = ns.serialize(array, v)
 		}
 	}
 
@@ -199,7 +199,7 @@ func (ns *NamespaceState) tree2array(array *[]SerialTreeNode, node *treeNode) in
 	return ret
 }
 // array2tree transforms the an serialized array to namespace tree
-func (ns *NamespaceState) array2tree(array []SerialTreeNode, id int) *treeNode {
+func (ns *NamespaceState) deserialize(array []SerialTreeNode, id int) *treeNode {
 	n := &treeNode{
 		isDir:  array[id].IsDir,
 	}
@@ -207,7 +207,7 @@ func (ns *NamespaceState) array2tree(array []SerialTreeNode, id int) *treeNode {
 	if array[id].IsDir {
 		n.treeNodes = make(map[string]*treeNode)
 		for k, v := range array[id].Children {
-			n.treeNodes[k] = ns.array2tree(array, v)
+			n.treeNodes[k] = ns.deserialize(array, v)
 		}
 	}
 
@@ -218,6 +218,6 @@ func (ns *NamespaceState) array2tree(array []SerialTreeNode, id int) *treeNode {
 func (ns *NamespaceState) Deserialize(array []SerialTreeNode) error {
 	ns.root.Lock()
 	defer ns.root.Unlock()
-	ns.root = ns.array2tree(array, len(array)-1)
+	ns.root = ns.deserialize(array, len(array)-1)
 	return nil
 }
