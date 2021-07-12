@@ -1,6 +1,7 @@
 package master
 
 import (
+	"DFS/kafka"
 	"DFS/util"
 	"DFS/util/zkWrap"
 	"github.com/sirupsen/logrus"

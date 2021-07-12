@@ -1,9 +1,11 @@
 package master
 
 import (
+	"DFS/kafka"
 	"DFS/util"
 	"DFS/util/zkWrap"
 	"fmt"
+	"github.com/Shopify/sarama"
 	"github.com/sirupsen/logrus"
 	"net"
 	"net/rpc"

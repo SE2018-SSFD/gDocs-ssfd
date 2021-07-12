@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"github.com/Shopify/sarama"
 	"github.com/sirupsen/logrus"
 	"os"
 	"path"
