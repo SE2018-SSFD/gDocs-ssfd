@@ -11,7 +11,6 @@ import (
 	"strings"
 )
 
-
 func writeAll(fd int, off int64, data []byte) (err error) {
 	written, total := int64(0), int64(len(data))
 	for written < total {
@@ -22,7 +21,7 @@ func writeAll(fd int, off int64, data []byte) (err error) {
 		written += n
 		off += n
 	}
-	
+
 	if written != total {
 		return fmt.Errorf("expect to write %d bytes, actually it is %d", total, written)
 	}
@@ -73,7 +72,7 @@ func DirCreate(path string) (err error) {
 	return nil
 }
 
-func FileGetAll(path string) (data []byte, err error) {
+func FileGetAll(path string, filterPad ...bool) (data []byte, err error) {
 	fileInfo, err := dfs.Stat(path)
 	if err != nil {
 		return nil, err
@@ -83,7 +82,7 @@ func FileGetAll(path string) (data []byte, err error) {
 		return nil, errors.New("cannot get all the content of a directory")
 	}
 
-	data, err = dfs.ReadAll(path)
+	data, err = dfs.ReadAll(path, filterPad...)
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +138,6 @@ func FileOverwriteAll(path string, data []byte) error {
 	return err
 }
 
-
-
 func DirFileNamesAll(path string) (filenames []string, err error) {
 	fileInfos, err := dfs.Scan(path)
 	if err != nil {
@@ -160,7 +157,6 @@ func DirFilenameIndexesAllSorted(path string) (indexes []int, err error) {
 	if err != nil {
 		return nil, err
 	}
-
 
 	for _, filename := range filenames {
 		if index, err := strconv.Atoi(strings.Split(filename, ".")[0]); err == nil {

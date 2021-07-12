@@ -45,7 +45,7 @@ func mockClose(fd int) (err error) {
 }
 
 func mockCreate(path string) (int, error) {
-	dirPath := (root + path)[:strings.LastIndex(root + path, "/")]
+	dirPath := (root + path)[:strings.LastIndex(root+path, "/")]
 	err := mockNameX(dirPath, true)
 	if err != nil {
 		return 0, err
@@ -63,7 +63,7 @@ func mockCreate(path string) (int, error) {
 }
 
 func mockMkdir(path string) (err error) {
-	err = mockNameX(root + path, true)
+	err = mockNameX(root+path, true)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func mockDelete(path string) error {
 	return nil
 }
 
-func mockRead(fd int, off int64, len int64) ([]byte, error) {
+func mockRead(fd int, off int64, len int64, _ ...bool) ([]byte, error) {
 	f, ok := fdMap.Load(fd)
 	if !ok {
 		return nil, withStackedMessagef(NoFdErr, "mockRead fails")
@@ -96,7 +96,7 @@ func mockRead(fd int, off int64, len int64) ([]byte, error) {
 	return raw[0:n], nil
 }
 
-func mockReadAll(path string) (data []byte, err error) {
+func mockReadAll(path string, _ ...bool) (data []byte, err error) {
 	file, err := os.OpenFile(root+path, os.O_RDWR, os.ModePerm)
 	if err != nil {
 		return nil, withStackedMessagef(err, "mockOpen fails")
@@ -131,7 +131,7 @@ func mockWrite(fd int, off int64, data []byte) (int64, error) {
 	return int64(n), nil
 }
 
-func mockAppend(fd int, data []byte) (bytesWritten int64, err error){
+func mockAppend(fd int, data []byte) (bytesWritten int64, err error) {
 	f, ok := fdMap.Load(fd)
 	if !ok {
 		return 0, NoFdErr
@@ -182,7 +182,7 @@ func mockNameX(path string, create bool) error {
 
 func osFileInfo2DfsFileInfo(before os.FileInfo) FileInfo {
 	return FileInfo{
-		Name: before.Name(),
+		Name:  before.Name(),
 		IsDir: before.IsDir(),
 	}
 }

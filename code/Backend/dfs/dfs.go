@@ -16,13 +16,12 @@ import (
 )
 
 var (
-	InvalidPathErr		=	errors.New("Path is Invalid")
-	InvalidFdErr		=	errors.New("FD is Invalid")
+	InvalidPathErr = errors.New("Path is Invalid")
+	InvalidFdErr   = errors.New("FD is Invalid")
 
-	OpenErr				=	errors.New("Cannot open file")
-	StatNonExistentErr	=	errors.New("File is nonexistent")
+	OpenErr            = errors.New("Cannot open file")
+	StatNonExistentErr = errors.New("File is nonexistent")
 )
-
 
 // interfaces
 func dfsOpen(path string, _ bool) (fd int, err error) {
@@ -120,7 +119,7 @@ func dfsDelete(path string) (err error) {
 		return withStackedMessagef(err, "[%s] dfsDelete cannot stat root", path)
 	}
 
-	if !statRespBody.IsDir {	// is file, simply delete
+	if !statRespBody.IsDir { // is file, simply delete
 		deleteReqBody := DeleteArg{
 			Path: transPath(path),
 		}
@@ -129,7 +128,7 @@ func dfsDelete(path string) (err error) {
 		if err != nil {
 			return withStackedMessagef(err, "[%s] dfsDelete cannot delete leaf file", path)
 		}
-	} else {					// is dir, recursively delete children, then delete self
+	} else { // is dir, recursively delete children, then delete self
 		listReqBody := ListArg{
 			Path: transPath(path),
 		}
@@ -164,15 +163,15 @@ func dfsDelete(path string) (err error) {
 	return nil
 }
 
-func dfsRead(fd int, off int64, len int64) (data []byte, err error) {
+func dfsRead(fd int, off int64, length int64, filterPad ...bool) (data []byte, err error) {
 	if fd <= 0 {
 		return nil, withStackedMessagef(InvalidFdErr, "[%d] dfsRead", strconv.Itoa(fd))
 	}
 
 	reqBody := ReadArg{
-		Fd: fd,
+		Fd:     fd,
 		Offset: int(off),
-		Len: int(len),
+		Len:    int(length),
 	}
 
 	var respBody []byte
@@ -181,11 +180,16 @@ func dfsRead(fd int, off int64, len int64) (data []byte, err error) {
 		return nil, withStackedMessagef(err, "[%d] dfsRead", fd)
 	}
 
-	data = filterAllPadding(respBody)
+	if len(filterPad) > 0 && filterPad[0] {
+		data = filterAllPadding(respBody)
+	} else {
+		data = respBody
+	}
+
 	return data, nil
 }
 
-func dfsReadAll(path string) (data []byte, err error) {
+func dfsReadAll(path string, filterPad ...bool) (data []byte, err error) {
 	absPath := checkPath(path)
 	if absPath == "" {
 		return nil, withStackedMessagef(InvalidPathErr, "[%s] dfsReadAll", path)
@@ -210,7 +214,7 @@ func dfsReadAll(path string) (data []byte, err error) {
 			return nil, withStackedMessagef(err, "[%s] dfsReadAll fail to open", path)
 		}
 
-		data, err := dfsRead(fd, 0, sup)
+		data, err := dfsRead(fd, 0, sup, filterPad...)
 		if err != nil {
 			return nil, withStackedMessagef(err, "[%s] dfsReadAll fail to read", path)
 		}
@@ -224,8 +228,8 @@ func dfsWrite(fd int, off int64, data []byte) (bytesWritten int64, err error) {
 		return 0, withStackedMessagef(InvalidFdErr, "[%d] dfsWrite", strconv.Itoa(fd))
 	}
 
-	reqBody := map[string]string {
-		"fd": strconv.Itoa(fd),
+	reqBody := map[string]string{
+		"fd":     strconv.Itoa(fd),
 		"offset": strconv.FormatInt(off, 10),
 	}
 	respBody := WriteRet{}
@@ -245,13 +249,13 @@ func dfsAppend(fd int, data []byte) (bytesWritten int64, err error) {
 		return 0, withStackedMessagef(InvalidFdErr, "[%d] dfsSppend", strconv.Itoa(fd))
 	}
 
-	reqBody := map[string]string {
+	reqBody := map[string]string{
 		"fd": strconv.Itoa(fd),
 	}
 	respBody := AppendRet{}
 
 	//err = post("append", reqBody, &respBody)
-	err = postForm("write", data, reqBody, &respBody)
+	err = postForm("append", data, reqBody, &respBody)
 	if err != nil {
 		return 0, withStackedMessagef(err, "[%d] dfsAppend", fd)
 	}
@@ -276,10 +280,7 @@ func dfsScan(path string) (fileInfos []FileInfo, err error) {
 		return nil, withStackedMessagef(err, "[%s] dfsScan", path)
 	}
 
-	split := strings.Split(path, "/")
-	name := split[len(split)-1]
-
-	return respFileInfos2FileInfos(name, respBody.FileInfos), nil
+	return respFileInfos2FileInfos(respBody.FileInfos), nil
 }
 
 func dfsStat(path string) (fileInfo FileInfo, err error) {
@@ -304,20 +305,19 @@ func dfsStat(path string) (fileInfo FileInfo, err error) {
 		split := strings.Split(path, "/")
 		name := split[len(split)-1]
 		return FileInfo{
-			Name: name,
+			Name:  name,
 			IsDir: respBody.IsDir,
 		}, nil
 	}
 }
 
-
 // helper functions
 const (
-	dfsRoot		=	""
+	dfsRoot = ""
 )
 
 var (
-	clientAddr	=	"http://1.15.127.43:1333"
+	clientAddr = "http://1.15.127.43:1333"
 )
 
 func post(api string, reqBody interface{}, respBody interface{}, returnRaw ...bool) (err error) {
@@ -455,10 +455,10 @@ func withStackedMessagef(before error, format string, args ...interface{}) (afte
 	return errors.WithStack(errors.WithMessagef(before, format, args...))
 }
 
-func respFileInfos2FileInfos(name string, before []GetFileInfoRet) (after []FileInfo) {
+func respFileInfos2FileInfos(before []GetFileInfoRet) (after []FileInfo) {
 	for i := 0; i < len(before); i += 1 {
 		after = append(after, FileInfo{
-			Name: before[i].FileName,
+			Name:  before[i].FileName,
 			IsDir: before[i].IsDir,
 		})
 	}
