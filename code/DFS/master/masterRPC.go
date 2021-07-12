@@ -206,7 +206,13 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		if err != nil {
 			return err
 		}
-		//TODO : Update ChunkServerState
+
+		for _,addr := range addrs{
+			m.css.servers[addr].Lock()
+			m.css.servers[addr].ChunkNum += 1
+			m.css.servers[addr].Unlock()
+		}
+
 		//m.css.xxx
 	} else {
 		targetChunk = fs.chunks[args.ChunkIndex]

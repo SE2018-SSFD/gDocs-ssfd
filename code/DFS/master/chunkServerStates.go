@@ -2,6 +2,7 @@ package master
 
 import (
 	"DFS/util"
+	"container/heap"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -21,7 +22,33 @@ type serialChunkServerStates struct {
 }
 
 type ChunkServerState struct {
+	sync.RWMutex
 	LastHeartbeat time.Time
+	ChunkNum int
+}
+type ChunkServerHeap struct{
+	Addr  util.Address
+	ChunkNum int
+}
+
+type IntHeap []ChunkServerHeap
+
+func (h IntHeap) Len() int           { return len(h) }
+func (h IntHeap) Less(i, j int) bool { return h[i].ChunkNum < h[j].ChunkNum }
+func (h IntHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+
+func (h *IntHeap) Push(x interface{}) {
+	// Push and Pop use pointer receivers because they modify the slice's length,
+	// not just its contents.
+	*h = append(*h, x.(ChunkServerHeap))
+}
+
+func (h *IntHeap) Pop() interface{} {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[0 : n-1]
+	return x
 }
 
 func (s *ChunkServerStates) Serialize() []serialChunkServerStates {
@@ -45,7 +72,6 @@ func (s *ChunkServerStates) Deserialize(scss []serialChunkServerStates) error {
 // randomServers randomly choose times server from existing chunkservers
 //goland:noinspection GoNilness
 func (s *ChunkServerStates) randomServers(times int) (addrs []util.Address, err error) {
-	// TODO:choose server in a load-balanced way
 	if times > len(s.servers) {
 		err = fmt.Errorf("NotEnoughServerError : Not enough server to support %d times chunk replication\n", times)
 		return
@@ -58,6 +84,27 @@ func (s *ChunkServerStates) randomServers(times int) (addrs []util.Address, err 
 		addrs = append(addrs, all[serverIndex])
 		//logrus.Debugln(all[serverIndex]," ")
 	}
+	return
+}
+
+// balanceServers choose server in a load-balanced way
+//goland:noinspection GoNilness
+func (s *ChunkServerStates) balanceServers(times int) (addrs []util.Address, err error) {
+	if times > len(s.servers) {
+		err = fmt.Errorf("NotEnoughServerError : Not enough server to support %d times chunk replication\n", times)
+		return
+	}
+	h := &IntHeap{}
+	heap.Init(h)
+	for addr, state := range s.servers {
+		hea := ChunkServerHeap{ChunkNum: state.ChunkNum,Addr: addr}
+		heap.Push(h,&hea)
+	}
+	for times > 0{
+		times --
+		addrs = append(addrs,heap.Pop(h).(ChunkServerHeap).Addr)
+	}
+
 	return
 }
 
