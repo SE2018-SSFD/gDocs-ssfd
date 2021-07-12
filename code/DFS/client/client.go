@@ -577,14 +577,17 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("mr.NextPart() err,",err)
 			break
 		}
+
 		//fmt.Println("part header:",p.Header)
 		formName := p.FormName()
 		fileName := p.FileName()
 		if formName == "fd" && fileName == ""{
+
 			formValue,_:= ioutil.ReadAll(p)
 			argW.Fd,_ = strconv.Atoi(string(formValue))
 		}
 		if formName == "offset" && fileName == ""{
+
 			formValue,_:= ioutil.ReadAll(p)
 			argW.Offset,_ = strconv.Atoi(string(formValue))
 		}
@@ -592,6 +595,7 @@ func (c *Client) Write(w http.ResponseWriter, r *http.Request) {
 			fileData,_:=ioutil.ReadAll(p)
 			argW.Data = fileData
 		}
+
 	}
 	// Decode the params
 	//var inter map[string]interface{}

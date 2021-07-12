@@ -3,10 +3,14 @@ package util
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/sirupsen/logrus"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"os"
+	"strconv"
 	"testing"
 )
 
@@ -175,8 +179,8 @@ func HTTPDelete(addr string,path string)(err error){
 	_, err = ioutil.ReadAll(resp.Body)
 	return
 }
-// HTTPWrite : write a file according to fd
-func HTTPWrite(addr string,fd int,offset int,data []byte)(err error){
+// HTTPWriteDeprecated : write a file according to fd
+func HTTPWriteDeprecated(addr string,fd int,offset int,data []byte)(err error){
 	url := "http://"+addr+"/write"
 	postBody, _ := json.Marshal(map[string]interface{}{
 		"fd":  fd,
@@ -193,8 +197,57 @@ func HTTPWrite(addr string,fd int,offset int,data []byte)(err error){
 	return
 }
 
-// HTTPAppend : append a file according to fd
-func HTTPAppend(addr string,fd int,data []byte)(result CAppendRet,err error){
+// HTTPWrite : write a file according to fd
+func HTTPWrite(addr string,fd int,offset int,data []byte)(err error){
+	url := "http://"+addr+"/write"
+	bodyBuf := bytes.Buffer{}
+	bodyWrite := multipart.NewWriter(&bodyBuf)
+	file, err := bodyWrite.CreateFormFile("file", "raw")
+	err = ioWriteAll(file, data)
+
+	if err != nil {
+		return err
+	}
+	params := make(map[string]string)
+	params["fd"] = strconv.Itoa(fd)
+	params["offset"] = strconv.Itoa(offset)
+
+	for k, v := range params {
+		field, errr := bodyWrite.CreateFormField(k)
+		if errr != nil {
+			return errr
+		}
+		errr = ioWriteAll(field, []byte(v))
+		if errr != nil {
+			return errr
+		}
+	}
+	err = bodyWrite.Close()
+	if err != nil {
+		return err
+	}
+	client := http.Client{}
+	req, err := http.NewRequest(http.MethodPost, url, &bodyBuf)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", bodyWrite.FormDataContentType())
+	logrus.Warnf(url)
+	resp, err := client.Do(req)
+	logrus.Warnln(err)
+	if err != nil {
+		return err
+	}
+	_, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	return
+}
+
+
+// HTTPAppendDeprecated : append a file according to fd
+func HTTPAppendDeprecated(addr string,fd int,data []byte)(result CAppendRet,err error){
 	url := "http://"+addr+"/append"
 	postBody, _ := json.Marshal(map[string]interface{}{
 		"fd":  fd,
@@ -213,6 +266,53 @@ func HTTPAppend(addr string,fd int,data []byte)(result CAppendRet,err error){
 	err = json.NewDecoder(bytes.NewReader(body)).Decode(&result)
 	return
 }
+// HTTPAppend : append a file according to fd
+func HTTPAppend(addr string,fd int,data []byte)(result CAppendRet,err error){
+	url := "http://"+addr+"/append"
+	bodyBuf := bytes.Buffer{}
+	bodyWrite := multipart.NewWriter(&bodyBuf)
+	file, err := bodyWrite.CreateFormFile("file", "raw")
+	err = ioWriteAll(file, data)
+	if err != nil {
+		return
+	}
+	params := make(map[string]string)
+	params["fd"] = strconv.Itoa(fd)
+
+	for k, v := range params {
+		field, errr := bodyWrite.CreateFormField(k)
+		if errr != nil {
+			return
+		}
+
+		errr = ioWriteAll(field, []byte(v))
+		if errr != nil {
+			return
+		}
+	}
+	err = bodyWrite.Close()
+	if err != nil {
+		return
+	}
+	client := http.Client{}
+	req, err := http.NewRequest(http.MethodPost, url, &bodyBuf)
+	if err != nil {
+		return
+	}
+
+	req.Header.Set("Content-Type", bodyWrite.FormDataContentType())
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	err = json.NewDecoder(bytes.NewReader(body)).Decode(&result)
+	return
+}
+
 
 // HTTPRead : read a file according to fd
 func HTTPRead(addr string,fd int,offset int,len int)(result ReadRet,err error){
@@ -254,3 +354,22 @@ func HTTPGetFileInfo(addr string, path string) (fileState GetFileMetaRet, err er
 	return
 }
 
+func ioWriteAll(writer io.Writer, data []byte) (err error) {
+
+	written, total := 0, len(data)
+	for written < total {
+		n, err := writer.Write(data[written:])
+		if err != nil {
+			return err
+		}
+
+		written += n
+
+	}
+
+	if written != total {
+		return fmt.Errorf("in postForm, expect to write %d bytes, actually it is %d", total, written)
+	}
+
+	return nil
+}

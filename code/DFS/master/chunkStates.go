@@ -28,13 +28,13 @@ type handleState struct {
 	sync.RWMutex
 	curHandle util.Handle
 }
-type serialfileState struct{
+type SerialfileState struct{
 	Size int
 	Chunks []SerialChunkState
 }
 type SerialChunkStates struct{
 	CurHandle util.Handle
-	File  map[util.DFSPath]serialfileState
+	File  map[util.DFSPath]SerialfileState
 	Chunk map[util.Handle]util.Version
 }
 type SerialChunkState struct{
@@ -56,7 +56,7 @@ func (s* ChunkStates) Serialize() SerialChunkStates {
 	defer s.RUnlock()
 	scss := SerialChunkStates{
 		CurHandle: -1,
-		File: make(map[util.DFSPath]serialfileState),
+		File: make(map[util.DFSPath]SerialfileState),
 		Chunk: make(map[util.Handle]util.Version),
 	}
 	for handle,verNum := range s.chunk{
@@ -73,7 +73,7 @@ func (s* ChunkStates) Serialize() SerialChunkStates {
 			} )
 			state.chunks[index].RUnlock()
 		}
-		scss.File[path]=serialfileState{
+		scss.File[path]=SerialfileState{
 			Size : state.size,
 			Chunks : chunks,
 		}

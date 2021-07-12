@@ -192,7 +192,6 @@ func (ns *NamespaceState) serialize(array *[]SerialTreeNode, node *treeNode) int
 			n.Children[k] = ns.serialize(array, v)
 		}
 	}
-
 	*array = append(*array, n)
 	ret := ns.childCount
 	ns.childCount++
