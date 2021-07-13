@@ -20,39 +20,39 @@ services:
       dockerfile: DOCKERFILE-MASTER
       args:
         MASTERPORT: 1234
-      container_name: master1
-      volumes:
-        - "./master/master1/data/:/master"
-      restart: always
-      hostname: master1
-      ports:
-        - 1234:1234
+    container_name: master1
+    volumes:
+      - "./master/master1/data/:/master"
+    restart: always
+    hostname: master1
+    ports:
+      - 1234:1234
   master2:
     build:
       context: .
       dockerfile: DOCKERFILE-MASTER
       args:
         MASTERPORT: 1235
-      container_name: master2
-      volumes:
-        - "./master/master2/data/:/master"
-      restart: always
-      hostname: master2
-      ports:
-        - 1235:1235
+    container_name: master2
+    volumes:
+      - "./master/master2/data/:/master"
+    restart: always
+    hostname: master2
+    ports:
+      - 1235:1235
   master3:
     build:
       context: .
       dockerfile: DOCKERFILE-MASTER
       args:
         MASTERPORT: 1236
-      container_name: master3
-      volumes:
-        - "./master/master3/data/:/master"
-      restart: always
-      hostname: master3
-      ports:
-        - 1236:1236
+    container_name: master3
+    volumes:
+      - "./master/master3/data/:/master"
+    restart: always
+    hostname: master3
+    ports:
+      - 1236:1236
 
 volumes:
   log: {}
