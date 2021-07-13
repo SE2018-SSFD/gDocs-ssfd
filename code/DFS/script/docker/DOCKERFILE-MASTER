@@ -4,6 +4,6 @@ ENV GOPROXY=https://goproxy.cn \
 ARG MASTERPORT
 
 WORKDIR /DFS
-CMD ./NodeRunner master 0.0.0.0:${MASTERPORTgit } ../log/log_${MASTERPORT} &> ../log/masterOutput${MASTERPORT}.log &
+CMD ./NodeRunner master 0.0.0.0:${MASTERPORT} ../log/log_${MASTERPORT} &> ../log/masterOutput${MASTERPORT}.log &
 
 EXPOSE $MASTERPORT
