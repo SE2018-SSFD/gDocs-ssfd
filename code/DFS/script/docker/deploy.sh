@@ -1,4 +1,16 @@
-r${a} dfsnode ./NodeRunner chunkServer 0.0.0.0:"${a}" ck"${a}" ${MASTER1PORT} &
+MASTER1PORT=1234
+MASTER2PORT=1235
+MASTER3PORT=1236
+MASTER1DIR=log_1
+MASTER2DIR=log_2
+MASTER3DIR=log_3
+CHUNKSERVERNUM=3
+# CHUNKSERVERROOT=../data/ck
+
+docker build -f ./Dockerfile ../.. -t dfsnode
+for a in `eval echo {3000..$[CHUNKSERVERNUM+3000]}`
+do
+docker run --expose=${a} --name=chunkServer${a} dfsnode ./NodeRunner chunkServer 0.0.0.0:"${a}" ck"${a}" ${MASTER1PORT} &
 done
 sleep 2
 docker run --expose=${MASTER1PORT} --name=master1 dfsnode ./NodeRunner master 0.0.0.0:${MASTER1PORT} ${MASTER1DIR} &
