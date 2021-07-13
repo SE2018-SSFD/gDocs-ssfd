@@ -2,8 +2,8 @@ FROM golang:1.16-alpine
 ENV GOPROXY=https://goproxy.cn \
     GO111MODULE=on
 ARG MASTERPORT
-
+ENV MASTERPORT ${MASTERPORT}
 WORKDIR /DFS
 CMD ./NodeRunner master 0.0.0.0:${MASTERPORT} ../log/log_${MASTERPORT} &> ../log/masterOutput${MASTERPORT}.log &
 
-EXPOSE $MASTERPORT
+EXPOSE ${MASTERPORT}

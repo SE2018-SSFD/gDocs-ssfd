@@ -2,8 +2,8 @@ FROM golang:1.16-alpine
 ENV GOPROXY=https://goproxy.cn \
     GO111MODULE=on
 ARG CLIENTPORT
-
+ENV CLIENTPORT ${CLIENTPORT}
 WORKDIR /DFS
 CMD ./NodeRunner client 0.0.0.0:${CLIENTPORT} 0.0.0.0:1234 &> ./log/clientOutput${CLIENTPORT}.log &
 
-EXPOSE $CLIENTPORT
+EXPOSE ${CLIENTPORT}
