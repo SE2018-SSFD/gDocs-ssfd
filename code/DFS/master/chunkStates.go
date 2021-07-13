@@ -11,35 +11,33 @@ import (
 type ChunkStates struct {
 	sync.RWMutex
 	file  map[util.DFSPath]*fileState
-	chunk map[util.Handle]util.Version
+	chunk map[util.Handle]*chunkState
 	handle *handleState
 }
 type fileState struct{
 	sync.RWMutex
 	chunks []*chunkState
-	size int
 }
 type chunkState struct {
 	sync.RWMutex
 	Handle util.Handle
 	Locations []util.Address // set of replica locations
+	Version util.Version
 }
 type handleState struct {
 	sync.RWMutex
 	curHandle util.Handle
 }
 type SerialfileState struct{
-	Size int
 	Chunks []SerialChunkState
 }
 type SerialChunkStates struct{
 	CurHandle util.Handle
 	File  map[util.DFSPath]SerialfileState
-	Chunk map[util.Handle]util.Version
 }
 type SerialChunkState struct{
 	Handle util.Handle
-	Locations []util.Address // set of replica locations
+	Version util.Version
 }
 
 // Serialize a chunkstates
@@ -57,10 +55,6 @@ func (s* ChunkStates) Serialize() SerialChunkStates {
 	scss := SerialChunkStates{
 		CurHandle: -1,
 		File: make(map[util.DFSPath]SerialfileState),
-		Chunk: make(map[util.Handle]util.Version),
-	}
-	for handle,verNum := range s.chunk{
-		scss.Chunk[handle]=verNum
 	}
 	for path,state := range s.file{
 		s.file[path].RLock()
@@ -68,13 +62,12 @@ func (s* ChunkStates) Serialize() SerialChunkStates {
 		for index,chunk := range state.chunks{
 			state.chunks[index].RLock()
 			chunks = append(chunks,SerialChunkState{
-				Locations: chunk.Locations,
 				Handle: chunk.Handle,
+				Version : chunk.Version,
 			} )
 			state.chunks[index].RUnlock()
 		}
 		scss.File[path]=SerialfileState{
-			Size : state.size,
 			Chunks : chunks,
 		}
 		s.file[path].RUnlock()
@@ -90,21 +83,15 @@ func (s* ChunkStates) Serialize() SerialChunkStates {
 func (s* ChunkStates) Deserialize(scss SerialChunkStates) error {
 	// clear remaining states
 	s.file = make(map[util.DFSPath]*fileState)
-	s.chunk = make(map[util.Handle]util.Version)
 
 	// recover original states
-	for handle,verNum := range scss.Chunk{
-		s.chunk[handle]=verNum
-	}
 	for path,state := range scss.File{
 		err := s.NewFile(path)
 		if err!=nil{
 			return err
 		}
-		s.file[path].size = state.Size
 		for _,chunk := range state.Chunks{
 			s.file[path].chunks = append(s.file[path].chunks,&chunkState{
-				Locations: chunk.Locations,
 				Handle: chunk.Handle,
 			} )
 		}
@@ -112,8 +99,37 @@ func (s* ChunkStates) Deserialize(scss SerialChunkStates) error {
 	s.handle.curHandle = scss.CurHandle
 	return nil
 }
+func (s* ChunkStates) AddLocationOfChunk(addr util.Address, handle util.Handle) error  {
+	s.RLock()
+	state := s.chunk[handle]
+	state.Lock()
+	defer state.Unlock()
+	s.RUnlock()
+	s.chunk[handle].Locations = append(s.chunk[handle].Locations,addr)
+	return nil
+}
 
-
+func (s* ChunkStates) DeleteLocationOfChunk(addr util.Address,handle util.Handle) error {
+	s.RLock()
+	state := s.chunk[handle]
+	state.Lock()
+	defer state.Unlock()
+	s.RUnlock()
+	index := -1
+	for _index,_addr := range state.Locations{
+		if _addr == addr{
+			index = _index
+			break
+		}
+	}
+	// unlikely
+	if index == -1{
+		err := fmt.Errorf("deleteLocationOfchunk error : %v is not existed in %v",handle,addr)
+		return err
+	}
+	state.Locations = append(state.Locations[:index], state.Locations[index+1:]...)
+	return nil
+}
 // CreateChunkAndReplica create metadata of a chunk and its replicas
 // then it ask chunkservers to create chunks in Linux File System
 // Note : s.file[path] is locked now
@@ -126,7 +142,6 @@ func (s* ChunkStates) CreateChunkAndReplica(fs *fileState,addrs []util.Address) 
 	newHandle := s.handle.curHandle+1
 	logrus.Infof(" CreateChunkAndReplica : new Handle %d\n",newHandle)
 	s.handle.curHandle+=1
-	s.chunk[newHandle] = util.INITIALVERSION
 	s.handle.Unlock()
 
 	// add chunk to file
@@ -134,6 +149,7 @@ func (s* ChunkStates) CreateChunkAndReplica(fs *fileState,addrs []util.Address) 
 		Locations: make([]util.Address,0),
 		Handle: newHandle,
 	}
+	s.chunk[newHandle] = newChunk
 	fs.chunks = append(fs.chunks,newChunk)
 	newChunk.Lock()
 	defer newChunk.Unlock()
@@ -156,7 +172,7 @@ func newChunkStates()*ChunkStates{
 		handle: &handleState{
 			curHandle: 0,
 		},
-		chunk: make(map[util.Handle]util.Version,0),
+		chunk: make(map[util.Handle]*chunkState,0),
 	}
 	return cs
 }
@@ -171,7 +187,6 @@ func (s* ChunkStates) NewFile(path util.DFSPath) error {
 	}
 	s.file[path] = &fileState{
 		chunks : make([]*chunkState,0),
-		size:0,
 	}
 	return nil
 }
@@ -203,3 +218,4 @@ func (s* ChunkStates) Delete(path util.DFSPath) error {
 	s.file[util.DFSPath(util.DELETEPREFIX+string(filename))] = node
 	return err
 }
+

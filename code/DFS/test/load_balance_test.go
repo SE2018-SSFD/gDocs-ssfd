@@ -155,38 +155,15 @@ func TestLoadBalanceAllocate(t *testing.T){
 	util.AssertNil(t,err)
 	fd,err := util.HTTPOpen(util.CLIENTADDR,"/dir1/file2")
 	util.AssertNil(t,err)
-	// Write 3.5 chunks to /dir1/file2
+	// Write 50 chunks to /dir1/file2
 	offset := 0
-	data := []byte(util.MakeString(util.MAXCHUNKSIZE*30))
+	data := []byte(util.MakeString(util.MAXCHUNKSIZE*50))
 	err = util.HTTPWrite(util.CLIENTADDR,fd,offset,data)
 	util.AssertNil(t,err)
-	// Write 1 chunk at offset 3*size+1 in /dir1/file2
-	offset = util.MAXCHUNKSIZE*3+1
-	data = []byte(util.MakeString(util.MAXCHUNKSIZE-1))
-	err = util.HTTPWrite(util.CLIENTADDR,fd,offset,data)
-	util.AssertNil(t,err)
-
-	// Read 65 bytes near the chunk 3
-	result,err := util.HTTPRead(util.CLIENTADDR,fd,util.MAXCHUNKSIZE*3-1,util.MAXCHUNKSIZE+1)
-	util.AssertNil(t,err)
-	util.AssertEqual(t,string(result.Data),"jkabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijk")
-
-	_,err = util.HTTPClose(util.CLIENTADDR,fd)
-	util.AssertNil(t,err)
-
-	// storeCheckPoint
-	err = m.StoreCheckPoint()
-	util.AssertNil(t,err)
-	err = m.CreateRPC(util.CreateArg{Path: "/dir1/file3"}, &createReply)
-	util.AssertNil(t,err)
-	fd,err = util.HTTPOpen(util.CLIENTADDR,"/dir1/file3")
-	util.AssertNil(t,err)
-
-	// Write 3.5 chunks to /dir1/file3
-	offset = 0
-	data = []byte(util.MakeString(util.MAXCHUNKSIZE*3.5))
-	err = util.HTTPWrite(util.CLIENTADDR,fd,offset,data)
-	util.AssertNil(t,err)
+	result := m.GetServersChunkNum()
+	for i:=0;i<5;i++{
+		util.AssertEqual(t,result[i].ChunkNum,50 * 3 / 5)
+	}
 }
 func TestLoadBalanceReallocate(t *testing.T){
 	c,mList,csList:=initTestMulti()

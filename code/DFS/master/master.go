@@ -214,3 +214,11 @@ func (m *Master) UnregisterServer(addr util.Address) error {
 func (m *Master) GetStatusString() string {
 	return "Master address :" + string(m.addr) + ",metaPath :" + string(m.metaPath)
 }
+
+func (m *Master) GetHandleList(addr util.Address) []util.Handle {
+	return m.css.GetHandleList(addr)
+}
+
+func (m *Master) DeleteLocationOfChunk(addr util.Address,handle util.Handle) error {
+	return m.cs.DeleteLocationOfChunk(addr,handle)
+}

@@ -137,18 +137,17 @@ func (m *Master) RecoverLog() error {
 				return err
 			}
 		case util.SETFILEMETAOPS:
-			m.cs.file[log.Path].size = log.Size
 		case util.GETREPLICASOPS:
 			// when this operation is in the log, there must be new chunk created
 			// increment handle
 			newHandle := m.cs.handle.curHandle + 1
 			m.cs.handle.curHandle += 1
-			m.cs.chunk[newHandle] = util.INITIALVERSION
 			// add chunk to file
 			newChunk := &chunkState{
 				Locations: make([]util.Address, 0),
 				Handle:    newHandle,
 			}
+			m.cs.chunk[newHandle] = newChunk
 			fs, exist := m.cs.file[log.Path]
 			if !exist {
 				err := fmt.Errorf("FileNotExistsError : the requested DFS path %s is non-existing", string(log.Path))

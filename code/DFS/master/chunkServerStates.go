@@ -20,7 +20,7 @@ type ChunkServerStates struct {
 type ChunkServerState struct {
 	sync.RWMutex
 	LastHeartbeat time.Time
-	ChunkNum int
+	ChunkList []util.Handle
 }
 type ChunkServerHeap struct{
 	Addr  util.Address
@@ -32,22 +32,22 @@ type serialChunkServerStates struct {
 }
 type SerialChunkServerState struct {
 	LastHeartbeat time.Time
-	ChunkNum int
+	ChunkList []util.Handle
 }
 
-type IntHeap []ChunkServerHeap
+type CssHeap []ChunkServerHeap
 
-func (h IntHeap) Len() int           { return len(h) }
-func (h IntHeap) Less(i, j int) bool { return h[i].ChunkNum < h[j].ChunkNum }
-func (h IntHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h CssHeap) Len() int           { return len(h) }
+func (h CssHeap) Less(i, j int) bool { return h[i].ChunkNum < h[j].ChunkNum }
+func (h CssHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
 
-func (h *IntHeap) Push(x interface{}) {
+func (h *CssHeap) Push(x interface{}) {
 	// Push and Pop use pointer receivers because they modify the slice's length,
 	// not just its contents.
 	*h = append(*h, x.(ChunkServerHeap))
 }
 
-func (h *IntHeap) Pop() interface{} {
+func (h *CssHeap) Pop() interface{} {
 	old := *h
 	n := len(old)
 	x := old[n-1]
@@ -62,7 +62,7 @@ func (s *ChunkServerStates) Serialize() []serialChunkServerStates {
 	for key, state := range s.servers {
 		state.RLock()
 		scss = append(scss, serialChunkServerStates{Addr: key, State: SerialChunkServerState{
-			ChunkNum: state.ChunkNum,
+			ChunkList: state.ChunkList,
 			LastHeartbeat: state.LastHeartbeat,
 		}})
 		state.RUnlock()
@@ -76,7 +76,7 @@ func (s *ChunkServerStates) Deserialize(scss []serialChunkServerStates) error {
 		s.servers[_scss.Addr] = &ChunkServerState{
 			RWMutex:       sync.RWMutex{},
 			LastHeartbeat: _scss.State.LastHeartbeat,
-			ChunkNum:      _scss.State.ChunkNum,
+			ChunkList:      _scss.State.ChunkList,
 		}
 	}
 	return nil
@@ -107,11 +107,11 @@ func (s *ChunkServerStates) balanceServers(times int) (addrs []util.Address, err
 		err = fmt.Errorf("NotEnoughServerError : Not enough server to support %d times chunk replication\n", times)
 		return
 	}
-	h := &IntHeap{}
+	h := &CssHeap{}
 	heap.Init(h)
 	for addr, state := range s.servers {
 		state.RLock()
-		hea := ChunkServerHeap{ChunkNum: state.ChunkNum,Addr: addr}
+		hea := ChunkServerHeap{ChunkNum: len(state.ChunkList),Addr: addr}
 		heap.Push(h,&hea)
 		state.RUnlock()
 	}
@@ -148,6 +148,51 @@ func (s *ChunkServerStates) unRegisterServer(addr util.Address) error {
 	delete(s.servers, addr)
 	return nil
 }
+func (s *ChunkServerStates) addChunk(addr util.Address, handle util.Handle) error {
+	s.servers[addr].Lock()
+	defer s.servers[addr].Unlock()
+	state := s.servers[addr]
+	state.ChunkList = append(state.ChunkList,handle)
+	return nil
+}
+func  (s *ChunkServerStates) removeChunk(addr util.Address,handle util.Handle) error {
+	s.servers[addr].Lock()
+	defer s.servers[addr].Unlock()
+	state := s.servers[addr]
+	index := -1
+	for _index,_handle := range state.ChunkList{
+		if _handle == handle{
+			index = _index
+			break
+		}
+	}
+	// unlikely
+	if index == -1{
+		err := fmt.Errorf("removeChunk warning : %v is not existed in %v",handle,addr)
+		return err
+	}
+	state.ChunkList = append(state.ChunkList[:index], state.ChunkList[index+1:]...)
+	return nil
+}
+
+func (s *ChunkServerStates) GetServerHandleList(addr util.Address) []util.Handle {
+	s.RLock()
+	defer s.RUnlock()
+	s.servers[addr].RLock()
+	defer s.servers[addr].RUnlock()
+	return s.servers[addr].ChunkList
+}
+
+
+func (s *ChunkServerStates) GetServerHandleOne(addr util.Address, index int)util.Handle {
+	s.RLock()
+	defer s.RUnlock()
+	s.servers[addr].RLock()
+	defer s.servers[addr].RUnlock()
+	return s.servers[addr].ChunkList[index]
+}
+
+
 
 func newChunkServerState() *ChunkServerStates {
 	ns := &ChunkServerStates{

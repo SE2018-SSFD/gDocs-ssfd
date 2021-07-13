@@ -23,6 +23,8 @@ const (
 	DELSERVEROPS   = 1008
 	INITIALVERSION = 1
 	HERETRYTIMES   = 3
+	LBLIMIT   = 10
+
 )
 
 // ChunkServer

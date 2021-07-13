@@ -31,20 +31,27 @@ func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 			logrus.Fatal("Master addServer error : cannot connect to chunkServer RPC  ")
 		}
 
-		m.RLock()
-		defer m.RUnlock()
+		// check chunk version & add location to chunk
 		staleHandles := make([]util.Handle, 0)
+		m.cs.RLock()
 		for _, chunk := range retG.ChunkStates {
-			ver, exist := m.cs.chunk[chunk.Handle]
-			if !exist || chunk.VerNum != ver {
-				if chunk.VerNum < ver {
+			state, exist := m.cs.chunk[chunk.Handle]
+			if !exist || chunk.VerNum != state.Version {
+				if chunk.VerNum < state.Version {
 					logrus.Infof("chunk %v with version %v is outdated", chunk.Handle, chunk.VerNum)
 				} else {
 					logrus.Fatalf("chunk %v with version %v is unexpected! Check the implementation", chunk.Handle, chunk.VerNum)
 				}
 				staleHandles = append(staleHandles, chunk.Handle)
+			}else{
+				m.cs.AddLocationOfChunk(chunkServerAddr,chunk.Handle)
 			}
 		}
+		m.cs.RUnlock()
+
+
+
+
 		// SendBack stale chunk to chunkServer
 		var argS util.SetStaleArgs
 		var retS util.SetStaleReply
@@ -60,7 +67,6 @@ func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 			return
 		}
 		logrus.Info("Master addServer success: ", who)
-
 	}
 }
 
@@ -72,6 +78,13 @@ func (m *Master) onClusterHeartbeatDisConn(_ string, who string) {
 		if err != nil {
 			logrus.Fatal("Master removeServer error : ", err)
 			return
+		}
+		for _,handle := range m.GetHandleList(chunkServerAddr){
+			err = m.DeleteLocationOfChunk(chunkServerAddr,handle)
+			if err != nil {
+				logrus.Fatal("Master removeLocation error : ", err)
+				return
+			}
 		}
 		logrus.Infof("chunkserver %v leaves", chunkServerAddr)
 	}
