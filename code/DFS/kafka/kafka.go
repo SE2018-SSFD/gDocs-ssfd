@@ -5,12 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/Shopify/sarama"
-	"github.com/sirupsen/logrus"
 	"os"
 	"path"
+
+	"github.com/Shopify/sarama"
+	"github.com/sirupsen/logrus"
 )
-type consumerGroupHandler struct{
+
+type consumerGroupHandler struct {
 	name string
 }
 
@@ -27,7 +29,7 @@ func (h consumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, cla
 	for msg := range claim.Messages() {
 		//fmt.Printf("%s Message topic:%q partition:%d offset:%d  value:%s\n",h.name, msg.Topic, msg.Partition, msg.Offset, string(msg.Value))
 		var ml util.MasterLog
-		json.Unmarshal(msg.Value,&ml)
+		json.Unmarshal(msg.Value, &ml)
 		logrus.Debugf("AppendLog : %d", ml.OpType)
 		enc := json.NewEncoder(fd)
 		logrus.Infoln(ml)
@@ -42,13 +44,13 @@ func (h consumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, cla
 	return nil
 }
 
-func handleErrors(group *sarama.ConsumerGroup){
+func handleErrors(group *sarama.ConsumerGroup) {
 	for err := range (*group).Errors() {
 		fmt.Println("ERROR", err)
 	}
 }
 
-func Consume(group *sarama.ConsumerGroup,name string) error {
+func Consume(group *sarama.ConsumerGroup, name string) error {
 	fmt.Println(name + "start")
 	ctx := context.Background()
 	for {
@@ -62,21 +64,20 @@ func Consume(group *sarama.ConsumerGroup,name string) error {
 	}
 }
 
-
-func MakeConsumerGroup(MastAddr string) (*sarama.ConsumerGroup,error) {
+func MakeConsumerGroup(MastAddr string) (*sarama.ConsumerGroup, error) {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = false
 	config.Version = sarama.V0_11_0_2
-	brokers := []string{"127.0.0.1:9092","127.0.0.1:9093","127.0.0.1:9094"}
-	cg,err := sarama.NewConsumerGroup(brokers,"testMaster"+MastAddr,config)
+	brokers := []string{"123.57.65.161:9092", "123.57.65.161:9093", "123.57.65.161:9094"}
+	cg, err := sarama.NewConsumerGroup(brokers, "testMaster"+MastAddr, config)
 	if err != nil {
 		logrus.Fatal(err)
-		return nil,err
+		return nil, err
 	}
-	return &cg,err
+	return &cg, err
 }
 
-func MakeProducer(MastAddr string) (*sarama.AsyncProducer,error) {
+func MakeProducer(MastAddr string) (*sarama.AsyncProducer, error) {
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForLocal
 	config.Producer.Partitioner = sarama.NewRandomPartitioner
@@ -84,10 +85,10 @@ func MakeProducer(MastAddr string) (*sarama.AsyncProducer,error) {
 	config.Producer.Return.Errors = true
 	config.Version = sarama.V0_11_0_2
 
-	producer, err := sarama.NewAsyncProducer([]string{"127.0.0.1:9092","127.0.0.1:9093","127.0.0.1:9094"}, config)
+	producer, err := sarama.NewAsyncProducer([]string{"123.57.65.161:9092", "123.57.65.161:9093", "123.57.65.161:9094"}, config)
 	if err != nil {
 		fmt.Printf("create producer error :%s\n", err.Error())
-		return nil,err
+		return nil, err
 	}
-	return &producer,nil
+	return &producer, nil
 }
