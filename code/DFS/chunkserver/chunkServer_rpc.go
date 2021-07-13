@@ -4,6 +4,7 @@ import (
 	"DFS/util"
 	"DFS/util/zkWrap"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/rpc"
@@ -251,14 +252,15 @@ func (cs *ChunkServer) CloneChunkRPC(args util.CloneChunkArgs, reply *util.Clone
 	defer ck.RUnlock()
 
 	len, err := cs.GetChunk(args.Handle, 0, buf)
-	if err != nil {
+	if err != nil && err != io.EOF{
 		log.Fatalf("get chunk error\n")
 		return err
 	}
 
-	if args.Len != len {
-		return fmt.Errorf("ChunkServer %v: clone chunk len %v,but actual len %v", cs.addr, args.Len, len)
-	}
+	//if args.Len != len {
+	//	return fmt.Errorf("ChunkServer %v: clone chunk len %v,but actual len %v", cs.addr, args.Len, len)
+	//}
+	buf = buf[:len]
 
 	err = util.CallAll(args.Addrs, "ChunkServer.SyncChunkRPC", util.SyncChunkArgs{Handle: args.Handle, VerNum: cs.chunks[args.Handle].verNum, Data: buf})
 	if err != nil {
