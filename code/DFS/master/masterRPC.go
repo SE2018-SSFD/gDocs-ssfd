@@ -189,7 +189,8 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 	if args.ChunkIndex == len(fs.chunks) || args.ChunkIndex == -1 {
 		// randomly choose servers to store chunk replica
 		var addrs []util.Address
-		addrs, err = m.css.randomServers(util.REPLICATIONTIMES)
+		//addrs, err = m.css.randomServers(util.REPLICATIONTIMES)
+		addrs, err = m.css.balanceServers(util.REPLICATIONTIMES)
 		if err != nil {
 			return err
 		}
@@ -206,7 +207,13 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		if err != nil {
 			return err
 		}
-		//TODO : Update ChunkServerState
+
+		for _,addr := range addrs{
+			m.css.servers[addr].Lock()
+			m.css.servers[addr].ChunkNum += 1
+			m.css.servers[addr].Unlock()
+		}
+
 		//m.css.xxx
 	} else {
 		targetChunk = fs.chunks[args.ChunkIndex]
