@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	basePath	=	"/test"
-	testStr		=	"test"
+	basePath = "/test"
+	testStr  = "test"
 )
 
 func TestDfs(t *testing.T) {
-	t.Log(dfs.Delete(basePath))
+	assert.NoError(t, dfs.Delete(basePath))
 
 	var AllFd []int
 
@@ -65,14 +65,14 @@ func TestDfs(t *testing.T) {
 			fd, err := dfs.Open(path, false)
 			AllFd = append(AllFd, fd)
 			if assert.NoError(t, err) {
-				repeat := rand.Int() % 10 + 1
-				toWrite := strings.Repeat(testStr, repeat)
+				repeat := rand.Int()%10 + 1
+				toWrite := []byte(strings.Repeat(testStr, repeat))
 				bytesWritten, err := dfs.Write(fd, 0, toWrite)
 				if assert.NoError(t, err) {
-					assert.EqualValues(t, len(testStr)*repeat, bytesWritten)
-					content, err := dfs.ReadAll(path)
+					assert.EqualValues(t, len(toWrite), bytesWritten)
+					data, err := dfs.ReadAll(path)
 					if assert.NoError(t, err) {
-						assert.Equal(t, toWrite, content)
+						assert.Equal(t, toWrite, data)
 					}
 				}
 			}
@@ -83,23 +83,24 @@ func TestDfs(t *testing.T) {
 			fd, err := dfs.Open(path, false)
 			AllFd = append(AllFd, fd)
 			if assert.NoError(t, err) {
-				repeat := rand.Int() % 10 + 1
-				toAppend := strings.Repeat(testStr, repeat)
+				repeat := rand.Int()%10 + 1
+				toAppend := []byte(strings.Repeat(testStr, repeat))
 				bytesWritten, err := dfs.Append(fd, toAppend)
 				if assert.NoError(t, err) {
-					assert.EqualValues(t, len(testStr)*repeat, bytesWritten)
-					content, err := dfs.ReadAll(path)
+					assert.EqualValues(t, len(toAppend), bytesWritten)
+					data, err := dfs.ReadAll(path, true)
 					if assert.NoError(t, err) {
-						assert.Equal(t, toAppend, content)
+						assert.Equal(t, toAppend, data)
 					}
 				}
 			}
 		}
 	}
 
-	t.Log(AllFd)
 	for _, fd := range AllFd {
 		err := dfs.Close(fd)
 		assert.NoError(t, err)
 	}
+
+	assert.NoError(t, dfs.Delete(basePath))
 }

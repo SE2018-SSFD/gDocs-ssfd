@@ -11,31 +11,28 @@ import (
 	"strings"
 )
 
-
-func writeAll(fd int, off int64, content string) (err error) {
-	toWrite := int64(len(content))
-	for toWrite > 0 {
-		n, err := dfs.Write(fd, off, content[:toWrite])
+func writeAll(fd int, off int64, data []byte) (err error) {
+	written, total := int64(0), int64(len(data))
+	for written < total {
+		n, err := dfs.Write(fd, off, data[written:])
 		if err != nil {
 			return err
 		}
-		toWrite = toWrite - n
-		off = off + n
+		written += n
+		off += n
 	}
-	
-	if toWrite != 0 {
-		return fmt.Errorf("expect to write %d bytes, actually it is %d", len(content),
-			int64(len(content)) - toWrite)
+
+	if written != total {
+		return fmt.Errorf("expect to write %d bytes, actually it is %d", total, written)
 	}
 
 	return nil
 }
 
-func appendAll(fd int, content string) (err error) {
-	appended := int64(0)
-	total := int64(len(content))
+func appendAll(fd int, data []byte) (err error) {
+	appended, total := int64(0), int64(len(data))
 	for appended < total {
-		n, err := dfs.Append(fd, content[appended:])
+		n, err := dfs.Append(fd, data[appended:])
 		if err != nil {
 			return err
 		}
@@ -56,7 +53,7 @@ func FileCreate(path string, initSize int64) (err error) {
 	}
 
 	if initSize != 0 {
-		err = writeAll(fd, 0, string(utils.Zeros(initSize)))
+		err = writeAll(fd, 0, utils.Zeros(initSize))
 		if err != nil {
 			return err
 		}
@@ -75,25 +72,25 @@ func DirCreate(path string) (err error) {
 	return nil
 }
 
-func FileGetAll(path string) (content string, err error) {
+func FileGetAll(path string, filterPad ...bool) (data []byte, err error) {
 	fileInfo, err := dfs.Stat(path)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if fileInfo.IsDir {
-		return "", errors.New("cannot get all the content of a directory")
+		return nil, errors.New("cannot get all the content of a directory")
 	}
 
-	content, err = dfs.ReadAll(path)
+	data, err = dfs.ReadAll(path, filterPad...)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return content, nil
+	return data, nil
 }
 
-func FileAppend(path string, content string) (err error) {
+func FileAppend(path string, data []byte) (err error) {
 	fileInfo, err := dfs.Stat(path)
 	if err != nil {
 		return err
@@ -108,7 +105,7 @@ func FileAppend(path string, content string) (err error) {
 		return err
 	}
 
-	err = appendAll(fd, content)
+	err = appendAll(fd, data)
 	if err != nil {
 		return err
 	}
@@ -117,7 +114,7 @@ func FileAppend(path string, content string) (err error) {
 	return err
 }
 
-func FileOverwriteAll(path string, content string) error {
+func FileOverwriteAll(path string, data []byte) error {
 	fileInfo, err := dfs.Stat(path)
 	if err != nil {
 		return err
@@ -132,7 +129,7 @@ func FileOverwriteAll(path string, content string) error {
 		return err
 	}
 
-	err = writeAll(fd, 0, content)
+	err = writeAll(fd, 0, data)
 	if err != nil {
 		return err
 	}
@@ -140,8 +137,6 @@ func FileOverwriteAll(path string, content string) error {
 	err = dfs.Close(fd)
 	return err
 }
-
-
 
 func DirFileNamesAll(path string) (filenames []string, err error) {
 	fileInfos, err := dfs.Scan(path)
@@ -162,7 +157,6 @@ func DirFilenameIndexesAllSorted(path string) (indexes []int, err error) {
 	if err != nil {
 		return nil, err
 	}
-
 
 	for _, filename := range filenames {
 		if index, err := strconv.Atoi(strings.Split(filename, ".")[0]); err == nil {

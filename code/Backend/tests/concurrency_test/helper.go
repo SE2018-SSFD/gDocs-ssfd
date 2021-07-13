@@ -22,9 +22,9 @@ const (
 
 var (
 	hosts = []string{
-		"192.168.1.107:10086",
-		"192.168.1.107:10087",
-		"192.168.1.107:10088",
+		"127.0.0.1:10086",
+		"127.0.0.1:10087",
+		"127.0.0.1:10088",
 	}
 
 	loginParams = []utils.LoginParams{
@@ -163,7 +163,7 @@ func getPostRaw(addr string, api string, reqBody interface{}) (raw []byte, err e
 func getWSAddr(token string, fid uint) string {
 	bean := ResponseBean{}
 	addr := randomHost()
-	err := get("http://" + addr, wsApi, "fid="+strconv.Itoa(int(fid))+"&token="+token+"&query=1", &bean)
+	err := get("http://"+addr, wsApi, "fid="+strconv.Itoa(int(fid))+"&token="+token+"&query=1", &bean)
 	if err != nil {
 		return ""
 	}
@@ -172,7 +172,7 @@ func getWSAddr(token string, fid uint) string {
 		logger.Debugf("[%q] Get WS address", str)
 		return str
 	} else {
-		str := "ws://"+addr+"/"+wsApi+"?fid="+strconv.Itoa(int(fid))+"&token="+token
+		str := "ws://" + addr + "/" + wsApi + "?fid=" + strconv.Itoa(int(fid)) + "&token=" + token
 		logger.Debugf("[%q] Get WS address", str)
 		return str
 	}
@@ -195,14 +195,14 @@ func login(t TestingT, params utils.LoginParams) (token string) {
 }
 
 func getSheet(t TestingT, token string, fid uint) (getSheetRet GetSheetRet) {
-	params := utils.GetSheetParams {
+	params := utils.GetSheetParams{
 		Token: token,
-		Fid: fid,
+		Fid:   fid,
 	}
 	err := getPostRet(randomHostHttp(), "getsheet", params, &getSheetRet)
 	if assert.NoError(t, err) {
 		assert.EqualValues(t, fid, getSheetRet.Fid)
-		row, col := len(getSheetRet.Content) / getSheetRet.Columns, getSheetRet.Columns
+		row, col := len(getSheetRet.Content)/getSheetRet.Columns, getSheetRet.Columns
 		assert.Equal(t, len(getSheetRet.Content), row*col)
 	}
 	return getSheetRet
@@ -238,58 +238,58 @@ type onReleaseFunc func(msg sheetPrepareNotify)
 type onConnFunc func(msg sheetOnConnNotify)
 
 type myWS struct {
-	ws	gowebsocket.Socket
+	ws gowebsocket.Socket
 }
 
 type sheetMessage struct {
-	MsgType		string				`json:"msgType"`	// acquire, modify, release, onConn
-	Body		json.RawMessage		`json:"body"`
+	MsgType string          `json:"msgType"` // acquire, modify, release, onConn
+	Body    json.RawMessage `json:"body"`
 }
 
 // client -> server
 type sheetAcquireMessage struct {
-	Row			int 		`json:"row"`
-	Col			int			`json:"col"`
+	Row int `json:"row"`
+	Col int `json:"col"`
 }
 
 type sheetModifyMessage struct {
-	Row			int 			`json:"row"`
-	Col			int				`json:"col"`
-	Content		string			`json:"content"`
-	Info		json.RawMessage	`json:"info"`
+	Row     int             `json:"row"`
+	Col     int             `json:"col"`
+	Content string          `json:"content"`
+	Info    json.RawMessage `json:"info"`
 }
 
 type sheetReleaseMessage struct {
-	Row			int 		`json:"row"`
-	Col			int			`json:"col"`
+	Row int `json:"row"`
+	Col int `json:"col"`
 }
 
 // server -> client
 type sheetPrepareNotify struct {
-	Row			int 		`json:"row"`
-	Col			int			`json:"col"`
-	Username	string		`json:"username"`
+	Row      int    `json:"row"`
+	Col      int    `json:"col"`
+	Username string `json:"username"`
 }
 
 type sheetModifyNotify struct {
-	Row			int 			`json:"row"`
-	Col			int				`json:"col"`
-	Content		string			`json:"content"`
-	Info		json.RawMessage	`json:"info"`
-	Username	string			`json:"username"`
+	Row      int             `json:"row"`
+	Col      int             `json:"col"`
+	Content  string          `json:"content"`
+	Info     json.RawMessage `json:"info"`
+	Username string          `json:"username"`
 }
 
 type cellLockNotify struct {
-	Row			int
-	Col			int
-	Username	string
+	Row      int
+	Col      int
+	Username string
 }
 
 type sheetOnConnNotify struct {
-	Name			string				`json:"name"`
-	Columns			int					`json:"columns"`
-	Content			[]string			`json:"content"`
-	CellLocks		[]cellLockNotify	`json:"cellLocks"`
+	Name      string           `json:"name"`
+	Columns   int              `json:"columns"`
+	Content   []string         `json:"content"`
+	CellLocks []cellLockNotify `json:"cellLocks"`
 }
 
 func NewWebSocket(t TestingT, addr string,
@@ -300,7 +300,7 @@ func NewWebSocket(t TestingT, addr string,
 	}
 
 	ws.ws.ConnectionOptions = gowebsocket.ConnectionOptions{
-		UseSSL: false,
+		UseSSL:         false,
 		UseCompression: true,
 	}
 
@@ -366,7 +366,7 @@ func (ws *myWS) SendJson(msgType string, msg interface{}) (err error) {
 
 	sheetMsg := sheetMessage{
 		MsgType: msgType,
-		Body: raw,
+		Body:    raw,
 	}
 
 	raw, err = json.Marshal(sheetMsg)
@@ -378,35 +378,33 @@ func (ws *myWS) SendJson(msgType string, msg interface{}) (err error) {
 	return nil
 }
 
-
 type ResponseBean struct {
-	Success		bool			`json:"success"`
-	Msg			int				`json:"msg"`
-	Data		json.RawMessage	`json:"data"`
+	Success bool            `json:"success"`
+	Msg     int             `json:"msg"`
+	Data    json.RawMessage `json:"data"`
 }
 
 type LoginRet struct {
-	Info	json.RawMessage		`json:"info"`
-	Token	string				`json:"token"`
+	Info  json.RawMessage `json:"info"`
+	Token string          `json:"token"`
 }
 
-
 type GetSheetRet struct {
-	Fid						uint		`json:"fid"`
-	IsDeleted				bool		`json:"isDeleted"`
-	Name					string		`json:"name"`
-	CheckPointNum			int			`json:"checkpoint_num"`
-	CheckPointBrief			[]ChkpBrief	`json:"checkPointBrief"`
-	Columns					int			`json:"columns"`
-	Owner					string		`json:"owner"`
+	Fid             uint        `json:"fid"`
+	IsDeleted       bool        `json:"isDeleted"`
+	Name            string      `json:"name"`
+	CheckPointNum   int         `json:"checkpoint_num"`
+	CheckPointBrief []ChkpBrief `json:"checkPointBrief"`
+	Columns         int         `json:"columns"`
+	Owner           string      `json:"owner"`
 
-	CreatedAt 				time.Time	`json:"CreatedAt"`
-	UpdatedAt 				time.Time	`json:"UpdatedAt"`
+	CreatedAt time.Time `json:"CreatedAt"`
+	UpdatedAt time.Time `json:"UpdatedAt"`
 
-	Content					[]string	`json:"content"`
+	Content []string `json:"content"`
 }
 
 type ChkpBrief struct {
-	Cid			uint		`json:"cid"`
-	TimeStamp	time.Time	`json:"timestamp"`
+	Cid       uint      `json:"cid"`
+	TimeStamp time.Time `json:"timestamp"`
 }

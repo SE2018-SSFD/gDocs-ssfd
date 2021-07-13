@@ -356,18 +356,16 @@ func GetChunk(ctx iris.Context) {
 	if chunk == "" || dao.GetSheetByFid(fid).Fid != fid {
 		ctx.ServeContent(bytes.NewReader([]byte("")), chunk, time.Now())
 	} else {
-		if content, err := dao.FileGetAll(gdocFS.GetChunkPath(fid, chunk)); err != nil {
+		if data, err := dao.FileGetAll(gdocFS.GetChunkPath(fid, chunk)); err != nil {
 			ctx.ServeContent(bytes.NewReader([]byte("")), chunk, time.Now())
 		} else {
-			ctx.ServeContent(bytes.NewReader([]byte(content)), chunk, time.Time{})
+			ctx.ServeContent(bytes.NewReader(data), chunk, time.Time{})
 		}
 	}
 }
 
 func UploadChunk(ctx iris.Context) (success bool, msg int, data string) {
 	ctx.SetMaxRequestBodySize(ctx.GetContentLength() + 1 << 20)
-
-	logger.Infof("[%+v] UploadChunk", ctx.FormValues())
 
 	file, info, err := ctx.FormFile("uploadfile")
 	if err != nil {
@@ -395,7 +393,7 @@ func UploadChunk(ctx iris.Context) (success bool, msg int, data string) {
 		panic(err)
 	}
 
-	err = dao.FileOverwriteAll(path, string(raw))
+	err = dao.FileOverwriteAll(path, raw)
 	if err != nil {
 		panic(err)
 	}
