@@ -15,6 +15,12 @@ import (
 type consumerGroupHandler struct {
 	name string
 }
+var kafkaHosts = []string{
+	"59.78.45.122:9092",
+	"59.78.45.122:9093",
+	"59.78.45.122:9094",
+}
+
 
 func (consumerGroupHandler) Setup(_ sarama.ConsumerGroupSession) error   { return nil }
 func (consumerGroupHandler) Cleanup(_ sarama.ConsumerGroupSession) error { return nil }
@@ -68,7 +74,7 @@ func MakeConsumerGroup(MastAddr string) (*sarama.ConsumerGroup, error) {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = false
 	config.Version = sarama.V0_11_0_2
-	brokers := []string{"123.57.65.161:9092", "123.57.65.161:9093", "123.57.65.161:9094"}
+	brokers := kafkaHosts
 	cg, err := sarama.NewConsumerGroup(brokers, "testMaster"+MastAddr, config)
 	if err != nil {
 		logrus.Fatal(err)
@@ -85,7 +91,7 @@ func MakeProducer(MastAddr string) (*sarama.AsyncProducer, error) {
 	config.Producer.Return.Errors = true
 	config.Version = sarama.V0_11_0_2
 
-	producer, err := sarama.NewAsyncProducer([]string{"123.57.65.161:9092", "123.57.65.161:9093", "123.57.65.161:9094"}, config)
+	producer, err := sarama.NewAsyncProducer(kafkaHosts, config)
 	if err != nil {
 		fmt.Printf("create producer error :%s\n", err.Error())
 		return nil, err
