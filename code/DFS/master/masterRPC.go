@@ -151,7 +151,7 @@ func (m *Master) SetFileMetaRPC(args util.SetFileMetaArg, reply *util.SetFileMet
 	// Modified metadata
 	m.cs.file[args.Path].Lock()
 	defer m.cs.file[args.Path].Unlock()
-	m.cs.file[args.Path].size = args.Size
+
 	return nil
 }
 
@@ -196,9 +196,9 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		}
 
 		// Write ahead log
-		err := m.AppendLog(MasterLog{OpType: util.GETREPLICASOPS, Path: args.Path, Addrs: addrs})
+		err = m.AppendLog(MasterLog{OpType: util.GETREPLICASOPS, Path: args.Path, Addrs: addrs})
 		if err != nil {
-			logrus.Warnf("RPC SetFileMeta failed : %s\n", err)
+			logrus.Warnf("RPC GetReplicas append log failed : %s\n", err)
 			return err
 		}
 
@@ -209,9 +209,10 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		}
 
 		for _,addr := range addrs{
-			m.css.servers[addr].Lock()
-			m.css.servers[addr].ChunkNum += 1
-			m.css.servers[addr].Unlock()
+			err = m.css.addChunk(addr, targetChunk.Handle)
+			if err != nil {
+				return err
+			}
 		}
 
 		//m.css.xxx

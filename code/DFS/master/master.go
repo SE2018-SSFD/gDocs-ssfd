@@ -229,7 +229,7 @@ func (m *Master) GetStatusString() string {
 }
 
 func (m *Master) GetHandleList(addr util.Address) []util.Handle {
-	return m.css.GetHandleList(addr)
+	return m.css.GetServerHandleList(addr)
 }
 
 func (m *Master) DeleteLocationOfChunk(addr util.Address,handle util.Handle) error {
