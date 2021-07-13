@@ -278,6 +278,10 @@ func (cs *ChunkServer) SyncChunkRPC(args util.SyncChunkArgs, reply *util.SyncChu
 	}
 	cs.chunks[args.Handle].Lock()
 	cs.RUnlock()
+
+	cs.chunks[args.Handle].isStale = false
+	cs.chunks[args.Handle].verNum = args.VerNum
+
 	defer cs.chunks[args.Handle].Unlock()
 	_, err := cs.CreateAndSetChunk(args.Handle, 0, args.Data)
 	if err != nil {
