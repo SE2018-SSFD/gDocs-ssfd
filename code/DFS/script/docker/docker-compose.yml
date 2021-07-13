@@ -1,0 +1,16 @@
+version: '3.1'
+
+services:
+  client:
+    build:
+      context: .
+      dockerfile: DOCKERFILE-CLIENT
+    container_name: client
+    volumes:
+      - log:/log
+    restart: always
+    hostname: client
+    ports:
+      - 1333:1333
+volumes:
+  log: {}
