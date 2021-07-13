@@ -105,6 +105,10 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error
 			return m, err
 		}
 	}
+	err = m.TryRecover()
+	if err != nil {
+		logrus.Fatal("recover error:", err)
+	}
 
 	// Wait until other masters are ready
 	// err = implicitWait(util.MAXWAITINGTIME*time.Second, &wg)
