@@ -20,6 +20,8 @@ func main() {
 	setLoggingStrategy()
 	switch os.Args[1] {
 	case "master":
+		MasterRun()
+	case "singlemaster":
 		singleMasterRun()
 	case "multimaster":
 		multiMasterRun()
@@ -59,16 +61,37 @@ func chunkServerRun() {
 	ch := make(chan bool)
 	<-ch
 }
-func singleMasterRun(){
+func singleMasterRun() {
 	if len(os.Args) < 4 {
 		printUsage()
 		return
 	}
 	addr := os.Args[2]
 	dataPath := os.Args[3]
-	m,_ := master.InitMaster(util.Address(addr), util.LinuxPath(dataPath))
+	m, _ := master.InitMaster(util.Address(addr), util.LinuxPath(dataPath))
 	m.Serve()
 	// block on ch; make it a daemon
+	ch := make(chan bool)
+	<-ch
+}
+
+func MasterRun() {
+	if len(os.Args) < 4 {
+		printUsage()
+		return
+	}
+	addr := os.Args[2]
+	dataPath := os.Args[3]
+	err := zkWrap.Chroot("/DFS")
+	if err != nil {
+		return
+	}
+	m, err := master.InitMultiMaster(util.Address(addr), util.LinuxPath(dataPath))
+	if err != nil {
+		fmt.Println("Master Init Error :", err)
+		os.Exit(1)
+	}
+	m.Serve()
 	ch := make(chan bool)
 	<-ch
 }
@@ -80,14 +103,14 @@ func multiMasterRun() {
 	}
 	err := zkWrap.Chroot("/DFS")
 	if err != nil {
-		return 
+		return
 	}
 	//arg 2,3,4 are addresses of master;arg 5,6,7 are metadata paths of master
-	for i:=0;i<util.MASTERCOUNT;i++{
+	for i := 0; i < util.MASTERCOUNT; i++ {
 		go func(order int) {
-			m,err := master.InitMultiMaster(util.Address(os.Args[2+order]), util.LinuxPath(os.Args[5+order]))
-			if err!=nil{
-				fmt.Println("Master Init Error :",err)
+			m, err := master.InitMultiMaster(util.Address(os.Args[2+order]), util.LinuxPath(os.Args[5+order]))
+			if err != nil {
+				fmt.Println("Master Init Error :", err)
 				os.Exit(1)
 			}
 			m.Serve()
