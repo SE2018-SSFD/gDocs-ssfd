@@ -66,7 +66,7 @@ func InitChunkServer(chunkAddr string, dataPath string, masterAddr string) *Chun
 
 	_, err := os.Stat(cs.dir)
 	if err != nil {
-		err := os.Mkdir(cs.dir, 0755)
+		err := os.MkdirAll(cs.dir, 0755)
 		if err != nil {
 			log.Fatalf("mkdir %v error\n", cs.dir)
 		}

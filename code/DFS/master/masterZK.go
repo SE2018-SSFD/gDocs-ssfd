@@ -4,8 +4,10 @@ import (
 	"DFS/kafka"
 	"DFS/util"
 	"DFS/util/zkWrap"
-	"github.com/sirupsen/logrus"
 	"strings"
+	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func (m *Master) onClusterHeartbeatConn(_ string, who string) {
@@ -140,6 +142,12 @@ func (m *Master) RegisterElectionNodes() {
 	cb := func(el *zkWrap.Elector) {
 		//become leader, join heartbeat
 		logrus.Print("master " + m.addr + " become leader!")
+		// sleep 1 second,wait all log write finish
+		time.Sleep(1 * time.Second)
+		err = m.TryRecover()
+		if err != nil {
+			logrus.Fatal("recover error:", err)
+		}
 		//kafka producer
 		m.ap, err = kafka.MakeProducer(string(m.addr))
 		if err != nil {

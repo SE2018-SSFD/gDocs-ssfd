@@ -5,8 +5,7 @@ import (
 	"DFS/util"
 	"DFS/util/zkWrap"
 	"fmt"
-	"github.com/Shopify/sarama"
-	"github.com/sirupsen/logrus"
+	"log"
 	"net"
 	"net/rpc"
 	"os"
@@ -14,6 +13,9 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/Shopify/sarama"
+	"github.com/sirupsen/logrus"
 )
 
 type Master struct {
@@ -88,6 +90,13 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error
 	m.cs = newChunkStates()
 	m.css = newChunkServerState()
 
+	_, err = os.Stat(string(m.metaPath))
+	if err != nil {
+		err := os.MkdirAll(string(m.metaPath), 0755)
+		if err != nil {
+			log.Fatalf("mkdir %v error\n", m.metaPath)
+		}
+	}
 	// Create log file if not exist
 	_, err = os.Stat(path.Join(string(m.metaPath), "log.dat"))
 	if os.IsNotExist(err) {
@@ -95,6 +104,10 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error
 		if err != nil {
 			return m, err
 		}
+	}
+	err = m.TryRecover()
+	if err != nil {
+		logrus.Fatal("recover error:", err)
 	}
 
 	// Wait until other masters are ready
