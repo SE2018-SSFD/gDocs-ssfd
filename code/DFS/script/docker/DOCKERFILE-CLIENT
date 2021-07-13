@@ -2,8 +2,9 @@ FROM golang:1.16-alpine
 COPY ./NodeRunner /DFS/NodeRunner
 ENV GOPROXY=https://goproxy.cn \
     GO111MODULE=on
+ARG CLIENTPORT
 
 WORKDIR /DFS
-CMD ./NodeRunner client 0.0.0.0:1333 0.0.0.0:1234 &> ./log/clientOutput${CLIENTPORT}.log &
+CMD ./NodeRunner client 0.0.0.0:${CLIENTPORT} 0.0.0.0:1234 &> ./log/clientOutput${CLIENTPORT}.log &
 
-EXPOSE 1333
+EXPOSE $CLIENTPORT

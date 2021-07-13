@@ -1,0 +1,10 @@
+FROM golang:1.16-alpine
+COPY ./NodeRunner /DFS/NodeRunner
+ENV GOPROXY=https://goproxy.cn \
+    GO111MODULE=on
+ARG MASTERPORT
+
+WORKDIR /DFS
+CMD ./NodeRunner master 0.0.0.0:${MASTERPORTgit } ../log/log_${MASTERPORT} &> ../log/masterOutput${MASTERPORT}.log &
+
+EXPOSE $MASTERPORT
