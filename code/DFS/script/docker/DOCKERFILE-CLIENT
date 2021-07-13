@@ -1,5 +1,4 @@
 FROM golang:1.16-alpine
-COPY ./NodeRunner /DFS/NodeRunner
 ENV GOPROXY=https://goproxy.cn \
     GO111MODULE=on
 ARG CLIENTPORT
