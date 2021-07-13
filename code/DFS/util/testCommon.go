@@ -315,23 +315,26 @@ func HTTPAppend(addr string,fd int,data []byte)(result CAppendRet,err error){
 
 
 // HTTPRead : read a file according to fd
-func HTTPRead(addr string,fd int,offset int,len int)(result ReadRet,err error){
+func HTTPRead(addr string,fd int,offset int,length int)(result ReadRet,err error){
 	url := "http://"+addr+"/read"
 	postBody, _ := json.Marshal(map[string]interface{}{
 		"fd":  fd,
 		"offset" :offset,
-		"Len" : len,
+		"Len" : length,
 	})
 	responseBody := bytes.NewBuffer(postBody)
 	resp, err := http.Post(url, "application/json", responseBody)
 	if err != nil {
 		return
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+
+	respBodyRaw, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
-	err = json.NewDecoder(bytes.NewReader(body)).Decode(&result)
+
+	result.Data = respBodyRaw
+	result.Len = len(respBodyRaw)
 	return
 }
 
