@@ -23,8 +23,7 @@ const (
 	DELSERVEROPS   = 1008
 	INITIALVERSION = 1
 	HERETRYTIMES   = 3
-	LBLIMIT   = 10
-
+	LBLIMIT        = 10
 )
 
 // ChunkServer
@@ -61,7 +60,7 @@ type OperationType int32
 type MasterLog struct {
 	OpType OperationType
 	Path   DFSPath
-	Size   int       // for setFileMetaRPC
-	Addrs  []Address // for GetReplicasRPC
-	Addr   Address   // for register & unregister RPC
+	// Size   int       // for setFileMetaRPC
+	Addrs []Address // for GetReplicasRPC
+	Addr  Address   // for register & unregister RPC
 }

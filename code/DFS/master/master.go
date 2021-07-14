@@ -105,10 +105,10 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error
 			return m, err
 		}
 	}
-	err = m.TryRecover()
-	if err != nil {
-		logrus.Fatal("recover error:", err)
-	}
+	// err = m.TryRecover()
+	// if err != nil {
+	// 	logrus.Fatal("recover error:", err)
+	// }
 
 	// Wait until other masters are ready
 	// err = implicitWait(util.MAXWAITINGTIME*time.Second, &wg)
@@ -232,6 +232,6 @@ func (m *Master) GetHandleList(addr util.Address) []util.Handle {
 	return m.css.GetServerHandleList(addr)
 }
 
-func (m *Master) DeleteLocationOfChunk(addr util.Address,handle util.Handle) error {
-	return m.cs.DeleteLocationOfChunk(addr,handle)
+func (m *Master) DeleteLocationOfChunk(addr util.Address, handle util.Handle) error {
+	return m.cs.DeleteLocationOfChunk(addr, handle)
 }

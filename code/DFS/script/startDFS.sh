@@ -26,5 +26,7 @@ mkdir ${CHUNKSERVERROOT}/ck"${a}"
 ./NodeRunner chunkServer 0.0.0.0:"${a}" ${CHUNKSERVERROOT}/ck"${a}" ${MASTER1ADDR} &> ../log/chunkServerOutput"${a}".log &
 done
 sleep 2
-./NodeRunner multimaster ${MASTER1ADDR} ${MASTER2ADDR} ${MASTER3ADDR} ${MASTER1DIR} ${MASTER2DIR} ${MASTER3DIR} &> ../log/masterOutput.log &
+./NodeRunner master ${MASTER1ADDR} ${MASTER1DIR}  &> ../log/masterOutput.log1 &
+./NodeRunner master ${MASTER2ADDR} ${MASTER2DIR}  &> ../log/masterOutput.log2 &
+./NodeRunner master ${MASTER3ADDR} ${MASTER3DIR}  &> ../log/masterOutput.log3 &
 

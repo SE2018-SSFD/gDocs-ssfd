@@ -32,8 +32,15 @@ func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 		if count == 0 {
 			logrus.Fatal("Master addServer error : cannot connect to chunkServer RPC  ")
 		}
-
+		// err := m.RegisterServer(chunkServerAddr)
+		// if err != nil {
+		// 	logrus.Fatal("Master addServer error : ", err)
+		// 	return
+		// }
 		// check chunk version & add location to chunk
+		m.css.servers[chunkServerAddr] = &ChunkServerState{} // clear all
+		m.css.servers[chunkServerAddr].Lock()
+		defer m.css.servers[chunkServerAddr].Unlock()
 		staleHandles := make([]util.Handle, 0)
 		m.cs.RLock()
 		for _, chunk := range retG.ChunkStates {
@@ -45,25 +52,18 @@ func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 					logrus.Fatalf("chunk %v with version %v is unexpected! Check the implementation", chunk.Handle, chunk.VerNum)
 				}
 				staleHandles = append(staleHandles, chunk.Handle)
-			}else{
-				m.cs.AddLocationOfChunk(chunkServerAddr,chunk.Handle)
+			} else {
+				m.cs.AddLocationOfChunk(chunkServerAddr, chunk.Handle)
+				m.css.servers[chunkServerAddr].ChunkList = append(m.css.servers[chunkServerAddr].ChunkList, chunk.Handle)
 			}
 		}
 		m.cs.RUnlock()
-
-
-
 
 		// SendBack stale chunk to chunkServer
 		var argS util.SetStaleArgs
 		var retS util.SetStaleReply
 		argS.Handles = staleHandles
 		err := util.Call(string(chunkServerAddr), "ChunkServer.SetStaleRPC", argS, &retS)
-		if err != nil {
-			logrus.Fatal("Master addServer error : ", err)
-			return
-		}
-		err = m.RegisterServer(chunkServerAddr)
 		if err != nil {
 			logrus.Fatal("Master addServer error : ", err)
 			return
@@ -76,18 +76,22 @@ func (m *Master) onClusterHeartbeatDisConn(_ string, who string) {
 	if strings.Compare("chunkserver", who[:11]) == 0 {
 		//TODO: remove chunkserver state
 		chunkServerAddr := util.Address(who[11:])
-		err := m.UnregisterServer(chunkServerAddr)
-		if err != nil {
-			logrus.Fatal("Master removeServer error : ", err)
-			return
-		}
-		for _,handle := range m.GetHandleList(chunkServerAddr){
-			err = m.DeleteLocationOfChunk(chunkServerAddr,handle)
+		var err error
+		for _, handle := range m.GetHandleList(chunkServerAddr) {
+			err = m.DeleteLocationOfChunk(chunkServerAddr, handle)
 			if err != nil {
 				logrus.Fatal("Master removeLocation error : ", err)
 				return
 			}
 		}
+		// err = m.UnregisterServer(chunkServerAddr)
+		m.css.Lock()
+		defer m.css.Unlock()
+		delete(m.css.servers, chunkServerAddr)
+		// if err != nil {
+		// 	logrus.Fatal("Master removeServer error : ", err)
+		// 	return
+		// }
 		logrus.Infof("chunkserver %v leaves", chunkServerAddr)
 	}
 }

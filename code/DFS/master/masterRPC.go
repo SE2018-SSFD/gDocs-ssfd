@@ -100,7 +100,7 @@ func (m *Master) ScanRPC(args util.ScanArg, reply *util.ScanRet) (err error) {
 		var ret util.GetFileMetaRet
 		fullPath := path.Join(string(args.Path), file)
 		err := m.GetFileMetaRPC(util.GetFileMetaArg{Path: util.DFSPath(fullPath)}, &ret)
-		logrus.Info("scan:",ret)
+		logrus.Info("scan:", ret)
 		if err != nil {
 			return err
 		}
@@ -113,7 +113,7 @@ func (m *Master) ScanRPC(args util.ScanArg, reply *util.ScanRet) (err error) {
 func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMetaRet) error {
 	logrus.Debugf("RPC getFileMeta, File Path : %s", args.Path)
 	node, err := m.ns.GetNode(args.Path)
-	_,filename:= path.Split(string(args.Path))
+	_, filename := path.Split(string(args.Path))
 
 	if err != nil {
 		logrus.Warnf("RPC getFileMeta failed : %s", err)
@@ -138,22 +138,22 @@ func (m *Master) GetFileMetaRPC(args util.GetFileMetaArg, reply *util.GetFileMet
 }
 
 // SetFileMetaRPC set the file metadata by path
-func (m *Master) SetFileMetaRPC(args util.SetFileMetaArg, reply *util.SetFileMetaRet) error {
-	logrus.Debugf("RPC setFileMeta, File Path : %s", args.Path)
+// func (m *Master) SetFileMetaRPC(args util.SetFileMetaArg, reply *util.SetFileMetaRet) error {
+// 	logrus.Debugf("RPC setFileMeta, File Path : %s", args.Path)
 
-	// Write ahead log
-	err := m.AppendLog(MasterLog{OpType: util.SETFILEMETAOPS, Path: args.Path, Size: args.Size})
-	if err != nil {
-		logrus.Warnf("RPC SetFileMeta failed : %s", err)
-		return err
-	}
+// 	// Write ahead log
+// 	err := m.AppendLog(MasterLog{OpType: util.SETFILEMETAOPS, Path: args.Path, Size: args.Size})
+// 	if err != nil {
+// 		logrus.Warnf("RPC SetFileMeta failed : %s", err)
+// 		return err
+// 	}
 
-	// Modified metadata
-	m.cs.file[args.Path].Lock()
-	defer m.cs.file[args.Path].Unlock()
+// 	// Modified metadata
+// 	m.cs.file[args.Path].Lock()
+// 	defer m.cs.file[args.Path].Unlock()
 
-	return nil
-}
+// 	return nil
+// }
 
 // GetReplicasRPC get a chunk handle by file path and offset
 // as well as the addresses of servers which store the chunk (and its replicas)
@@ -174,9 +174,9 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 
 	//if offset == -1 , return the last one
 	if args.ChunkIndex == -1 {
-		if len(fs.chunks)==0{
+		if len(fs.chunks) == 0 {
 			args.ChunkIndex = 0
-		}else{
+		} else {
 			args.ChunkIndex = len(fs.chunks) - 1
 		}
 		reply.ChunkIndex = len(fs.chunks) - 1
@@ -196,7 +196,9 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		}
 
 		// Write ahead log
-		err = m.AppendLog(MasterLog{OpType: util.GETREPLICASOPS, Path: args.Path, Addrs: addrs})
+		// err = m.AppendLog(MasterLog{OpType: util.GETREPLICASOPS, Path: args.Path, Addrs: addrs})
+		err = m.AppendLog(MasterLog{OpType: util.GETREPLICASOPS, Path: args.Path})
+
 		if err != nil {
 			logrus.Warnf("RPC GetReplicas append log failed : %s\n", err)
 			return err
@@ -208,7 +210,7 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 			return err
 		}
 
-		for _,addr := range addrs{
+		for _, addr := range addrs {
 			err = m.css.addChunk(addr, targetChunk.Handle)
 			if err != nil {
 				return err

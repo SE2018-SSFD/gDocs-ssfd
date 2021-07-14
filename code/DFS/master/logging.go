@@ -14,7 +14,7 @@ import (
 
 type MasterCKP struct {
 	// manage the state of chunkserver node
-	Servers   []serialChunkServerStates
+	// Servers   []serialChunkServerStates
 	Cs        SerialChunkStates
 	Namespace []SerialTreeNode
 }
@@ -23,9 +23,9 @@ type MasterCKP struct {
 type MasterLog struct {
 	OpType OperationType
 	Path   util.DFSPath
-	Size   int            // for setFileMetaRPC
-	Addrs  []util.Address // for GetReplicasRPC
-	Addr   util.Address   // for register & unregister RPC
+	// Size   int            // for setFileMetaRPC
+	// Addrs []util.Address // for GetReplicasRPC
+	// Addr  util.Address   // for register & unregister RPC
 }
 
 func PushMessage(ap *sarama.AsyncProducer, value util.MasterLog) {
@@ -61,9 +61,9 @@ func (m *Master) AppendLog(ml MasterLog) error {
 	uml := util.MasterLog{
 		OpType: util.OperationType(ml.OpType),
 		Path:   ml.Path,
-		Size:   ml.Size,
-		Addrs:  ml.Addrs,
-		Addr:   ml.Addr,
+		// Size:   ml.Size,
+		// Addrs: ml.Addrs,
+		// Addr:  ml.Addr,
 	}
 	PushMessage(m.ap, uml)
 	//logrus.Debugf("AppendLog : %d", ml.OpType)
@@ -137,7 +137,7 @@ func (m *Master) RecoverLog() error {
 				logrus.Warnf("RPC delete failed : %s", err)
 				return err
 			}
-		case util.SETFILEMETAOPS:
+		// case util.SETFILEMETAOPS:
 		case util.GETREPLICASOPS:
 			// when this operation is in the log, there must be new chunk created
 			// increment handle
@@ -155,9 +155,9 @@ func (m *Master) RecoverLog() error {
 				return err
 			}
 			fs.chunks = append(fs.chunks, newChunk)
-			for _, addr := range log.Addrs {
-				newChunk.Locations = append(newChunk.Locations, addr)
-			}
+			// for _, addr := range log.Addrs {
+			// 	newChunk.Locations = append(newChunk.Locations, addr)
+			// }
 		}
 
 	}
@@ -184,11 +184,11 @@ func (m *Master) LoadCheckPoint() error {
 		logrus.Printf("LoadCheckPoint failed : deserialize chunkStates error")
 		return err
 	}
-	err = m.css.Deserialize(ckcp.Servers)
-	if err != nil {
-		logrus.Printf("LoadCheckPoint failed : deserialize chunkserverStates error")
-		return err
-	}
+	// err = m.css.Deserialize(ckcp.Servers)
+	// if err != nil {
+	// 	logrus.Printf("LoadCheckPoint failed : deserialize chunkserverStates error")
+	// 	return err
+	// }
 	err = m.ns.Deserialize(ckcp.Namespace)
 	if err != nil {
 		logrus.Printf("LoadCheckPoint failed : deserialize namespace error")
@@ -211,7 +211,7 @@ func (m *Master) StoreCheckPoint() error {
 	defer fd.Close()
 	ckcp := MasterCKP{
 		// manage the state of chunkserver node
-		Servers:   m.css.Serialize(),
+		// Servers:   m.css.Serialize(),
 		Cs:        m.cs.Serialize(),
 		Namespace: m.ns.Serialize(),
 	}

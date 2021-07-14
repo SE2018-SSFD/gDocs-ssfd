@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
-	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -20,21 +19,22 @@ type ChunkServerStates struct {
 
 type ChunkServerState struct {
 	sync.RWMutex
-	LastHeartbeat time.Time
-	ChunkList     []util.Handle
+	// LastHeartbeat time.Time
+	ChunkList []util.Handle
 }
 type ChunkServerHeap struct {
 	Addr     util.Address
 	ChunkNum int
 }
-type serialChunkServerStates struct {
-	Addr  util.Address
-	State SerialChunkServerState
-}
-type SerialChunkServerState struct {
-	LastHeartbeat time.Time
-	ChunkList     []util.Handle
-}
+
+// type serialChunkServerStates struct {
+// 	Addr  util.Address
+// 	State SerialChunkServerState
+// }
+// type SerialChunkServerState struct {
+// 	LastHeartbeat time.Time
+// 	ChunkList     []util.Handle
+// }
 
 type CssHeap []ChunkServerHeap
 
@@ -56,32 +56,32 @@ func (h *CssHeap) Pop() interface{} {
 	return x
 }
 
-func (s *ChunkServerStates) Serialize() []serialChunkServerStates {
-	s.RLock()
-	defer s.RUnlock()
-	var scss = make([]serialChunkServerStates, 0)
-	for key, state := range s.servers {
-		state.RLock()
-		scss = append(scss, serialChunkServerStates{Addr: key, State: SerialChunkServerState{
-			ChunkList:     state.ChunkList,
-			LastHeartbeat: state.LastHeartbeat,
-		}})
-		state.RUnlock()
-	}
-	return scss
-}
-func (s *ChunkServerStates) Deserialize(scss []serialChunkServerStates) error {
-	s.Lock()
-	defer s.Unlock()
-	for _, _scss := range scss {
-		s.servers[_scss.Addr] = &ChunkServerState{
-			RWMutex:       sync.RWMutex{},
-			LastHeartbeat: _scss.State.LastHeartbeat,
-			ChunkList:     _scss.State.ChunkList,
-		}
-	}
-	return nil
-}
+// func (s *ChunkServerStates) Serialize() []serialChunkServerStates {
+// 	s.RLock()
+// 	defer s.RUnlock()
+// 	var scss = make([]serialChunkServerStates, 0)
+// 	for key, state := range s.servers {
+// 		state.RLock()
+// 		scss = append(scss, serialChunkServerStates{Addr: key, State: SerialChunkServerState{
+// 			ChunkList:     state.ChunkList,
+// 			LastHeartbeat: state.LastHeartbeat,
+// 		}})
+// 		state.RUnlock()
+// 	}
+// 	return scss
+// }
+// func (s *ChunkServerStates) Deserialize(scss []serialChunkServerStates) error {
+// 	s.Lock()
+// 	defer s.Unlock()
+// 	for _, _scss := range scss {
+// 		s.servers[_scss.Addr] = &ChunkServerState{
+// 			RWMutex:       sync.RWMutex{},
+// 			LastHeartbeat: _scss.State.LastHeartbeat,
+// 			ChunkList:     _scss.State.ChunkList,
+// 		}
+// 	}
+// 	return nil
+// }
 
 // randomServers randomly choose times server from existing chunkservers
 //goland:noinspection GoNilness
@@ -132,7 +132,7 @@ func (s *ChunkServerStates) registerServer(addr util.Address) error {
 		return fmt.Errorf("ServerRegisterError : Server %s is registered\n", addr)
 	}
 	s.servers[addr] = &ChunkServerState{
-		LastHeartbeat: time.Now(),
+		// LastHeartbeat: time.Now(),
 	}
 	return nil
 }
