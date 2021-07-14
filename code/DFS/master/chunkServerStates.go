@@ -4,10 +4,11 @@ import (
 	"DFS/util"
 	"container/heap"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"math/rand"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 /* The state of all chunkServer, maintained by the master */
@@ -20,10 +21,10 @@ type ChunkServerStates struct {
 type ChunkServerState struct {
 	sync.RWMutex
 	LastHeartbeat time.Time
-	ChunkList []util.Handle
+	ChunkList     []util.Handle
 }
-type ChunkServerHeap struct{
-	Addr  util.Address
+type ChunkServerHeap struct {
+	Addr     util.Address
 	ChunkNum int
 }
 type serialChunkServerStates struct {
@@ -32,7 +33,7 @@ type serialChunkServerStates struct {
 }
 type SerialChunkServerState struct {
 	LastHeartbeat time.Time
-	ChunkList []util.Handle
+	ChunkList     []util.Handle
 }
 
 type CssHeap []ChunkServerHeap
@@ -62,7 +63,7 @@ func (s *ChunkServerStates) Serialize() []serialChunkServerStates {
 	for key, state := range s.servers {
 		state.RLock()
 		scss = append(scss, serialChunkServerStates{Addr: key, State: SerialChunkServerState{
-			ChunkList: state.ChunkList,
+			ChunkList:     state.ChunkList,
 			LastHeartbeat: state.LastHeartbeat,
 		}})
 		state.RUnlock()
@@ -76,7 +77,7 @@ func (s *ChunkServerStates) Deserialize(scss []serialChunkServerStates) error {
 		s.servers[_scss.Addr] = &ChunkServerState{
 			RWMutex:       sync.RWMutex{},
 			LastHeartbeat: _scss.State.LastHeartbeat,
-			ChunkList:      _scss.State.ChunkList,
+			ChunkList:     _scss.State.ChunkList,
 		}
 	}
 	return nil
@@ -111,13 +112,13 @@ func (s *ChunkServerStates) balanceServers(times int) (addrs []util.Address, err
 	heap.Init(h)
 	for addr, state := range s.servers {
 		state.RLock()
-		hea := ChunkServerHeap{ChunkNum: len(state.ChunkList),Addr: addr}
-		heap.Push(h,&hea)
+		hea := ChunkServerHeap{ChunkNum: len(state.ChunkList), Addr: addr}
+		heap.Push(h, hea)
 		state.RUnlock()
 	}
-	for times > 0{
-		times --
-		addrs = append(addrs,heap.Pop(h).(ChunkServerHeap).Addr)
+	for times > 0 {
+		times--
+		addrs = append(addrs, heap.Pop(h).(ChunkServerHeap).Addr)
 	}
 	logrus.Debugf("Balanced choosed ")
 	return
@@ -152,23 +153,23 @@ func (s *ChunkServerStates) addChunk(addr util.Address, handle util.Handle) erro
 	s.servers[addr].Lock()
 	defer s.servers[addr].Unlock()
 	state := s.servers[addr]
-	state.ChunkList = append(state.ChunkList,handle)
+	state.ChunkList = append(state.ChunkList, handle)
 	return nil
 }
-func  (s *ChunkServerStates) removeChunk(addr util.Address,handle util.Handle) error {
+func (s *ChunkServerStates) removeChunk(addr util.Address, handle util.Handle) error {
 	s.servers[addr].Lock()
 	defer s.servers[addr].Unlock()
 	state := s.servers[addr]
 	index := -1
-	for _index,_handle := range state.ChunkList{
-		if _handle == handle{
+	for _index, _handle := range state.ChunkList {
+		if _handle == handle {
 			index = _index
 			break
 		}
 	}
 	// unlikely
-	if index == -1{
-		err := fmt.Errorf("removeChunk warning : %v is not existed in %v",handle,addr)
+	if index == -1 {
+		err := fmt.Errorf("removeChunk warning : %v is not existed in %v", handle, addr)
 		return err
 	}
 	state.ChunkList = append(state.ChunkList[:index], state.ChunkList[index+1:]...)
@@ -183,16 +184,13 @@ func (s *ChunkServerStates) GetServerHandleList(addr util.Address) []util.Handle
 	return s.servers[addr].ChunkList
 }
 
-
-func (s *ChunkServerStates) GetServerHandleOne(addr util.Address, index int)util.Handle {
+func (s *ChunkServerStates) GetServerHandleOne(addr util.Address, index int) util.Handle {
 	s.RLock()
 	defer s.RUnlock()
 	s.servers[addr].RLock()
 	defer s.servers[addr].RUnlock()
 	return s.servers[addr].ChunkList[index]
 }
-
-
 
 func newChunkServerState() *ChunkServerStates {
 	ns := &ChunkServerStates{

@@ -5,10 +5,11 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"github.com/Shopify/sarama"
-	"github.com/sirupsen/logrus"
 	"os"
 	"path"
+
+	"github.com/Shopify/sarama"
+	"github.com/sirupsen/logrus"
 )
 
 type MasterCKP struct {
@@ -54,7 +55,7 @@ func (m *Master) AppendLog(ml MasterLog) error {
 	m.logLock.Lock()
 	defer m.logLock.Unlock()
 	if m.ap == nil {
-		logrus.Fatal("producer is nil")
+		logrus.Debug("producer is nil")
 		return nil
 	}
 	uml := util.MasterLog{
