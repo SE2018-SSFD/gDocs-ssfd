@@ -152,6 +152,10 @@ func (m *Master) RegisterElectionNodes() {
 		if err != nil {
 			logrus.Fatal("recover error:", err)
 		}
+		err = m.StoreCheckPoint()
+		if err != nil {
+			logrus.Fatal("storecheckpoint error:", err)
+		}
 		//kafka producer
 		m.ap, err = kafka.MakeProducer(string(m.addr))
 		if err != nil {

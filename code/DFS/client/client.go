@@ -211,7 +211,7 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes in
 		if err != nil {
 			return
 		}
-		logrus.Debugf(" Read ChunkHandle : %d Addresses : %s %s %s\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2])
+		//logrus.Debugf(" Read ChunkHandle : %d Addresses : %s %s %s\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2])
 		//TODO : make it random
 		argRCK.Handle = retR.ChunkHandle
 		argRCK.Len = roundReadBytes
@@ -507,7 +507,7 @@ func (c *Client) _Write(path util.DFSPath, offset int, data []byte) (writtenByte
 			return
 		}
 		roundWrittenBytes := int(math.Min(float64(util.MAXCHUNKSIZE-(offset+writtenBytes)%util.MAXCHUNKSIZE), float64(len(data)-writtenBytes)))
-		logrus.Infof(" Write ChunkHandle : %d Addresses : %s %s %s, write %v\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2], roundWrittenBytes)
+		//logrus.Infof(" Write ChunkHandle : %d Addresses : %s %s %s, write %v\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2], roundWrittenBytes)
 		var cid = c.newCacheID(retR.ChunkHandle)
 
 		argL.CID = cid
@@ -748,7 +748,7 @@ func (c *Client) _Append(path util.DFSPath, data []byte) (offset int, err error)
 		if err != nil {
 			return
 		}
-		logrus.Debugf(" ChunkHandle : %d Addresses : %s %s %s\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2])
+		//logrus.Debugf(" ChunkHandle : %d Addresses : %s %s %s\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2])
 		// roundWrittenBytes := int(math.Min(float64(util.MAXCHUNKSIZE-(offset+writtenBytes)%util.MAXCHUNKSIZE), float64(len(data)-writtenBytes)))
 		var cid = c.newCacheID(retR.ChunkHandle)
 		argL.CID = cid

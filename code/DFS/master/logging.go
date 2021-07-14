@@ -94,7 +94,7 @@ func (m *Master) RecoverLog() error {
 	fd, err := os.Open(filename)
 	if err != nil {
 		// logrus.Printf("chunkserver %v: open file error\n")
-		return err
+		return nil
 	}
 	defer fd.Close()
 	dec := json.NewDecoder(fd)
@@ -243,14 +243,16 @@ func (m *Master) TryRecover() error {
 	_, err := os.Stat(path.Join(string(m.metaPath), "checkpoint.dat"))
 	if os.IsNotExist(err) {
 		logrus.Infof("No checkpoint, start master directly")
-		return nil
+		// return nil
+	} else {
+		logrus.Infof("Checkpoint found, start recover")
+		err = m.LoadCheckPoint()
+		if err != nil {
+			logrus.Debug("load checkpoint err", err)
+			return err
+		}
 	}
-	logrus.Infof("Checkpoint found, start recover")
 
-	err = m.LoadCheckPoint()
-	if err != nil {
-		return err
-	}
 	err = m.RecoverLog()
 	return err
 }

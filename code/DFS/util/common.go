@@ -36,7 +36,7 @@ type ChunkState struct {
 
 // Client
 const (
-	MAXCHUNKSIZE = 64 // 64MB
+	MAXCHUNKSIZE = 64<<20 // 64MB
 	// MAXCHUNKSIZE      = 1024 // 64B
 	REPLICATIONTIMES  = 3
 	MAXAPPENDSIZE     = MAXCHUNKSIZE / 2 // TODO: according to GFS docs, we should set it to MAXCHUNKSIZE / 4
@@ -61,6 +61,6 @@ type MasterLog struct {
 	OpType OperationType
 	Path   DFSPath
 	// Size   int       // for setFileMetaRPC
-	Addrs []Address // for GetReplicasRPC
-	Addr  Address   // for register & unregister RPC
+	//Addrs []Address // for GetReplicasRPC
+	//Addr  Address   // for register & unregister RPC
 }
