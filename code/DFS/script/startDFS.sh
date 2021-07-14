@@ -7,7 +7,7 @@ MASTER3ADDR=0.0.0.0:1236
 MASTER1DIR=../log/log_1
 MASTER2DIR=../log/log_2
 MASTER3DIR=../log/log_3
-CHUNKSERVERNUM=3
+CHUNKSERVERNUM=5
 CHUNKSERVERROOT=../data/ck
 rm -r ./NodeRunner
 go build ../NodeRunner.go
