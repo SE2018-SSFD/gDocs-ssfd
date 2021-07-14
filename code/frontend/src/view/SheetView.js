@@ -22,7 +22,7 @@ import {
     UploadOutlined
 } from "@ant-design/icons";
 import {UserAvatar} from "../components/UserAvatar";
-import {ColMap, RowMap} from "../utils";
+import {ColMap, getValue, RowMap} from "../utils";
 import Modal from "antd/es/modal/Modal";
 
 const {Header} = Layout
@@ -77,8 +77,7 @@ class SheetView extends React.Component {
                     picDrawerVisible: false,
                 });
                 message.success(msg_word);
-            }
-            else{
+            } else {
                 this.setState({
                     fileList: [],
                     uploading: false,
@@ -361,7 +360,14 @@ class SheetView extends React.Component {
                     k = i % columns;
                     if (content[i].indexOf("getchunk") !== -1) {
                         console.log("image");
-                        luckysheet.insertImage(content[i],0, j, k)
+                        let options = {
+                            order: 0,
+                            rowIndex: j,
+                            colIndex: k,
+                            success: () => {
+                            }
+                        }
+                        luckysheet.insertImage(content[i], options)
                     }
                 }
                 message.success(msg_word).then(() => {
@@ -503,12 +509,20 @@ class SheetView extends React.Component {
 
                         }
                     })
+                    let options = {};
                     for (let i = 0; i < content.length; i++) {
                         j = Math.floor(i / columns);
                         k = i % columns;
                         if (content[i].indexOf("getchunk") !== -1) {
                             console.log("image");
-                            luckysheet.insertImage(content[i],0, j, k, )
+                            options = {
+                                order: 0,
+                                rowIndex: j,
+                                colIndex: k,
+                                success: () => {
+                                }
+                            }
+                            luckysheet.insertImage(content[i], options)
                         }
                     }
                     break;
@@ -562,7 +576,14 @@ class SheetView extends React.Component {
                     }
                     if (content.indexOf("getchunk") !== -1) {
                         console.log("image")
-                        luckysheet.insertImage(content,0,row,col);
+                        let options = {
+                            order: 0,
+                            rowIndex: row,
+                            colIndex: col,
+                            success: () => {
+                            }
+                        }
+                        luckysheet.insertImage(content, options);
                     }
                     break;
                 }
@@ -623,10 +644,11 @@ class SheetView extends React.Component {
                     <div>
                         {
                             item.old === "" ?
-                                (<p> 设置 {ColMap(item.col) + RowMap(item.row)} 为 {item.new}</p>) :
+                                (
+                                    <p> 设置 {ColMap(item.col) + RowMap(item.row)} 为 {getValue(item.new)}</p>) :
                                 item.new === "" ?
                                     (<p> 清空 {ColMap(item.col) + RowMap(item.row)}</p>) :
-                                    (<p> 将 {ColMap(item.col) + RowMap(item.row)} 从 {item.old} 修改为 {item.new}</p>)
+                                    (<p> 将 {ColMap(item.col) + RowMap(item.row)} 从 {item.old} 修改为 {getValue(item.new)}</p>)
                         }
                         {/*<Button onClick={() => this.handleRecoverLog(item)}>恢复到此处</Button>*/}
                     </div>
@@ -645,7 +667,7 @@ class SheetView extends React.Component {
                 <Card hoverable style={{width: 300}}
                       title={item}>
                     <p>{GET_HTTP_URL() + "getchunk?fid=" + fid + "&chunk=" + item}</p>
-                    <img src={GET_HTTP_URL() + "getchunk?fid=" + fid + "&chunk=" + item}/>
+                    <img src={GET_HTTP_URL() + "getchunk?fid=" + fid + "&chunk=" + item} height={100}/>
                 </Card>
         );
 

@@ -24,3 +24,13 @@ export function ColMap(col){
         return String.fromCharCode(65+ first_idx) + String.fromCharCode(65+ second_idx);
     }
 }
+
+export function getValue(val){
+    if(val.indexOf("getchunk")===-1)
+    {
+        return val;
+    }
+    else{
+        return <img src={val} height={100} alt={"img"}/>
+    }
+}

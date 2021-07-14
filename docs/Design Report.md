@@ -133,7 +133,7 @@ graph LR
     
 ```
 
-​错误状态并不会停止整个前端，而是会给用户以提示信息。
+错误状态并不会停止整个前端，而是会给用户以提示信息。
 
 当然只依靠前端是不可能在实现最优情况下的顺序一致性，对于这部分的描述详见后端文档。
 
@@ -350,158 +350,6 @@ DFS要求同一个文件只能由write或者append其中一个操作进行写入
 1. 协程池大小：决定了高并发时能够缓存的未处理的请求，但过高会导致协程占用太多内存。
 2. 消息队列(chan)的buffer size，越大协程越不容易阻塞，但同样的会占用更多的内存。
 
-### 测试
-
-#### 正确性
-
-##### 缓存池单元测试
-
-###### Memsheet
-
-1. 测试了*NewMemSheetFromStringSlice*和*NewMemSheet*经过几轮Set后各个单元格内容是否一致。
-2. 测试了写入大量随机字符后，*GetSize*返回的大小是否和字符串大小基本相等。
-3. 测试了1000并发同时写同一个单元格表格字符数统计是否正确，内容修改是否正确。
-
-###### SheetCache
-
-1. 测试写入三倍于缓存容量时是否按照LRU顺序驱逐缓存
-2. 测试Get一个MemSheet后，改变大小为原来4倍，重新Put后是否会驱逐出3个缓存
-3. 测试被Get但没有被Put的MemSheet是否没有被驱逐
-4. 测试大到缓存无法驱逐来获得足够内存的MemSheet是否会被直接驱逐
-5. 测试原先驱逐的MemSheet剩下的空间是否能够继续容纳新的缓存
-
-###### 结果
-
-通过率：100%
-
-覆盖率：93.5%
-
-有部分分支是为了健壮性添加，理论上不会到达，所以无法全部覆盖。
-
-##### LRU单元测试
-
-1. 测试Add方法 - 将新加入或者已有的Key设为最近使用
-2. 测试Delete方法 - 删除Key
-3. 测试AddToLeastRecent -  将新加入或者已有的Key设为最不常使用，主要是用来恢复DoEvict出的Key
-4. 测试DoEvict - 获得最不常使用的Key，并删除
-5. 测试Len - 是否和LRU中剩余的Key数量相等
-
-###### 结果
-
-通过率：100%
-
-覆盖率：100%
-
-##### DFS封装测试
-
-1. 在原本不存在20个目录下每个目录都新建20个文件，测试是否报错和create返回的fd是否正常
-2. 使用Scan测试原本不存在中间目录是否被正确创建，且名字正确
-3. 使用Scan测试每个目录下文件是否被正确创建，且名字正确
-4. 对前10个文件夹里的所有文件调用Write随机写入并用ReadAll读取，比较是否相同
-5. 对后10个文件夹里的所有文件调用Append随机写入并用ReadAll读取，比较是否相同
-6. Delete测试根目录，测试所有子目录和文件是否都被删除
-7. Close所有fd，测试是否报错
-
-###### 结果
-
-通过率：100%
-
-覆盖率：77.3%
-
-没有覆盖到的基本都是对网络错误的处理，只是简单地返回错误，不需要覆盖。
-
-##### 系统测试
-
-###### User
-
-1. 测试了Login
-2. 测试了Register
-3. 测试了GetUser
-4. 测试了ModifyUser
-5. 测试了ModifyUserAuth
-
-###### Sheet
-
-1. 测试了NewSheet
-2. 测试了GetSheet
-3. 测试了ModifySheet
-
-###### 结果
-
-注：该测试是针对单机版的测试，后改为分布式部署后只能进行端到端测试
-
-通过率：100%
-
-覆盖率：96.7%
-
-##### 端到端测试
-
-注：以下测试由docker-compose分布式部署后，使用go编写脚本进行端到端测试，故没有覆盖率指标。
-
-###### 单元格顺序一致性
-
-1. 测试单个文件实时编辑：启动多个用户，使用websocket对同一个文件进行无限制的随机写，部分用户会从中间加入，最后比较各个用户通过websocket信息还原的表格内容是否一致
-2. 测试多个文件实时编辑：启动多个用户，一边新建房间一边在里面进行限制速率的随机写，用户会从中间加入，最后比较各个用户通过websocket信息还原的表格内容是否一致
-
-###### 内存Evict和文件系统加载
-
-1. 启动多文件实时编辑，调大单个表格的行列，并调大测试新建的文件数量，确保超过服务器的缓存大小，测试各个用户还原的表格应该是否一致
-2. 把服务器的最大缓存调整为0，这样每次修改都会触发存盘和加载，然后测试单文件实时编辑，测试各个用户还原的表格应该是否一致
-
-###### 新增和删除节点
-
-1. 删除节点：在Chrome中用前端新建一个表格并进入，随便填写几个单元格，保存版本，在NetWork中查看被分配的后端，手动在Docker关闭该后端，等待ZooKeeper心跳时间(7s)后刷新，看是否被分配到新的后端且不同后端重定向到的位置是否一致。然后看新加载的表格内容是否一致，版本回滚是否一致。
-2. 新增节点：新建一个表格，在Chrome中找到对应的后端A，在docker将其关闭，重新打开会重定向到新的后端B，此时使用两个用户登陆B并进入实时编辑状态。重新启动被关闭的后端A，此时该资源在任何后端都会被重定向到原先的后端A，在两个用户未断开连接的情况下，ZooKeeper的分布式锁仍然在后端B，此时新的用户进入实时编辑，会被重定向到后端A，且A会阻塞因为无法获取分布式锁。之后退出B上实时编辑两个用户，A会迅速得到锁并恢复实时编辑的服务。
-3. FSCheck：新建表格后多次(>10)修改单元格并创建回滚点，然后手动删除所有checkpoint文件，只保留log文件，将原先负责该资源的服务器在Docker中关闭，重新加载时会触发FSCheck，如果正确的话所有丢失的checkpoint文件都会被恢复，且表格内容和原来一致。
-
-###### 结果
-
-除了缓存为0的无限制单文件测试和多文件测试外，其他的测试都通过，但这两个测试没通过的原因不是因为实现的错误。
-
-在缓存为0的无限制单文件测试中，因为文件写非常慢，而请求不受限制的话会有很多任务堆积在协程池中等待处理，这样导致在测试过程中只处理了几百个请求，而在协程池中还有上万个请求等待处理，这样用户接收到的内容很有可能是服务器还没有返回，而不是返回错误。在调整了协程池大小，减缓了了请求速度，加大了测试等待时间之后，测试是可以通过的。
-
-多文件测试也是同样的原因，服务器负载过高，测试等待结束后还没有处理完，所以需要减慢消息速率，延长等待时间，这样也能通过测试。
-
-#### 性能
-
-##### 单文件实时编辑
-
-在缓存充足的情况下，我们测试了十个用户对单文件无限制随机写5分钟的性能，结果如下：
-
->concurrency_test.go:37:
->Duration:       300s
->Users:  10
->Total Send:     74250003 op
->Total Recv:     72389638 op
->Send Rate:      24750 op/(s * user)
->Recv Rate:      24129 op/(s * user)
->--- PASS: TestBenchmarkSingleFile (320.26s)
-
-其中Recv Rate是最重要的参数，它是在后端处理完消息之后返回的，代表着后端处理消息的速率；而因为后端会丢弃超过协程池容量的消息，Send Rate和网络关系比较大，而和后端处理能力关系不大。所以我们重点关注Recv Rate。
-
-可以看到消息处理和转发的吞吐非常高，这是因为WebSocket的无锁生产者消费者架构的良好设计带来的，同时也是缓存的作用。我将后端的最大缓存设置为0，这样每次修改都需要读写文件系统，在这样的条件下测试结果如下：
-
->concurrency_test.go:37:
->Duration:       300s
->Users:  10
->Total Send:     165382496 op
->Total Recv:     40944 op
->Send Rate:      55127 op/(s * user)
->Recv Rate:      13 op/(s * user)
->--- PASS: TestBenchmarkSingleFile (320.27s)
-
-可以看到Recv吞吐非常低，说明后端每秒钟只能处理十几个请求，只有缓存的两千分之一，缓存的重要性得以体现。
-
-##### 后端个数对性能的影响
-
-后端越多，文件的缓存越大，对实时编辑计算资源的也可以分摊更多。如果我们无限制地模拟用户创建新文件并进行实时编辑，后端越多，性能曲线应该越好。但是由于设备的限制，我们很难进行效果能够明显到体现出计算和缓存分摊的大规模测试，所以只是进行了方案设想，并未进行实际测试。
-
-我们设想的方案如下：
-
-1. 采用二八定律，先创建大量文件，然后将80%的访问概率集中在20%的文件上，记录Cache Miss的概率，测试LRU缓存驱逐策略的影响
-2. 在不同后端数量下，分别测试 $10^{1}$~$10^{6}$ 个文件实时编辑的各个文件的吞吐
-3. 在不同后端数量下，对测试 $10^{1}$~$10^{6}$ 个文件使用GetSheet，使其加载到缓存中，测试Cache Miss的概率
-
 ## ZooKeeper
 
 ### 实现功能
@@ -549,44 +397,246 @@ DFS要求同一个文件只能由write或者append其中一个操作进行写入
 
 详见附录B[代码片段 4](#Bcode4)
 
-### 测试
+## DFS
 
-#### 心跳 & 服务发现
+SSFD小组的后端分布式文件系统（以下简称DFS）采用go语言编写，使用了zookeeper框架来实现心跳，服务发现，选举等功能；使用kafka来实现日志同步的功能；完成了基本操作(operation)、chunk设计与实现、replication、一致性（concurrent append)、并发控制、容错、故障恢复、元数据的日志与checkpoint、节点可拓展性、负载均衡等功能，并最大程度保证了efficiency。
 
-1. 为四个服务器创建回调函数，使用四个Map记录收到的对应节点事件的数量
-2. 四个服务器依次注册，每次注册时调用*GetOriginMates*得到的伙伴数量应该和之前注册的服务器数量相同
-3. 检查每个服务器收到的*onConn*事件数量是否正确
-4. 每个服务器主动断开连接，检查每个服务器收到的*onDisConn*事件数量是否正确
+DFS的总代码行数接近7000行，除了业务代码以外，还包括了不同层面的详尽测试代码，力求减少集成测试，端到端测试中的错误。
 
-#### 消息队列
+文档将以功能的方式来划分，讲述每一个具体功能的实现方案，以文字与图片为主，代码为辅。
 
-1. 创建10个Log Room
-2. 为每个Room创建20/5个初始/追加的Channel，测试初始Channel和追加事件是否正确
-3. 为每个channel创建5/20个初始/追加的Log，测试初始Log和追加事件是否正确
-4. 使用WaitGroup等待预计的事件结束，并设置超时时间，超时则测试失败
+### 架构
 
-#### 选举
+首先介绍一下DFS的总体架构，该分布式文件系统主要分为三大部分：**client,master**与 **chunkserver**，client负责接收后端HTTP请求，向master交互获取元数据，再向chunkserver请求数据，作用原理与GFS相同。其中，每个部分都有专门与zookeeper交互的模块(如clientZK.go)，负责标准化打印log的模块(client_debug.log)，处理RPC的模块(client_rpc.go)。
 
-1. 生成10个候选者
-2. 每个候选者成为Leader后立刻退位
-3. 测试是否同时只有一个Leader，且退位后状态是否改变
-4. 使用WaitGroup等待预计的事件结束，并设置超时时间，超时则测试失败
+在master部分，元数据的管理还分为三个部分。一个是**Namespace server**(namespaceState.go)，负责管理DFS的目录树；一个是 **chunk server**(chunkStates.go),负责管理文件路径到chunk之间的关系，以及chunk的状态；最后一个是 **ChunkServer server**(chunkServerStates.go，维护监听了chunkserver的状态。
 
-#### 互斥锁
+每个server都是一个进程，不同进程间交互采用RPC进行通信。我们使用了docker与非docker两种方式来做DFS的部署。
 
-1. 生成10个锁的竞争者
-2. 每个竞争者竞争到锁后睡眠一段时间再放锁
-3. 测试释放锁的一定是得到锁的
-4. 拿到锁时给计数加1，放锁时减1
-5. 测试最后计数是否为0
+### Operation 
 
-#### 测试结果
+DFS实现的Operation有十一种，除了覆盖了POSIX标准的常用接口外，还有原子append操作，以下简单介绍每个接口的作用与实现 :
 
-通过率：100%
+**Create :** 给定DFS路径，创建一个文件。
 
-覆盖率：72.6%
+**Mkdir :**给定DFS路径，创建一个文件夹。
 
-未覆盖的大多数都是为了健壮性添加的错误处理，只是简单地返回错误，不需要覆盖。
+**Delete:**给定DFS路径，删除一个文件或空文件夹。这里采用**迟删除**的办法，即只在namespace server和chunk server中将对应的映射改为删除前缀，再在之后定期触发的垃圾回收过程中回收旧chunk。
+
+**Open:** 打开一个文件，返回一个fd。这里在client端做了一层抽象，保存了从fd到DFS路径的映射。对于一个client来说，只有被打开的文件才能进行读写，与POSIX API的语义一致。
+
+**Close:** 关闭一个文件，删除对应fd到路径的映射。
+
+**Write:**写文件操作，进入chunk数据写入流程，具体实现放在chunk一节介绍
+
+1. 读取解析HTTP POST的参数，这里统一使用multipart/form-data以支持文件、图片的传输
+2. 获取DFS中文件信息，做一系列Precheck，比如确保写入offset不大于文件大小
+3. 写入文件，具体见chunk一节
+4. 返回写入文件的字节数
+
+**Read:**读文件操作，进入chunk数据读取流程，具体实现放在chunk一节介绍
+
+**Append:** 追加操作，从文件的末尾追加数据，返回文件成功写入的offset（与gfs一致）
+
+**List:** 列出一个文件夹下所有文件的名称
+
+**GetFileInfo:** 给定DFS路径，查看文件的元数据信息
+
+**Scan:** 列出一个文件夹下所有文件的元数据信息。
+
+### Chunk
+
+DFS实现了将文件数据分为chunk，并以chunk级别做副本，元数据管理等操作。接下来以write和read操作为例来讲述chunk的思想与实现：
+
+**chunk创建流程：**
+
+如果读写过程调用GetReplicas时Index大于原有块数，则会进入创建新chunk流程。
+
+创建新文件时，不会创建chunk，只有向新文件第一次写入(write or append)时才创建chunk
+
+1. 拿到新的chunk Handle
+2. 新建chunk，并随机分配三个chunkserver来存储
+3. 通知三个chunkserver创建对应的chunk，等待返回。
+4. 所有chunkserver返回创建成功，则chunk创建成功。
+
+**chunk写入流程: **
+
+0. 首先确定好每个chunk的大小，
+
+1. 把要写入的数据按chunk大小切分，对于每份数据，向master发送GetReplicasRPC，获取三个副本所在的chunkserver 地址
+2. 获取到地址后，调用chunkserver LoadDataRPC，把数据load进chunkserver data cache中，此步数据流完成。注意这里采用的是**流水线**的方式，client只发送给第一个chunkserver并给定传输顺序，根据此信息流水线地将数据传播，来最大化的利用网络带宽。
+3. 接着调用sync函数，发送给primary chunkserver，primary chunkserver将写请求发送给各个副本，等所有副本都成功写入，才返回成功。
+4. 如果写入失败，client则重试，重试多次后，仍失败，表明有chunkserver已经离开，client重新向master获取chunkserver地址，重新写入。
+
+**chunk读取流程：**
+
+1. 把要读入的数据按chunk大小切分，对于每份数据，向master发送GetReplicasRPC，获取三个副本所在的chunkserver 地址
+2. 获取到地址后，调用其中任意一个chunkserver ReadChunkRPC，即可读到数据。
+
+### Replication
+
+我们采用三副本模型，一个chunk会replicate到三个chunkserver上。同时，我们还提供了CloneChunkRPC, 来允许将chunk从一个chunkserver拷贝到另一个chunkserver中，来实现re-replication。chunkserver和master会维持版本号，来判断chunkserver中是否为最新的chunk，如果不是最新，则会将旧chunk设为stale。
+
+### Fault Tolerance
+
+我们支持multiple master和multiple data nodes。允许最多两个master crash，服务仍保持可用性。由于我们chunk采用三副本，所以也容许短时间内两个chunkserver crash。我们可以加大副本数以及通过采取re-replication的策略来提高容错。
+
+### Consistency
+
+对于一致性，我们做了很多思考。首先，master应尽可能维护更少的元数据，与论文一致，master只维护namespace，文件与块的映射，块与位置的映射。我们并没有维护像文件大小这样的元数据，因为这些元数据维护时，为保证master和chunkserver的一致性，一方面需要2pc，这样会带来巨大的性能开销，另一方面还需要增加client与master的交互（更新文件大小），这样会给master增加压力。与论文一致，master维护的元数据不会与chunkserver产生不一致。因为namespace、文件与块映射在chunkserver是不可见的；而块与位置的映射，在心跳检测中，发现chunkserver离开，也可以被立即修正。
+
+此外，阅读论文后，我们还发现另一种一致性的情况，就是并发写入会产生consistent但undefined的情况，这种undefined在我们的应用中是不能容忍的。所以我们在应用层做了很多优化。首先我们应用层只会用到single write和concurrent append。这部分设计可以阅读应用层的文档。单一写是consistent且defined，符合我们要求。同时并发append我们采用了checksum的设计（参考gfs2.7.2）,这样我们虽然在字节上不满足一致性，但是可以通过reader对checksum进行校验来实现一致性，通过是append是defined的，最终满足应用的一致性要求。
+
+### Concurrency Control
+
+DFS广泛采用读写锁和互斥锁来进行并发控制。为了保证总体的性能损失最小，能用无锁设计的地方就用了无锁设计（比如并发append)，并且锁的粒度从大到小，层次分明，以下列举DFS中锁的设计理念与case study。
+
+**总体设计**
+
+由于DFS支持多client同时访问，同时一个client也会开goroutine去完成每一个RPC请求（意味着单client也要做并发控制），而client会调用master与chunkserver，所以DFS的每个部分都必须有严格的并发控制。
+
+**设计思想一**：锁粒度粗中有细。实际上，如果以功能为导向而不要求性能，全局一把大锁就可以解决并发问题，同时把RPC改成串行的即可。显而易见的是，这样做性能将有极大的损失(tradeoff)。于是我们设计了**精细的读写锁**，以master管理元数据为例，master自己本身有一把最大的锁。
+
+```go
+type Master struct {
+	sync.RWMutex
+	logLock  sync.Mutex
+    ...
+}
+```
+
+到了chunkstates层面，有一把第二大的锁，管理path-file mapping，chunk-handle mapping等，根据需要拿读锁或写锁。
+
+```go
+type ChunkStates struct {
+	sync.RWMutex
+	file  map[util.DFSPath]*fileState
+	chunk map[util.Handle]util.Version
+	handle *handleState
+}
+```
+
+再到管理一个文件（文件夹）状态的fileState，又有一把第三大的锁，管理file-chunk mapping
+
+```go
+type fileState struct{
+   sync.RWMutex
+   chunks []*chunkState
+   size int
+}
+```
+
+具体到每一个chunk，又有一个chunk读写锁来管理chunk handle与chunk replicas的位置
+
+```
+type chunkState struct {
+	sync.RWMutex
+	Handle util.Handle
+	Locations []util.Address // set of replica locations
+}
+```
+
+**设计思想二 ：**死锁预防，按照**从大到小**的顺序拿锁。如上文中，master锁就是最大的锁，而chunk的锁是最小的锁，拿锁顺序只能从大到小拿。
+
+**设计思想三：**维护一致性的关键，拿大锁，拿小锁，放大锁，放小锁，典型例子如下：
+
+```go
+fs.Lock()
+newChunk = &chunkState{
+	Locations: make([]util.Address,0),
+	Handle: newHandle,
+}
+fs.chunks = append(fs.chunks,newChunk)
+//...
+newChunk.Lock()
+defer newChunk.Unlock()
+fs.Unlock()
+```
+
+这里先拿了filestate（维护文件-chunk映射关系）的锁，修改了映射关系后开始要操作新chunk了，此时先拿到新chunk的锁，再放掉filestate的锁。这样有效避免了在修改chunk前其它client对filestate做操作（比如直接删除等）
+
+**设计思想四**：尽量少拿锁。有时候client虽然在读临界区，但并不一定要拿读锁，应具体场景具体分析。
+
+如单client多RPC gouroutine时，fd成为了需要保护的变量。但只有在open新取fd时我们才拿锁，而write, read等操作要用fd时无需拿锁，原因是新取fd并不会影响到读写旧的文件，拿了读锁反而会拖慢打开新文件的速度。
+
+### Failure Recovery
+
+因为我们master和chunkserver都在本地存储了log和checkpoint，都可以根据这些文件来恢复数据，同时因为kafka会维护每个消费者组的offset，所以master恢复时，会从上一次消费的位置开始消费，所以也能正常恢复。chunkserver恢复完后，会与master通信，然后master会将过期的chunk发给chunkserver，chunkserver能够及时删除过期的chunk。
+
+### Checkpoint
+
+checkpoint是DFS中一个重要的设计，有效备份了DFS中各部分的元数据，减少了log的长度，加快了failure recovery的速度，实现checkpoint的各部分实现如下：
+
+**Chunkserver Checkpoint**： chunkserver部分的checkpoint较为精简，只保存了每一个chunk的Chunk Handle与Chunk Version，存放在该chunkserver的本地。恢复时其只要读取当前持久化的所有chunk数据，再redo log即可
+
+```go
+type ChunkInfoCP struct {
+	Handle util.Handle
+	VerNum util.Version
+}
+```
+
+**Master Checkpoint**： master部分的checkpoint分为三个部分，namespace server，chunk server,chunkserver server都要将元数据持久化。由于这些元数据中不少含有指针形式的变量，需要单独编写序列化函数来将元数据序列化，同时也要有反序列化函数来读取。
+
+在namespace部分，使用递归的方式将树变为数组，每个数组元素是一个树的节点信息，同时保存每个节点的孩子个数以助于恢复
+
+```go
+ns.serialize(&nodes,ns.root)
+func (ns *NamespaceState) serialize(array *[]SerialTreeNode, node *treeNode) int {
+	n := SerialTreeNode{IsDir: node.isDir}
+	if node.isDir {
+		n.Children = make(map[string]int)
+		for k, v := range node.treeNodes {
+			n.Children[k] = ns.serialize(array, v)
+		}
+	}
+	*array = append(*array, n)
+	ret := ns.childCount
+	ns.childCount++
+	return ret
+}
+```
+
+在chunkstates和chunkserverstates部分，新建无指针的数据结构来存放序列化数据
+
+```go
+type SerialChunkStates struct{
+	CurHandle util.Handle
+	File  map[util.DFSPath]serialfileState // 原来的元数据是指针形式
+	Chunk map[util.Handle]util.Version
+}
+//...
+```
+
+#### Scalability
+
+我们用zookeeper实现服务发现，所以新的data node加入，可以立即被master发现，并且服务。同时，由于我们的负载均衡策略，新data node会有更大概率存储新的chunk。
+
+#### Load Balance
+
+LoadBalance策略可以有效防止部分chunkserver存储的chunk过多，从而会接收到master大量的IO请求，导致单节点被打爆的现象发生。我们DFS的负载均衡策略主要体现在两个方面：
+
+**初分配**：指client写文件触发master创建新chunk时，选定chunkserver的策略为选取拥有chunk最少的chunkservers。为了达成此目标，master需要保存好chunkserver和chunk间的映射关系，并维护一个最小堆记录每个chunkserver拥有的chunk数量。
+
+```go
+heap.Init(h)
+// 进堆
+for addr, state := range s.servers {
+	state.RLock()
+	hea := ChunkServerHeap{ChunkNum: len(state.ChunkList),Addr: addr}
+	heap.Push(h,&hea)
+	state.RUnlock()
+}
+// 出堆
+for times > 0{
+	times --
+	addrs = append(addrs,heap.Pop(h).(ChunkServerHeap).Addr)
+}
+```
+
+**重分配：**指master定期调用loadbalanceCheck检查目前replicas的分配情况，如果出现有chunkservers负载过小或过大的情况，则会触发主动loadbalance流程，把一个chunk replica在chunkserver间转移。
+
+为了达成此目标，需要设立合理的时间间隔来主动触发负载均衡函数，并设定合理的阈值以免chunk迁移过于频繁。
 
 ### 附录A
 
