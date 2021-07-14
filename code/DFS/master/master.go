@@ -210,12 +210,12 @@ func (m *Master) Exit() {
 
 func (m *Master) RegisterServer(addr util.Address) error {
 	// Write ahead log
-	err := m.AppendLog(MasterLog{OpType: util.ADDSERVEROPS, Addr: addr})
-	if err != nil {
-		logrus.Warnf("RPC delete failed : %s", err)
-		return err
-	}
-	err = m.css.registerServer(addr)
+	//err := m.AppendLog(MasterLog{OpType: util.ADDSERVEROPS, Addr: addr})
+	//if err != nil {
+	//	logrus.Warnf("RPC delete failed : %s", err)
+	//	return err
+	//}
+	err := m.css.registerServer(addr)
 	return err
 }
 

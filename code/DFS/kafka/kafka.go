@@ -16,9 +16,9 @@ type consumerGroupHandler struct {
 	name string
 }
 var kafkaHosts = []string{
-	"kafka1:9092",
-	"kafka2:9093",
-	"kafka3:9094",
+	"127.0.0.1:9092",
+	"127.0.0.1:9093",
+	"127.0.0.1:9094",
 }
 
 
