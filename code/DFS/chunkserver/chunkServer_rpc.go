@@ -76,6 +76,7 @@ func (cs *ChunkServer) GetChunkStatesRPC(args util.GetChunkStatesArgs, reply *ut
 func (cs *ChunkServer) SetStaleRPC(args util.SetStaleArgs, reply *util.SetStaleReply) error {
 	cs.Lock()
 	for _, h := range args.Handles {
+		cs.RemoveChunk(h)
 		cs.chunks[h].isStale = true
 	}
 	cs.Unlock()
@@ -236,6 +237,22 @@ func (cs *ChunkServer) StoreDataRPC(args util.StoreDataArgs, reply *util.StoreDa
 	}
 	log.Printf("ChunkServer %v: store handle %v, len %v\n", cs.addr, args.CID.Handle, len)
 	return err
+}
+
+func (cs *ChunkServer) UpdateVersionRPC(args util.UpdateVersionArg, reply * util.UpdateVersionRet) error {
+	cs.RLock()
+	ck, exist := cs.chunks[args.Handle]
+	if !exist {
+		cs.RUnlock()
+		return fmt.Errorf("ChunkServer %v: chunk %v not exist", cs.addr, args.Handle)
+	}
+	ck.RLock()
+	cs.RUnlock()
+	defer ck.RUnlock()
+	if ck.verNum == args.Version {
+		ck.verNum++
+	}
+	return nil
 }
 
 func (cs *ChunkServer) CloneChunkRPC(args util.CloneChunkArgs, reply *util.CloneChunkReply) error {

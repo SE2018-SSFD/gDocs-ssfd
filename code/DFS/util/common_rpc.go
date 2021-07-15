@@ -92,6 +92,14 @@ type SetStaleArgs struct {
 type SetStaleReply struct {
 }
 
+type UpdateVersionArg struct {
+	Version Version
+	Handle Handle
+}
+
+type UpdateVersionRet struct {
+
+}
 // Master RPC structure
 type OpenArg struct {
 	Path DFSPath `json:"path"`

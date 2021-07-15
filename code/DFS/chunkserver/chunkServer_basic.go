@@ -98,7 +98,7 @@ func (cs *ChunkServer) RemoveChunk(handle util.Handle) error {
 	filename := cs.GetFileName(handle)
 	err := os.Remove(filename)
 	if err != nil {
-		log.Panic(err)
+		logrus.Error(err)
 		return err
 	}
 	return nil

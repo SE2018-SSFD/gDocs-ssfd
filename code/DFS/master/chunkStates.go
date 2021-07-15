@@ -23,6 +23,7 @@ type chunkState struct {
 	Handle util.Handle
 	Locations []util.Address // set of replica locations
 	Version util.Version
+	UpdateFlag 	bool
 }
 type handleState struct {
 	sync.RWMutex
@@ -38,6 +39,7 @@ type SerialChunkStates struct{
 type SerialChunkState struct{
 	Handle util.Handle
 	Version util.Version
+	UpdateFlag 	bool
 }
 
 // Serialize a chunkstates
@@ -64,6 +66,7 @@ func (s* ChunkStates) Serialize() SerialChunkStates {
 			chunks = append(chunks,SerialChunkState{
 				Handle: chunk.Handle,
 				Version : chunk.Version,
+				UpdateFlag: chunk.UpdateFlag,
 			} )
 			state.chunks[index].RUnlock()
 		}
@@ -93,6 +96,8 @@ func (s* ChunkStates) Deserialize(scss SerialChunkStates) error {
 		for _,chunk := range state.Chunks{
 			s.file[path].chunks = append(s.file[path].chunks,&chunkState{
 				Handle: chunk.Handle,
+				Version: chunk.Version,
+				UpdateFlag: chunk.UpdateFlag,
 			} )
 		}
 	}
@@ -148,6 +153,8 @@ func (s* ChunkStates) CreateChunkAndReplica(fs *fileState,addrs []util.Address) 
 	newChunk = &chunkState{
 		Locations: make([]util.Address,0),
 		Handle: newHandle,
+		Version: util.INITIALVERSION,
+		UpdateFlag: false,
 	}
 	s.chunk[newHandle] = newChunk
 	fs.chunks = append(fs.chunks,newChunk)

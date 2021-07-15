@@ -220,8 +220,9 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		//m.css.xxx
 	} else {
 		targetChunk = fs.chunks[args.ChunkIndex]
-		targetChunk.RLock()
-		defer targetChunk.RUnlock()
+		// maybe modify UpdateFlag
+		targetChunk.Lock()
+		defer targetChunk.Unlock()
 		fs.Unlock()
 	}
 	logrus.Debugf("targetchunk handle :%v, Locations : %v ", targetChunk.Handle, targetChunk.Locations)
@@ -229,6 +230,14 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 	reply.ChunkServerAddrs = make([]util.Address, 0)
 	for _, addr := range targetChunk.Locations {
 		reply.ChunkServerAddrs = append(reply.ChunkServerAddrs, addr)
+	}
+	if targetChunk.UpdateFlag == true {
+		err = util.CallAll(reply.ChunkServerAddrs,"ChunkServer.UpdateVersion",util.UpdateVersionArg{Version: targetChunk.Version,Handle: targetChunk.Handle})
+		if err != nil {
+			logrus.Error(err)
+		}
+		targetChunk.Version++
+		targetChunk.UpdateFlag = false
 	}
 	reply.ChunkHandle = targetChunk.Handle
 	reply.ChunkIndex = args.ChunkIndex
