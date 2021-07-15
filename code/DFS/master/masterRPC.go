@@ -232,7 +232,7 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		reply.ChunkServerAddrs = append(reply.ChunkServerAddrs, addr)
 	}
 	if targetChunk.UpdateFlag == true {
-		err = util.CallAll(reply.ChunkServerAddrs,"ChunkServer.UpdateVersion",util.UpdateVersionArg{Version: targetChunk.Version,Handle: targetChunk.Handle})
+		err = util.CallAll(reply.ChunkServerAddrs,"ChunkServer.UpdateVersionRPC",util.UpdateVersionArg{Version: targetChunk.Version,Handle: targetChunk.Handle})
 		if err != nil {
 			logrus.Error(err)
 		}
