@@ -96,6 +96,10 @@ func prepareLB(){
 }
 func multiPrepareLB(){
 	logrus.SetLevel(logrus.DebugLevel)
+	//delete old ckp
+	util.DeleteFile("../log/checkpoint.dat")
+	//delete old log
+	util.DeleteFile("../log/log.dat")
 	_, err := os.Stat("ck")
 	if err == nil {
 		err := os.RemoveAll("ck")
@@ -109,9 +113,11 @@ func multiPrepareLB(){
 	}
 	for i:=0;i<3;i++{
 		filename := "log_"+strconv.Itoa(i+1)
-		_, err := os.Stat(filename)
+		_, err = os.Stat(filename)
 		if err == nil {
-			err := os.RemoveAll(filename)
+			logrus.Warnf("delete %v",filename)
+
+			err = os.RemoveAll(filename)
 			if err != nil {
 				logrus.Fatalf("remove %v error\n", filename)
 			}
@@ -127,7 +133,7 @@ func multiPrepareLB(){
 	}
 }
 func TestLoadBalanceAllocate(t *testing.T){
-	c,m,cs := initTestSingle()
+	c,m,cs := initTestSingleLB()
 	defer func() {
 		m.Exit()
 		c.Exit()
@@ -135,10 +141,6 @@ func TestLoadBalanceAllocate(t *testing.T){
 			_cs.Exit()
 		}
 	}()
-	//delete old ckp
-	util.DeleteFile("../log/checkpoint.dat")
-	//delete old log
-	util.DeleteFile("../log/log.dat")
 	var createReply util.CreateRet
 	var mkdirReply util.MkdirRet
 	err := m.CreateRPC(util.CreateArg{Path: "/file1"}, &createReply)
@@ -164,10 +166,17 @@ func TestLoadBalanceAllocate(t *testing.T){
 	for i:=0;i<5;i++{
 		util.AssertEqual(t,result[i].ChunkNum,50 * 3 / 5)
 	}
+	offset = 50 * util.MAXCHUNKSIZE
+	err = util.HTTPWrite(util.CLIENTADDR,fd,offset,data)
+	result = m.GetServersChunkNum()
+	for i:=0;i<5;i++{
+		util.AssertEqual(t,result[i].ChunkNum,100 * 3 / 5)
+	}
 }
+
 func TestLoadBalanceReallocate(t *testing.T){
-	c,mList,csList:=initTestMulti()
-	time.Sleep(5*util.HERETRYTIMES*time.Second)
+	c,mList,csList:=initTestMultiLB()
+	time.Sleep(1*util.HERETRYTIMES*time.Second)
 	defer func() {
 		for i:=0;i<util.MASTERCOUNT;i++{
 			mList[i].Exit()
@@ -181,4 +190,32 @@ func TestLoadBalanceReallocate(t *testing.T){
 	util.AssertNil(t,err)
 	err = util.HTTPCreate(util.CLIENTADDR,"/file2")
 	util.AssertNil(t,err)
+	err = util.HTTPMkdir(util.CLIENTADDR,"/dir1")
+	util.AssertNil(t,err)
+	err = util.HTTPCreate(util.CLIENTADDR,"/dir1/file1")
+	util.AssertNil(t,err)
+	err = util.HTTPCreate(util.CLIENTADDR,"/dir1/file2")
+	util.AssertNil(t,err)
+	err = util.HTTPCreate(util.CLIENTADDR,"/file3")
+	util.AssertNil(t,err)
+	fd,err := util.HTTPOpen(util.CLIENTADDR,"/dir1/file2")
+	util.AssertNil(t,err)
+	// Write 50 chunks to /dir1/file2
+	offset := 0
+	data := []byte(util.MakeString(util.MAXCHUNKSIZE*50))
+	err = util.HTTPWrite(util.CLIENTADDR,fd,offset,data)
+	util.AssertNil(t,err)
+	logrus.Warnln("step1")
+	result := mList[0].GetServersChunkNum()
+	logrus.Warnln("result")
+
+	for i:=0;i<5;i++{
+		util.AssertEqual(t,result[i].ChunkNum,50 * 3 / 5)
+	}
+	offset = 50 * util.MAXCHUNKSIZE
+	err = util.HTTPWrite(util.CLIENTADDR,fd,offset,data)
+	result =  mList[0].GetServersChunkNum()
+	for i:=0;i<5;i++{
+		util.AssertEqual(t,result[i].ChunkNum,100 * 3 / 5)
+	}
 }

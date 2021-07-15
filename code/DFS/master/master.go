@@ -77,7 +77,7 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error
 		return m, err
 	}
 	mate := len(hb.GetOriginMates())
-	logrus.Debugln(string(addr) + ": has " + strconv.Itoa(mate) + "mate")
+	logrus.Debugln(string(addr) + ": has " + strconv.Itoa(mate) + " mate")
 	for i := 0; i < mate; i++ {
 		wg.Done()
 	}

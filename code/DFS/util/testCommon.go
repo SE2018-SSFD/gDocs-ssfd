@@ -148,9 +148,25 @@ func HTTPClose(addr string,fd int)(statusCode int,err error){
 	return
 }
 
-// HTTPCreate : crate a file
+// HTTPCreate : create a file
 func HTTPCreate(addr string,path string)(err error){
 	url := "http://"+addr+"/create"
+	postBody, _ := json.Marshal(map[string]string{
+		"path":  path,
+	})
+	responseBody := bytes.NewBuffer(postBody)
+	resp, err := http.Post(url, "application/json", responseBody)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	_, err = ioutil.ReadAll(resp.Body)
+	return
+}
+
+// HTTPMkdir : make a directory
+func HTTPMkdir(addr string,path string)(err error){
+	url := "http://"+addr+"/mkdir"
 	postBody, _ := json.Marshal(map[string]string{
 		"path":  path,
 	})
@@ -232,9 +248,7 @@ func HTTPWrite(addr string,fd int,offset int,data []byte)(err error){
 		return err
 	}
 	req.Header.Set("Content-Type", bodyWrite.FormDataContentType())
-	logrus.Warnf(url)
 	resp, err := client.Do(req)
-	logrus.Warnln(err)
 	if err != nil {
 		return err
 	}
