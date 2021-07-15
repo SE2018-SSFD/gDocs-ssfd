@@ -95,7 +95,8 @@ func (cs *ChunkServer) LoadDataRPC(args util.LoadDataArgs, reply *util.LoadDataR
 		}
 		err := util.Call(string(args.Addrs[0]), "ChunkServer.LoadDataRPC", newArgs, nil)
 		if err != nil {
-			log.Panicf("ChunkServer %v: "+err.Error(), cs.addr)
+			//log.Panicf("ChunkServer %v: "+err.Error(), cs.addr)
+			logrus.Debug(err)
 		}
 		return err
 	}
@@ -251,8 +252,11 @@ func (cs *ChunkServer) UpdateVersionRPC(args util.UpdateVersionArg, reply * util
 	cs.RUnlock()
 	defer ck.RUnlock()
 	if ck.verNum == args.Version {
+		logrus.Print("Update chunk ",args.Handle," to version ",args.Version)
 		cs.AppendLog(ChunkInfoLog{Handle: args.Handle, VerNum: ck.verNum + 1, Operation: Operation_Update})
 		ck.verNum++
+	}else {
+		logrus.Print("Update chunk failed, chunk version is ",ck.verNum," ,master version is ",args.Version)
 	}
 	return nil
 }
