@@ -76,6 +76,7 @@ func (cs *ChunkServer) GetChunkStatesRPC(args util.GetChunkStatesArgs, reply *ut
 func (cs *ChunkServer) SetStaleRPC(args util.SetStaleArgs, reply *util.SetStaleReply) error {
 	cs.Lock()
 	for _, h := range args.Handles {
+		cs.AppendLog(ChunkInfoLog{Handle: h, VerNum: 0, Operation: Operation_Delete})
 		cs.RemoveChunk(h)
 		cs.chunks[h].isStale = true
 	}
@@ -250,6 +251,7 @@ func (cs *ChunkServer) UpdateVersionRPC(args util.UpdateVersionArg, reply * util
 	cs.RUnlock()
 	defer ck.RUnlock()
 	if ck.verNum == args.Version {
+		cs.AppendLog(ChunkInfoLog{Handle: args.Handle, VerNum: ck.verNum + 1, Operation: Operation_Update})
 		ck.verNum++
 	}
 	return nil
