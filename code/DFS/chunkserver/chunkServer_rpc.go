@@ -137,8 +137,8 @@ func (cs *ChunkServer) CreateChunkRPC(args util.CreateChunkArgs, reply *util.Cre
 		log.Panicf("ChunkServer %v: chunk %v has been already created", cs.addr, args.Handle)
 		return nil
 	}
-	cs.AppendLog(ChunkInfoLog{Handle: args.Handle, VerNum: 0, Operation: Operation_Update})
-	cs.chunks[args.Handle] = &ChunkInfo{verNum: 0}
+	cs.AppendLog(ChunkInfoLog{Handle: args.Handle, VerNum: util.INITIALVERSION, Operation: Operation_Update})
+	cs.chunks[args.Handle] = &ChunkInfo{verNum: util.INITIALVERSION}
 	return cs.CreateChunk(args.Handle)
 }
 
