@@ -76,6 +76,8 @@ func (cs *ChunkServer) GetChunkStatesRPC(args util.GetChunkStatesArgs, reply *ut
 func (cs *ChunkServer) SetStaleRPC(args util.SetStaleArgs, reply *util.SetStaleReply) error {
 	cs.Lock()
 	for _, h := range args.Handles {
+		cs.AppendLog(ChunkInfoLog{Handle: h, VerNum: 0, Operation: Operation_Delete})
+		cs.RemoveChunk(h)
 		cs.chunks[h].isStale = true
 	}
 	cs.Unlock()
@@ -93,7 +95,8 @@ func (cs *ChunkServer) LoadDataRPC(args util.LoadDataArgs, reply *util.LoadDataR
 		}
 		err := util.Call(string(args.Addrs[0]), "ChunkServer.LoadDataRPC", newArgs, nil)
 		if err != nil {
-			log.Panicf("ChunkServer %v: "+err.Error(), cs.addr)
+			//log.Panicf("ChunkServer %v: "+err.Error(), cs.addr)
+			logrus.Debug(err)
 		}
 		return err
 	}
@@ -135,8 +138,8 @@ func (cs *ChunkServer) CreateChunkRPC(args util.CreateChunkArgs, reply *util.Cre
 		log.Panicf("ChunkServer %v: chunk %v has been already created", cs.addr, args.Handle)
 		return nil
 	}
-	cs.AppendLog(ChunkInfoLog{Handle: args.Handle, VerNum: 0, Operation: Operation_Update})
-	cs.chunks[args.Handle] = &ChunkInfo{verNum: 0}
+	cs.AppendLog(ChunkInfoLog{Handle: args.Handle, VerNum: util.INITIALVERSION, Operation: Operation_Update})
+	cs.chunks[args.Handle] = &ChunkInfo{verNum: util.INITIALVERSION}
 	return cs.CreateChunk(args.Handle)
 }
 
@@ -236,6 +239,26 @@ func (cs *ChunkServer) StoreDataRPC(args util.StoreDataArgs, reply *util.StoreDa
 	}
 	log.Printf("ChunkServer %v: store handle %v, len %v\n", cs.addr, args.CID.Handle, len)
 	return err
+}
+
+func (cs *ChunkServer) UpdateVersionRPC(args util.UpdateVersionArg, reply * util.UpdateVersionRet) error {
+	cs.RLock()
+	ck, exist := cs.chunks[args.Handle]
+	if !exist {
+		cs.RUnlock()
+		return fmt.Errorf("ChunkServer %v: chunk %v not exist", cs.addr, args.Handle)
+	}
+	ck.RLock()
+	cs.RUnlock()
+	defer ck.RUnlock()
+	if ck.verNum == args.Version {
+		logrus.Print("Update chunk ",args.Handle," to version ",args.Version)
+		cs.AppendLog(ChunkInfoLog{Handle: args.Handle, VerNum: ck.verNum + 1, Operation: Operation_Update})
+		ck.verNum++
+	}else {
+		logrus.Print("Update chunk failed, chunk version is ",ck.verNum," ,master version is ",args.Version)
+	}
+	return nil
 }
 
 func (cs *ChunkServer) CloneChunkRPC(args util.CloneChunkArgs, reply *util.CloneChunkReply) error {
