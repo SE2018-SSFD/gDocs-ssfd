@@ -36,6 +36,7 @@ type Master struct {
 	el               *zkWrap.Elector       // use for leader election
 	cg               *sarama.ConsumerGroup // kafka consumer group, use for logging
 	ap               *sarama.AsyncProducer // kafka producer, use for logging
+	leaderFlag 		 bool
 }
 
 type OperationType int32
@@ -47,6 +48,7 @@ func InitMultiMaster(addr util.Address, metaPath util.LinuxPath) (*Master, error
 		metaPath: metaPath,
 		rpcs:     rpc.NewServer(),
 		shutdown: make(chan interface{}),
+		leaderFlag: false,
 	}
 	err := m.rpcs.Register(m)
 	if err != nil {
@@ -169,7 +171,9 @@ func implicitWait(t time.Duration, wg *sync.WaitGroup) error {
 	}
 	return nil
 }
-
+func (m* Master) IsLeader()bool{
+	return m.leaderFlag
+}
 func (m *Master) Serve() {
 	// listening thread
 	go func() {
@@ -215,11 +219,14 @@ func (m *Master) RegisterServer(addr util.Address) error {
 	//	logrus.Warnf("RPC delete failed : %s", err)
 	//	return err
 	//}
+	logrus.Debugln("RegisterServer : ",addr)
+
 	err := m.css.registerServer(addr)
 	return err
 }
 
 func (m *Master) UnregisterServer(addr util.Address) error {
+	logrus.Debugln("UnregisterServer : ",addr)
 	err := m.css.unRegisterServer(addr)
 	return err
 }

@@ -49,9 +49,9 @@ func AssertEqual(t *testing.T, a, b interface{}) {
 	t.Logf("AssertEqual Succeed :")
 
 }
-func AssertGreater(t *testing.T, a, b interface{}) {
+func AssertGreater(t *testing.T, a, b int) {
 	t.Helper()
-	if a != b {
+	if a <= b {
 		t.Fail()
 		t.Fatal("AssertGreater Failed :", a, b)
 	}

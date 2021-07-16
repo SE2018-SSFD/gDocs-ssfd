@@ -68,7 +68,7 @@ func (m *Master) onClusterHeartbeatConn(_ string, who string) {
 			logrus.Fatal("Master addServer error : ", err)
 			return
 		}
-		logrus.Info("Master addServer success: ", who)
+		logrus.Info("Master addServer success: ", who, m.css.servers)
 	}
 }
 
@@ -149,6 +149,7 @@ func (m *Master) RegisterElectionNodes() {
 	cb := func(el *zkWrap.Elector) {
 		//become leader, join heartbeat
 		logrus.Print("master " + m.addr + " become leader!")
+		m.leaderFlag = true
 		// sleep 1 second,wait all log write finish
 		time.Sleep(1 * time.Second)
 		err = m.TryRecover()

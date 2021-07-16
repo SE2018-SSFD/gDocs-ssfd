@@ -1,0 +1,1148 @@
+=== RUN   TestLoadBalanceReallocate
+time="2021-07-16T18:14:01+08:00" level=warning msg="delete log_1"
+time="2021-07-16T18:14:01+08:00" level=warning msg="delete log_2"
+time="2021-07-16T18:14:01+08:00" level=warning msg="delete log_3"
+2021/07/16 18:14:01 connected to 123.57.65.161:12086
+2021/07/16 18:14:01 authenticated: id=72097412844029090, timeout=15000
+2021/07/16 18:14:01 re-submitting `0` credentials after reconnect
+2021/07/16 18:14:01 connected to 123.57.65.161:12087
+2021/07/16 18:14:01 authenticated: id=144155006883136562, timeout=15000
+2021/07/16 18:14:01 re-submitting `0` credentials after reconnect
+2021/07/16 18:14:01 connected to 123.57.65.161:12088
+2021/07/16 18:14:01 authenticated: id=216212600926241318, timeout=4000
+2021/07/16 18:14:01 re-submitting `0` credentials after reconnect
+2021/07/16 18:14:01 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: reply type of method "DeleteLocationOfChunk" is not a pointer: "util.Handle"
+2021/07/16 18:14:01 rpc.Register: reply type of method "DeleteLocationOfChunk" is not a pointer: "util.Handle"
+2021/07/16 18:14:01 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "GetHandleList" has 2 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "GetHandleList" has 2 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "GetServersChunkNum" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "GetServersChunkNum" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "GetStatusString" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "GetStatusString" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "LoadBalanceCheck" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "LoadBalanceCheck" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: reply type of method "DeleteLocationOfChunk" is not a pointer: "util.Handle"
+2021/07/16 18:14:01 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "GetHandleList" has 2 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "GetServersChunkNum" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "GetStatusString" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "LoadBalanceCheck" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RecoverLog" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RegisterClusterNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RegisterElectionNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RegisterLeaderNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RegisterServer" has 2 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "Serve" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "TryRecover" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "UnregisterServer" has 2 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RecoverLog" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RegisterClusterNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RegisterElectionNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RegisterLeaderNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RegisterServer" has 2 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "Serve" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "TryRecover" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "UnregisterServer" has 2 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RecoverLog" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RegisterClusterNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RegisterElectionNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RegisterLeaderNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "RegisterServer" has 2 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "Serve" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "TryRecover" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:01 rpc.Register: method "UnregisterServer" has 2 input parameters; needs exactly three
+2021/07/16 18:14:01 connected to 123.57.65.161:12086
+time="2021-07-16T18:14:01+08:00" level=info msg="client127.0.0.1:1233 leader heartbeart conn : another client client127.0.0.1:1233 join"
+2021/07/16 18:14:01 connected to 123.57.65.161:12087
+2021/07/16 18:14:01 connected to 123.57.65.161:12086
+2021/07/16 18:14:01 authenticated: id=72097412844029091, timeout=5000
+2021/07/16 18:14:01 re-submitting `0` credentials after reconnect
+2021/07/16 18:14:01 authenticated: id=144155006883136563, timeout=5000
+2021/07/16 18:14:01 re-submitting `0` credentials after reconnect
+2021/07/16 18:14:01 authenticated: id=72097412844029092, timeout=5000
+2021/07/16 18:14:01 re-submitting `0` credentials after reconnect
+time="2021-07-16T18:14:01+08:00" level=debug msg="127.0.0.1:1236: has 0 mate"
+time="2021-07-16T18:14:01+08:00" level=debug msg="127.0.0.1:1235: has 0 mate"
+time="2021-07-16T18:14:01+08:00" level=info msg="127.0.0.1:1236 receive :127.0.0.1:1235"
+time="2021-07-16T18:14:01+08:00" level=info msg="127.0.0.1:1236 receive :127.0.0.1:1236"
+time="2021-07-16T18:14:01+08:00" level=info msg="127.0.0.1:1235 receive :127.0.0.1:1236"
+time="2021-07-16T18:14:01+08:00" level=info msg="127.0.0.1:1235 receive :127.0.0.1:1235"
+time="2021-07-16T18:14:01+08:00" level=info msg="127.0.0.1:1234 receive :127.0.0.1:1235"
+time="2021-07-16T18:14:01+08:00" level=debug msg="127.0.0.1:1234: has 1 mate"
+time="2021-07-16T18:14:01+08:00" level=info msg="127.0.0.1:1234 receive :127.0.0.1:1234"
+time="2021-07-16T18:14:01+08:00" level=info msg="127.0.0.1:1236 receive :127.0.0.1:1234"
+time="2021-07-16T18:14:01+08:00" level=info msg="127.0.0.1:1235 receive :127.0.0.1:1234"
+log_3start
+log_2start
+2021/07/16 18:14:02 connected to 123.57.65.161:12088
+2021/07/16 18:14:02 connected to 123.57.65.161:12088
+log_1start
+2021/07/16 18:14:02 authenticated: id=216212600926241319, timeout=15000
+2021/07/16 18:14:02 re-submitting `0` credentials after reconnect
+2021/07/16 18:14:02 authenticated: id=216212600926241320, timeout=15000
+2021/07/16 18:14:02 re-submitting `0` credentials after reconnect
+2021/07/16 18:14:02 connected to 123.57.65.161:12087
+2021/07/16 18:14:02 authenticated: id=144155006883136564, timeout=15000
+2021/07/16 18:14:02 re-submitting `0` credentials after reconnect
+time="2021-07-16T18:14:02+08:00" level=info msg="master 127.0.0.1:1236: init success"
+time="2021-07-16T18:14:02+08:00" level=info msg="master 127.0.0.1:1235: init success"
+time="2021-07-16T18:14:02+08:00" level=info msg="master 127.0.0.1:1234: init success"
+time="2021-07-16T18:14:02+08:00" level=debug msg="Master address :127.0.0.1:1234,metaPath :log_1"
+time="2021-07-16T18:14:02+08:00" level=info msg="open ck/ck3000/checkpoint.dat: no such file or directory"
+time="2021-07-16T18:14:02+08:00" level=info msg="open ck/ck3000/log.dat: no such file or directory"
+2021/07/16 18:14:02 rpc.Register: reply type of method "AppendChunk" is not a pointer: "[]uint8"
+2021/07/16 18:14:02 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "Crash" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "CreateAndSetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "CreateChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "GetAddr" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "GetCPName" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "GetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "GetFileName" has 2 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "GetLogName" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "LoadLog" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "PadChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: reply type of method "Printf" is not a pointer: "[]interface {}"
+2021/07/16 18:14:02 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "RecoverChunkInfo" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "RegisterNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "RemoveChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "SetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "StartRPCServer" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:02 connected to 123.57.65.161:12087
+2021/07/16 18:14:02 authenticated: id=144155006883136565, timeout=15000
+2021/07/16 18:14:02 re-submitting `0` credentials after reconnect
+time="2021-07-16T18:14:02+08:00" level=info msg="master 127.0.0.1:1236 become leader!"
+2021/07/16 18:14:03 connected to 123.57.65.161:12086
+2021/07/16 18:14:03 authenticated: id=72097412844029093, timeout=4000
+2021/07/16 18:14:03 re-submitting `0` credentials after reconnect
+2021/07/16 18:14:03 chunkserver 127.0.0.1:3000: init success
+time="2021-07-16T18:14:03+08:00" level=info msg="open ck/ck3001/checkpoint.dat: no such file or directory"
+time="2021-07-16T18:14:03+08:00" level=info msg="open ck/ck3001/log.dat: no such file or directory"
+2021/07/16 18:14:03 rpc.Register: reply type of method "AppendChunk" is not a pointer: "[]uint8"
+2021/07/16 18:14:03 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "Crash" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "CreateAndSetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "CreateChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "GetAddr" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "GetCPName" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "GetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "GetFileName" has 2 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "GetLogName" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "LoadLog" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "PadChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: reply type of method "Printf" is not a pointer: "[]interface {}"
+2021/07/16 18:14:03 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "RecoverChunkInfo" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "RegisterNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "RemoveChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "SetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "StartRPCServer" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:03 connected to 123.57.65.161:12086
+time="2021-07-16T18:14:03+08:00" level=info msg="chunkserver127.0.0.1:3000 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3000 join"
+2021/07/16 18:14:03 authenticated: id=72097412844029094, timeout=15000
+2021/07/16 18:14:03 re-submitting `0` credentials after reconnect
+time="2021-07-16T18:14:03+08:00" level=info msg="No checkpoint, start master directly"
+time="2021-07-16T18:14:03+08:00" level=debug msg="{{0 map[]} [{true map[]}]}"
+2021/07/16 18:14:04 connected to 123.57.65.161:12088
+2021/07/16 18:14:04 authenticated: id=216212600926241321, timeout=4000
+2021/07/16 18:14:04 re-submitting `0` credentials after reconnect
+time="2021-07-16T18:14:04+08:00" level=info msg=" leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3000 join"
+2021/07/16 18:14:04 chunkserver 127.0.0.1:3001: init success
+time="2021-07-16T18:14:04+08:00" level=info msg="open ck/ck3002/checkpoint.dat: no such file or directory"
+time="2021-07-16T18:14:04+08:00" level=info msg="open ck/ck3002/log.dat: no such file or directory"
+2021/07/16 18:14:04 rpc.Register: reply type of method "AppendChunk" is not a pointer: "[]uint8"
+2021/07/16 18:14:04 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "Crash" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "CreateAndSetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "CreateChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "GetAddr" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "GetCPName" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "GetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "GetFileName" has 2 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "GetLogName" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "LoadLog" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "PadChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: reply type of method "Printf" is not a pointer: "[]interface {}"
+2021/07/16 18:14:04 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "RecoverChunkInfo" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "RegisterNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "RemoveChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "SetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "StartRPCServer" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:04 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+time="2021-07-16T18:14:04+08:00" level=info msg="chunkserver127.0.0.1:3000 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3001 join"
+time="2021-07-16T18:14:04+08:00" level=info msg="chunkserver127.0.0.1:3001 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3001 join"
+2021/07/16 18:14:04 connected to 123.57.65.161:12086
+2021/07/16 18:14:04 connected to 123.57.65.161:12087
+2021/07/16 18:14:04 authenticated: id=72097412844029095, timeout=4000
+2021/07/16 18:14:04 re-submitting `0` credentials after reconnect
+2021/07/16 18:14:04 authenticated: id=144155006883136566, timeout=15000
+2021/07/16 18:14:04 re-submitting `0` credentials after reconnect
+time="2021-07-16T18:14:04+08:00" level=info msg="chunkserver 127.0.0.1:3000 exists"
+time="2021-07-16T18:14:04+08:00" level=info msg="Master addServer success: chunkserver127.0.0.1:3000map[127.0.0.1:3000:0xc000ddf410]"
+time="2021-07-16T18:14:04+08:00" level=info msg="chunkserver 127.0.0.1:3001 exists"
+time="2021-07-16T18:14:04+08:00" level=info msg="Master addServer success: chunkserver127.0.0.1:3001map[127.0.0.1:3000:0xc000ddf410 127.0.0.1:3001:0xc0015d0390]"
+2021/07/16 18:14:04 connected to 123.57.65.161:12087
+time="2021-07-16T18:14:04+08:00" level=info msg="chunkserver127.0.0.1:3000 leader heartbeart conn : master leader master127.0.0.1:1236 join"
+time="2021-07-16T18:14:04+08:00" level=info msg="chunkserver127.0.0.1:3001 leader heartbeart conn : master leader master127.0.0.1:1236 join"
+2021/07/16 18:14:04 authenticated: id=144155006883136567, timeout=4000
+2021/07/16 18:14:04 re-submitting `0` credentials after reconnect
+time="2021-07-16T18:14:05+08:00" level=info msg="client127.0.0.1:1233 leader heartbeart conn : master leader master127.0.0.1:1236 join"
+2021/07/16 18:14:05 connected to 123.57.65.161:12086
+2021/07/16 18:14:05 authenticated: id=72097412844029096, timeout=4000
+2021/07/16 18:14:05 re-submitting `0` credentials after reconnect
+time="2021-07-16T18:14:05+08:00" level=info msg=" leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3000 join"
+time="2021-07-16T18:14:05+08:00" level=info msg=" leader heartbeart conn : master leader master127.0.0.1:1236 join"
+time="2021-07-16T18:14:05+08:00" level=info msg=" leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3001 join"
+2021/07/16 18:14:05 chunkserver 127.0.0.1:3002: init success
+time="2021-07-16T18:14:05+08:00" level=info msg="open ck/ck3003/checkpoint.dat: no such file or directory"
+time="2021-07-16T18:14:05+08:00" level=info msg="open ck/ck3003/log.dat: no such file or directory"
+2021/07/16 18:14:05 rpc.Register: reply type of method "AppendChunk" is not a pointer: "[]uint8"
+2021/07/16 18:14:05 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "Crash" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "CreateAndSetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "CreateChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "GetAddr" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "GetCPName" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "GetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "GetFileName" has 2 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "GetLogName" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "LoadLog" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "PadChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: reply type of method "Printf" is not a pointer: "[]interface {}"
+2021/07/16 18:14:05 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "RecoverChunkInfo" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "RegisterNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "RemoveChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "SetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "StartRPCServer" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:05 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+time="2021-07-16T18:14:05+08:00" level=info msg="chunkserver 127.0.0.1:3002 exists"
+time="2021-07-16T18:14:05+08:00" level=info msg="Master addServer success: chunkserver127.0.0.1:3002map[127.0.0.1:3000:0xc000ddf410 127.0.0.1:3001:0xc0015d0390 127.0.0.1:3002:0xc000103f80]"
+time="2021-07-16T18:14:05+08:00" level=info msg="chunkserver127.0.0.1:3000 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3002 join"
+time="2021-07-16T18:14:05+08:00" level=info msg="chunkserver127.0.0.1:3002 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3002 join"
+time="2021-07-16T18:14:05+08:00" level=info msg="chunkserver127.0.0.1:3001 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3002 join"
+2021/07/16 18:14:05 connected to 123.57.65.161:12088
+2021/07/16 18:14:05 authenticated: id=216212600926241322, timeout=15000
+2021/07/16 18:14:05 re-submitting `0` credentials after reconnect
+2021/07/16 18:14:06 connected to 123.57.65.161:12087
+2021/07/16 18:14:06 authenticated: id=144155006883136568, timeout=4000
+2021/07/16 18:14:06 re-submitting `0` credentials after reconnect
+time="2021-07-16T18:14:06+08:00" level=info msg=" leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3000 join"
+time="2021-07-16T18:14:06+08:00" level=info msg=" leader heartbeart conn : master leader master127.0.0.1:1236 join"
+time="2021-07-16T18:14:06+08:00" level=info msg=" leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3001 join"
+time="2021-07-16T18:14:06+08:00" level=info msg=" leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3002 join"
+2021/07/16 18:14:06 chunkserver 127.0.0.1:3003: init success
+time="2021-07-16T18:14:06+08:00" level=info msg="open ck/ck3004/checkpoint.dat: no such file or directory"
+time="2021-07-16T18:14:06+08:00" level=info msg="open ck/ck3004/log.dat: no such file or directory"
+2021/07/16 18:14:06 rpc.Register: reply type of method "AppendChunk" is not a pointer: "[]uint8"
+2021/07/16 18:14:06 rpc.Register: method "AppendLog" has 2 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "Crash" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "CreateAndSetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "CreateChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "Exit" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "GetAddr" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "GetCPName" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "GetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "GetFileName" has 2 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "GetLogName" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "LoadCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "LoadLog" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "PadChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: reply type of method "Printf" is not a pointer: "[]interface {}"
+2021/07/16 18:14:06 rpc.Register: method "RLock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "RLocker" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "RUnlock" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "RecoverChunkInfo" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "RegisterNodes" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "RemoveChunk" has 2 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "SetChunk" has 4 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "StartRPCServer" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "StoreCheckPoint" has 1 input parameters; needs exactly three
+2021/07/16 18:14:06 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+time="2021-07-16T18:14:06+08:00" level=info msg="chunkserver 127.0.0.1:3003 exists"
+time="2021-07-16T18:14:06+08:00" level=info msg="Master addServer success: chunkserver127.0.0.1:3003map[127.0.0.1:3000:0xc000ddf410 127.0.0.1:3001:0xc0015d0390 127.0.0.1:3002:0xc000103f80 127.0.0.1:3003:0xc0017cef90]"
+time="2021-07-16T18:14:06+08:00" level=info msg="chunkserver127.0.0.1:3000 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3003 join"
+time="2021-07-16T18:14:06+08:00" level=info msg="chunkserver127.0.0.1:3002 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3003 join"
+time="2021-07-16T18:14:06+08:00" level=info msg="chunkserver127.0.0.1:3001 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3003 join"
+2021/07/16 18:14:06 connected to 123.57.65.161:12088
+time="2021-07-16T18:14:06+08:00" level=info msg="chunkserver127.0.0.1:3003 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3003 join"
+2021/07/16 18:14:06 authenticated: id=216212600926241323, timeout=15000
+2021/07/16 18:14:06 re-submitting `0` credentials after reconnect
+2021/07/16 18:14:07 connected to 123.57.65.161:12086
+2021/07/16 18:14:07 authenticated: id=72097412844029097, timeout=4000
+2021/07/16 18:14:07 re-submitting `0` credentials after reconnect
+time="2021-07-16T18:14:07+08:00" level=info msg=" leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3003 join"
+time="2021-07-16T18:14:07+08:00" level=info msg=" leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3000 join"
+time="2021-07-16T18:14:07+08:00" level=info msg=" leader heartbeart conn : master leader master127.0.0.1:1236 join"
+time="2021-07-16T18:14:07+08:00" level=info msg=" leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3001 join"
+time="2021-07-16T18:14:07+08:00" level=info msg=" leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3002 join"
+2021/07/16 18:14:07 chunkserver 127.0.0.1:3004: init success
+time="2021-07-16T18:14:07+08:00" level=info msg="chunkserver 127.0.0.1:3004 exists"
+time="2021-07-16T18:14:07+08:00" level=info msg="Master addServer success: chunkserver127.0.0.1:3004map[127.0.0.1:3000:0xc000ddf410 127.0.0.1:3001:0xc0015d0390 127.0.0.1:3002:0xc000103f80 127.0.0.1:3003:0xc0017cef90 127.0.0.1:3004:0xc004288cf0]"
+time="2021-07-16T18:14:07+08:00" level=info msg="chunkserver127.0.0.1:3000 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3004 join"
+time="2021-07-16T18:14:07+08:00" level=info msg="chunkserver127.0.0.1:3004 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3004 join"
+time="2021-07-16T18:14:07+08:00" level=info msg="chunkserver127.0.0.1:3002 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3004 join"
+time="2021-07-16T18:14:07+08:00" level=info msg="chunkserver127.0.0.1:3001 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3004 join"
+time="2021-07-16T18:14:07+08:00" level=info msg="chunkserver127.0.0.1:3003 leader heartbeart conn : another chunkserver chunkserver127.0.0.1:3004 join"
+time="2021-07-16T18:14:10+08:00" level=info msg=----1----
+time="2021-07-16T18:14:10+08:00" level=info msg="remain servers: map[]"
+time="2021-07-16T18:14:10+08:00" level=info msg="map[]"
+time="2021-07-16T18:14:10+08:00" level=info msg=----1----
+time="2021-07-16T18:14:10+08:00" level=warning msg="[] ---1"
+time="2021-07-16T18:14:10+08:00" level=debug msg="Client Create : path /file1"
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC create, File Path : /file1"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1000"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1000 /file1}"
+offset: 2565,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1000"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1000 /file1}"
+    load_balance_test.go:193: AssertNil Succeed :
+time="2021-07-16T18:14:10+08:00" level=debug msg="Client Create : path /file2"
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC create, File Path : /file2"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1000"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1000 /file2}"
+offset: 2566,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1000"
+    load_balance_test.go:195: AssertNil Succeed :
+time="2021-07-16T18:14:10+08:00" level=info msg="{1000 /file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="Client Mkdir : path /dir1"
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC mkdir, Dir Path : /dir1"
+offset: 2567,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1001"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1001 /dir1}"
+    load_balance_test.go:197: AssertNil Succeed :
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1001"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1001 /dir1}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="Client Create : path /dir1/file1"
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC create, File Path : /dir1/file1"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1000"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1000 /dir1/file1}"
+offset: 2568,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1000"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1000 /dir1/file1}"
+    load_balance_test.go:199: AssertNil Succeed :
+time="2021-07-16T18:14:10+08:00" level=debug msg="Client Create : path /dir1/file2"
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC create, File Path : /dir1/file2"
+offset: 2569,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1000"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1000"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1000 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1000 /dir1/file2}"
+    load_balance_test.go:201: AssertNil Succeed :
+time="2021-07-16T18:14:10+08:00" level=debug msg="Client Create : path /file3"
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC create, File Path : /file3"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1000"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1000 /file3}"
+offset: 2570,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1000"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1000 /file3}"
+    load_balance_test.go:203: AssertNil Succeed :
+time="2021-07-16T18:14:10+08:00" level=debug msg="Client Open : path /dir1/file2"
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getFileMeta, File Path : /dir1/file2"
+time="2021-07-16T18:14:10+08:00" level=debug msg="Client open : assign 1"
+    load_balance_test.go:205: AssertNil Succeed :
+time="2021-07-16T18:14:10+08:00" level=info msg=----1----
+time="2021-07-16T18:14:10+08:00" level=info msg="remain servers: map[]"
+time="2021-07-16T18:14:10+08:00" level=info msg="map[]"
+time="2021-07-16T18:14:10+08:00" level=info msg=----1----
+time="2021-07-16T18:14:10+08:00" level=warning msg="[] ---2"
+time="2021-07-16T18:14:10+08:00" level=debug msg="Client write : fd 1, offset 0"
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getFileMeta, File Path : /dir1/file2"
+time="2021-07-16T18:14:10+08:00" level=debug msg="client write path:/dir1/file2,offset:0,datasize:51200"
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 0"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2571,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 1\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 1
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 1
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 1
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :1, Locations : [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 1 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 1, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 1, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 1"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+offset: 2572,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 2\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 2
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 2
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 2
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :2, Locations : [127.0.0.1:3001 127.0.0.1:3002 127.0.0.1:3004] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 2 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 2, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 2, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 2"
+offset: 2573,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 3\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 3
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 3
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 3
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :3, Locations : [127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 3 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 3, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 3, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 3"
+offset: 2574,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 4\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 4
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 4
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 4
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :4, Locations : [127.0.0.1:3002 127.0.0.1:3004 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 4 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 4, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 4, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 4"
+offset: 2575,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 5\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 5
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 5
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 5
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :5, Locations : [127.0.0.1:3000 127.0.0.1:3002 127.0.0.1:3001] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 5 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 5, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 5, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 5"
+offset: 2576,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 6\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 6
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 6
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 6
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :6, Locations : [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 6 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 6, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 6, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 6"
+offset: 2577,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 7\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 7
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 7
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 7
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :7, Locations : [127.0.0.1:3001 127.0.0.1:3002 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 7 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 7, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 7, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 7"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2578,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 8\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 8
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 8
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 8
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :8, Locations : [127.0.0.1:3004 127.0.0.1:3000 127.0.0.1:3002] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 8 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: store handle 8, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 8, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 8"
+offset: 2579,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 9\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 9
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 9
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 9
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :9, Locations : [127.0.0.1:3001 127.0.0.1:3002 127.0.0.1:3004] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 9 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 9, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 9, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 9"
+offset: 2580,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 10\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 10
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 10
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 10
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :10, Locations : [127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 10 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 10, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 10, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 10"
+offset: 2581,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 11\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 11
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 11
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 11
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :11, Locations : [127.0.0.1:3004 127.0.0.1:3003 127.0.0.1:3002] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 11 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 11, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 11, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 11"
+offset: 2582,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 12\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 12
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 12
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 12
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :12, Locations : [127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 12 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 12, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 12, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 12"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2583,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 13\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 13
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 13
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 13
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :13, Locations : [127.0.0.1:3001 127.0.0.1:3000 127.0.0.1:3004] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 13 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: store handle 13, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 13, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 13"
+offset: 2584,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 14\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 14
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 14
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 14
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :14, Locations : [127.0.0.1:3002 127.0.0.1:3004 127.0.0.1:3001] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 14 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 14, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 14, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 14"
+offset: 2585,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 15\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 15
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 15
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 15
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :15, Locations : [127.0.0.1:3000 127.0.0.1:3003 127.0.0.1:3002] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 15 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 15, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 15, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 15"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2586,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 16\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 16
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 16
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 16
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :16, Locations : [127.0.0.1:3001 127.0.0.1:3000 127.0.0.1:3004] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 16 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: store handle 16, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 16, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 16"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2587,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 17\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 17
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 17
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 17
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :17, Locations : [127.0.0.1:3003 127.0.0.1:3002 127.0.0.1:3001] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 17 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 17, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 17, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 17"
+offset: 2588,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 18\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 18
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 18
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 18
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :18, Locations : [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 18 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 18, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 18, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 18"
+offset: 2589,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 19\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 19
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 19
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 19
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :19, Locations : [127.0.0.1:3002 127.0.0.1:3004 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 19 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 19, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 19, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 19"
+offset: 2590,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 20\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 20
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 20
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 20
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :20, Locations : [127.0.0.1:3001 127.0.0.1:3000 127.0.0.1:3002] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 20 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: store handle 20, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 20, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 20"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2591,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 21\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 21
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 21
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 21
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :21, Locations : [127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3000] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 21 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: store handle 21, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 21, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 21"
+offset: 2592,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 22\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 22
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 22
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 22
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :22, Locations : [127.0.0.1:3003 127.0.0.1:3004 127.0.0.1:3001] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 22 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 22, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 22, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 22"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2593,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 23\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 23
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 23
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 23
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :23, Locations : [127.0.0.1:3004 127.0.0.1:3003 127.0.0.1:3002] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 23 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 23, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 23, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 23"
+offset: 2594,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 24\n"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 24
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 24
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 24
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :24, Locations : [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 24 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 24, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 24, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 24"
+offset: 2595,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 25\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 25
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 25
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 25
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :25, Locations : [127.0.0.1:3000 127.0.0.1:3002 127.0.0.1:3001] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 25 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 25, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 25, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 25"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+offset: 2596,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 26\n"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 26
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 26
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 26
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :26, Locations : [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 26 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 26, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 26, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 26"
+offset: 2597,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 27\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 27
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 27
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 27
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :27, Locations : [127.0.0.1:3001 127.0.0.1:3002 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 27 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 27, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 27, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 27"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2598,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 28\n"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 28
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 28
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 28
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :28, Locations : [127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3000] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 28 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 28, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: store handle 28, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 28"
+offset: 2599,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 29\n"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 29
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 29
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 29
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :29, Locations : [127.0.0.1:3004 127.0.0.1:3001 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 29 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 29, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 29, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 29"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2600,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 30\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 30
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 30
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 30
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :30, Locations : [127.0.0.1:3002 127.0.0.1:3000 127.0.0.1:3004] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 30 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 30, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: store handle 30, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 30"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2601,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 31\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 31
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 31
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 31
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :31, Locations : [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 31 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 31, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 31, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 31"
+offset: 2602,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 32\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 32
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 32
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 32
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :32, Locations : [127.0.0.1:3001 127.0.0.1:3002 127.0.0.1:3004] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 32 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 32, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 32, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 32"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+offset: 2603,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 33\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 33
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 33
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 33
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :33, Locations : [127.0.0.1:3000 127.0.0.1:3003 127.0.0.1:3002] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 33 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 33, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 33, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 33"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+offset: 2604,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 34\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 34
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 34
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 34
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :34, Locations : [127.0.0.1:3001 127.0.0.1:3003 127.0.0.1:3000] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 34 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 34, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: store handle 34, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 34"
+offset: 2605,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 35\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 35
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 35
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 35
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :35, Locations : [127.0.0.1:3004 127.0.0.1:3002 127.0.0.1:3001] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 35 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 35, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 35, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 35"
+offset: 2606,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 36\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 36
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 36
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 36
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :36, Locations : [127.0.0.1:3003 127.0.0.1:3002 127.0.0.1:3001] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 36 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 36, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 36, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 36"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2607,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 37\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 37
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 37
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 37
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :37, Locations : [127.0.0.1:3004 127.0.0.1:3000 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 37 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: store handle 37, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 37, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 37"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2608,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 38\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 38
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 38
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 38
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :38, Locations : [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3001] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 38 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 38, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 38, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 38"
+offset: 2609,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 39\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 39
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 39
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 39
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :39, Locations : [127.0.0.1:3002 127.0.0.1:3004 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 39 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 39, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 39, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 39"
+offset: 2610,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 40\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 40
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 40
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 40
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :40, Locations : [127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3002] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 40 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 40, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 40, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 40"
+offset: 2611,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 41\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 41
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 41
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 41
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :41, Locations : [127.0.0.1:3000 127.0.0.1:3004 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 41 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 41, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 41, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 41"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+offset: 2612,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 42\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 42
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 42
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 42
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :42, Locations : [127.0.0.1:3001 127.0.0.1:3002 127.0.0.1:3000] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 42 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: store handle 42, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 42, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 42"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2613,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 43\n"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 43
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 43
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 43
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :43, Locations : [127.0.0.1:3004 127.0.0.1:3003 127.0.0.1:3002] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 43 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 43, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 43, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 43"
+offset: 2614,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 44\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 44
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 44
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 44
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :44, Locations : [127.0.0.1:3001 127.0.0.1:3004 127.0.0.1:3003] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 44 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: store handle 44, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 44, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 44"
+offset: 2615,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 45\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3000: create chunk 45
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 45
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: create chunk 45
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :45, Locations : [127.0.0.1:3000 127.0.0.1:3002 127.0.0.1:3001] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 45 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 45, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3001: store handle 45, len 1024
+time="2021-07-16T18:14:10+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 45"
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+offset: 2616,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:10+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:10+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:10+08:00" level=info msg=" CreateChunkAndReplica : new Handle 46\n"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3004: create chunk 46
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: create chunk 46
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: create chunk 46
+time="2021-07-16T18:14:10+08:00" level=debug msg="targetchunk handle :46, Locations : [127.0.0.1:3004 127.0.0.1:3003 127.0.0.1:3002] "
+time="2021-07-16T18:14:10+08:00" level=info msg="Handle 46 len 1024 off 0"
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3003: store handle 46, len 1024
+2021/07/16 18:14:10 ChunkServer 127.0.0.1:3002: store handle 46, len 1024
+time="2021-07-16T18:14:11+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 46"
+offset: 2617,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:11+08:00" level=info msg=" CreateChunkAndReplica : new Handle 47\n"
+time="2021-07-16T18:14:11+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:11+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:11+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:11+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3000: create chunk 47
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3001: create chunk 47
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3004: create chunk 47
+time="2021-07-16T18:14:11+08:00" level=debug msg="targetchunk handle :47, Locations : [127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3004] "
+time="2021-07-16T18:14:11+08:00" level=info msg="Handle 47 len 1024 off 0"
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3001: store handle 47, len 1024
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3004: store handle 47, len 1024
+time="2021-07-16T18:14:11+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 47"
+offset: 2618,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:11+08:00" level=info msg=" CreateChunkAndReplica : new Handle 48\n"
+time="2021-07-16T18:14:11+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:11+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:11+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:11+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3000: create chunk 48
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3001: create chunk 48
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3003: create chunk 48
+time="2021-07-16T18:14:11+08:00" level=debug msg="targetchunk handle :48, Locations : [127.0.0.1:3000 127.0.0.1:3001 127.0.0.1:3003] "
+time="2021-07-16T18:14:11+08:00" level=info msg="Handle 48 len 1024 off 0"
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3001: store handle 48, len 1024
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3003: store handle 48, len 1024
+time="2021-07-16T18:14:11+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 48"
+offset: 2619,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:11+08:00" level=info msg=" CreateChunkAndReplica : new Handle 49\n"
+time="2021-07-16T18:14:11+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:11+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:11+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:11+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3002: create chunk 49
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3001: create chunk 49
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3000: create chunk 49
+time="2021-07-16T18:14:11+08:00" level=debug msg="targetchunk handle :49, Locations : [127.0.0.1:3002 127.0.0.1:3001 127.0.0.1:3000] "
+time="2021-07-16T18:14:11+08:00" level=info msg="Handle 49 len 1024 off 0"
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3001: store handle 49, len 1024
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3000: store handle 49, len 1024
+time="2021-07-16T18:14:11+08:00" level=debug msg="RPC getReplica, file path : /dir1/file2, chunk index : 49"
+offset: 2620,  timestamp: 0001-01-01 00:00:00 +0000 UTC
+time="2021-07-16T18:14:11+08:00" level=info msg=" CreateChunkAndReplica : new Handle 50\n"
+time="2021-07-16T18:14:11+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:11+08:00" level=info msg="{1006 /dir1/file2}"
+time="2021-07-16T18:14:11+08:00" level=debug msg="AppendLog : 1006"
+time="2021-07-16T18:14:11+08:00" level=info msg="{1006 /dir1/file2}"
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3002: create chunk 50
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3003: create chunk 50
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3004: create chunk 50
+time="2021-07-16T18:14:11+08:00" level=debug msg="targetchunk handle :50, Locations : [127.0.0.1:3002 127.0.0.1:3003 127.0.0.1:3004] "
+time="2021-07-16T18:14:11+08:00" level=info msg="Handle 50 len 1024 off 0"
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3003: store handle 50, len 1024
+2021/07/16 18:14:11 ChunkServer 127.0.0.1:3004: store handle 50, len 1024
+    load_balance_test.go:212: AssertNil Succeed :
+time="2021-07-16T18:14:11+08:00" level=warning msg=step1
+time="2021-07-16T18:14:11+08:00" level=info msg=----1----
+time="2021-07-16T18:14:11+08:00" level=info msg="remain servers: map[]"
+time="2021-07-16T18:14:11+08:00" level=info msg="map[]"
+time="2021-07-16T18:14:11+08:00" level=info msg=----1----
+time="2021-07-16T18:14:11+08:00" level=warning msg="[] ---3"
+time="2021-07-16T18:14:11+08:00" level=debug msg="Master Exit"
+time="2021-07-16T18:14:11+08:00" level=debug msg="Master Exit"
+time="2021-07-16T18:14:11+08:00" level=debug msg="Master shutdown!"
+time="2021-07-16T18:14:11+08:00" level=debug msg="Master Exit"
+time="2021-07-16T18:14:11+08:00" level=debug msg="Master shutdown!"
+time="2021-07-16T18:14:11+08:00" level=debug msg="Master shutdown!"
+2021/07/16 18:14:11 ChunkServer: done
+time="2021-07-16T18:14:11+08:00" level=info msg="chunkserver 127.0.0.1:3000: store checkpoint success\n%!(EXTRA []interface {}=[])"
+2021/07/16 18:14:11 ChunkServer: done
+time="2021-07-16T18:14:11+08:00" level=info msg="chunkserver 127.0.0.1:3001: store checkpoint success\n%!(EXTRA []interface {}=[])"
+2021/07/16 18:14:11 ChunkServer: done
+time="2021-07-16T18:14:11+08:00" level=info msg="chunkserver 127.0.0.1:3002: store checkpoint success\n%!(EXTRA []interface {}=[])"
+2021/07/16 18:14:11 ChunkServer: done
+time="2021-07-16T18:14:11+08:00" level=info msg="chunkserver 127.0.0.1:3003: store checkpoint success\n%!(EXTRA []interface {}=[])"
+2021/07/16 18:14:11 ChunkServer: done
+time="2021-07-16T18:14:11+08:00" level=info msg="chunkserver 127.0.0.1:3004: store checkpoint success\n%!(EXTRA []interface {}=[])"
+--- FAIL: TestLoadBalanceReallocate (9.99s)
+panic: runtime error: index out of range [0] with length 0 [recovered]
+	panic: runtime error: index out of range [0] with length 0
+
+goroutine 18 [running]:
+testing.tRunner.func1.2(0xa06100, 0xc0055f69f0)
+	/snap/go/current/src/testing/testing.go:1143 +0x332
+testing.tRunner.func1(0xc000150300)
+	/snap/go/current/src/testing/testing.go:1146 +0x4b6
+panic(0xa06100, 0xc0055f69f0)
+	/snap/go/current/src/runtime/panic.go:965 +0x1b9
+DFS/test.TestLoadBalanceReallocate(0xc000150300)
+	/home/ubuntu/go/src/DFS/test/load_balance_test.go:218 +0xbcd
+testing.tRunner(0xc000150300, 0xa7d580)
+	/snap/go/current/src/testing/testing.go:1193 +0xef
+created by testing.(*T).Run
+	/snap/go/current/src/testing/testing.go:1238 +0x2b3
+exit status 2
+FAIL	DFS/test	10.003s

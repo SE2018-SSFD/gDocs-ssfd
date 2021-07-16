@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
-
-	"github.com/sirupsen/logrus"
 )
 
 /* The state of all chunkServer, maintained by the master */
@@ -120,7 +118,6 @@ func (s *ChunkServerStates) balanceServers(times int) (addrs []util.Address, err
 		times--
 		addrs = append(addrs, heap.Pop(h).(ChunkServerHeap).Addr)
 	}
-	logrus.Debugf("Balanced choosed ")
 	return
 }
 

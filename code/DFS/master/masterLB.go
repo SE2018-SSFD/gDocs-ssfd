@@ -25,7 +25,7 @@ func (m *Master) LoadBalanceCheck()(err error) {
 		state.RUnlock()
 	}
 	avg = avg / len(m.css.servers)
-
+	logrus.Debugln("avg :",avg, " toSort:",toSort)
 	// load balance base limit
 	if avg <= util.LBLIMIT{
 		return
@@ -65,9 +65,9 @@ func (m *Master) LoadBalanceCheck()(err error) {
 			}
 			staleHandleList := make([]util.Handle,0)
 			staleHandleList = append(staleHandleList,targetHandle)
-			err = util.Call(string(toSort[cssNum-1].Addr), "ChunkServer.SetStaleRPC", util.SetStaleArgs{Handles:staleHandleList },retS)
+			err = util.Call(string(toSort[cssNum-1].Addr), "ChunkServer.SetStaleRPC", util.SetStaleArgs{Handles:staleHandleList },&retS)
 			if err!=nil{
-				logrus.Warnf("LoadBalance failed of cloneChunk from %v to %v : %v",toSort[0].Addr,toSort[cssNum-1].Addr,err)
+				logrus.Warnf("LoadBalance failed of SetStale from %v to %v : %v",provider.Addr,receiver.Addr,err)
 				return
 			}
 			receiver.ChunkNum += 1
@@ -106,6 +106,12 @@ func (m *Master) LoadBalanceCheck()(err error) {
 func (m *Master) GetServersChunkNum()(result []ChunkServerHeap){
 	m.css.RLock()
 	defer m.css.RUnlock()
+	logrus.Println("----1----")
+
+	logrus.Println("remain servers:",m.css.servers)
+	logrus.Println(m.cs.chunk)
+	logrus.Println("----1----")
+
 	for addr,state := range m.css.servers{
 		state.RLock()
 		result = append(result,ChunkServerHeap{

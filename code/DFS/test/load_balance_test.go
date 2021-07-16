@@ -200,28 +200,38 @@ func TestLoadBalanceReallocate(t *testing.T){
 	util.AssertNil(t,err)
 	fd,err := util.HTTPOpen(util.CLIENTADDR,"/dir1/file2")
 	util.AssertNil(t,err)
+
+	leader := -1
+	for i:=0;i<3;i++{
+		if mList[i].IsLeader(){
+			leader = i
+			break
+		}
+	}
 	// Write 50 chunks to /dir1/file2
 	offset := 0
 	data := []byte(util.MakeString(util.MAXCHUNKSIZE*50))
 	err = util.HTTPWrite(util.CLIENTADDR,fd,offset,data)
 	util.AssertNil(t,err)
-	logrus.Warnln("step1")
-	result := mList[0].GetServersChunkNum()
-	logrus.Warnln(result)
 
+	result := mList[leader].GetServersChunkNum()
 	for i:=0;i<5;i++{
 		util.AssertEqual(t,result[i].ChunkNum,50 * 3 / 5)
 	}
 	offset = 50 * util.MAXCHUNKSIZE
 	err = util.HTTPWrite(util.CLIENTADDR,fd,offset,data)
-	result =  mList[0].GetServersChunkNum()
+	result =  mList[leader].GetServersChunkNum()
 	for i:=0;i<5;i++{
 		util.AssertEqual(t,result[i].ChunkNum,100 * 3 / 5)
 	}
 	addr := util.Address("127.0.0.1:" + strconv.Itoa(3005))
 	_ = chunkserver.InitChunkServer(string(addr), "ck/ck"+strconv.Itoa(3005),  util.MASTER1ADDR)
-	err = mList[0].LoadBalanceCheck()
+	time.Sleep(time.Second)
+	err = mList[leader].LoadBalanceCheck()
 	util.AssertNil(t,err)
-	result = mList[0].GetServersChunkNum()
-	fmt.Println(result)
+	result = mList[leader].GetServersChunkNum()
+	for i:=0;i<5;i++{
+		util.AssertGreater(t,result[i].ChunkNum,32) // 按目前的算法和测试参数，这里就是大于33
+
+	}
 }
