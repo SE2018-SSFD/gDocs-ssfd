@@ -207,7 +207,7 @@ func TestLoadBalanceReallocate(t *testing.T){
 	util.AssertNil(t,err)
 	logrus.Warnln("step1")
 	result := mList[0].GetServersChunkNum()
-	logrus.Warnln("result")
+	logrus.Warnln(result)
 
 	for i:=0;i<5;i++{
 		util.AssertEqual(t,result[i].ChunkNum,50 * 3 / 5)
@@ -218,4 +218,10 @@ func TestLoadBalanceReallocate(t *testing.T){
 	for i:=0;i<5;i++{
 		util.AssertEqual(t,result[i].ChunkNum,100 * 3 / 5)
 	}
+	addr := util.Address("127.0.0.1:" + strconv.Itoa(3005))
+	_ = chunkserver.InitChunkServer(string(addr), "ck/ck"+strconv.Itoa(3005),  util.MASTER1ADDR)
+	err = mList[0].LoadBalanceCheck()
+	util.AssertNil(t,err)
+	result = mList[0].GetServersChunkNum()
+	fmt.Println(result)
 }

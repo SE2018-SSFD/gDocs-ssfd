@@ -7,7 +7,7 @@ import (
 )
 
 // Trigger by crontab or manual
-func (m *Master) loadBalanceCheck()(err error) {
+func (m *Master) LoadBalanceCheck()(err error) {
 	var retC util.CloneChunkReply
 	var retS util.SetStaleReply
 	logrus.Infof("LoadBalanceCheck finished")
