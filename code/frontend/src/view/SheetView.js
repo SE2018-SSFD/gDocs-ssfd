@@ -97,25 +97,14 @@ class SheetView extends React.Component {
 
         this.fid = fid;
 
-        const callback = (data) => {
-            if (data.success === true) {
-                this.checkpoint_now = data.data.checkpoint_num;
-                const checkPointBrief = data.data.checkPointBrief === null ? [] : data.data.checkPointBrief.reverse()
-                this.setState({
-                    checkpoint_num: data.data.checkpoint_num,
-                    checkpoint: checkPointBrief
-                })
-            } else {
-                console.log(MSG_WORDS[data.msg]);
-            }
-        }
-        getSheet(fid, callback)
+        getSheet(fid, this.getSheetCallback)
 
         testWS(fid, this.connectWS);
     }
 
     getSheetCallback = (data) => {
         if (data.success === true) {
+            this.checkpoint_now = data.data.checkpoint_num;
             const checkPointBrief = data.data.checkPointBrief === null ? [] : data.data.checkPointBrief.reverse()
             this.setState({
                 checkpoint_num: data.data.checkpoint_num,
@@ -635,7 +624,6 @@ class SheetView extends React.Component {
 
         const {name, log, checkpoint, picVisible, picDrawerVisible, uploading, fileList, picList} = this.state;
 
-        const token = JSON.parse(localStorage.getItem("token"));
         const fid = this.fid;
         let logContent = log.map(
             (item) =>
@@ -667,7 +655,7 @@ class SheetView extends React.Component {
                 <Card hoverable style={{width: 300}}
                       title={item}>
                     <p>{GET_HTTP_URL() + "getchunk?fid=" + fid + "&chunk=" + item}</p>
-                    <img src={GET_HTTP_URL() + "getchunk?fid=" + fid + "&chunk=" + item} height={100}/>
+                    <img src={GET_HTTP_URL() + "getchunk?fid=" + fid + "&chunk=" + item} height={100} alt={"img"}/>
                 </Card>
         );
 
@@ -815,7 +803,7 @@ class SheetView extends React.Component {
                 <Drawer
                     title="复制URL到单元格来插入图片"
                     onClose={this.closePicDrawer}
-                    visible={this.state.picDrawerVisible}
+                    visible={picDrawerVisible}
                     bodyStyle={{paddingBottom: 80}}
                     width={320}
                     footer={
