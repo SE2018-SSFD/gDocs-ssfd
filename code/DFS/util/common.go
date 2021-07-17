@@ -1,14 +1,69 @@
 package util
+
+import "time"
+
 // Master
+type Handle int64
+type DFSPath string
+type LinuxPath string
+type Address string
+type Version int64
+
+const (
+	MASTERCOUNT    = 3
+	MASTERZKPATH   = "/master"
+	CREATEOPS      = 1000
+	MKDIROPS       = 1001
+	DELETEOPS      = 1002
+	LISTOPS        = 1003
+	GETFILEMETAOPS = 1004
+	SETFILEMETAOPS = 1005
+	GETREPLICASOPS = 1006
+	ADDSERVEROPS   = 1007
+	DELSERVEROPS   = 1008
+	SETUPDATEFLAGTOTRUEOPS = 1009
+	ADDVERSIONOPS = 1010
+	INITIALVERSION = 1
+	HERETRYTIMES   = 3
+	LBLIMIT        = 10
+)
 
 // ChunkServer
 
-// Client
-
-// RPC structure
-type CreateArg struct{
-	Path string
+type ChunkState struct {
+	Handle Handle
+	VerNum Version
+	//CheckSum int64
 }
-type CreateRet struct {
-	Result bool
+
+// Client
+const (
+	//MAXCHUNKSIZE = 64<<20 // 64MB
+	MAXCHUNKSIZE      = 1024 // 64B
+	REPLICATIONTIMES  = 3
+	MAXAPPENDSIZE     = MAXCHUNKSIZE / 2 // TODO: according to GFS docs, we should set it to MAXCHUNKSIZE / 4
+	MAXFD             = 65535
+	MINFD             = 1
+	HEARTBEATDURATION = 2000 * time.Millisecond // 2s
+	DELETEPREFIX      = "_delete_"
+)
+
+// Error Code
+type ErrorCode int32
+
+const (
+	NOSPACE ErrorCode = -11
+)
+
+var MasterTopicName string = "my_topic3"
+
+type OperationType int32
+
+type MasterLog struct {
+	OpType OperationType
+	Path   DFSPath
+	Handle Handle
+	// Size   int       // for setFileMetaRPC
+	//Addrs []Address // for GetReplicasRPC
+	//Addr  Address   // for register & unregister RPC
 }
