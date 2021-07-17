@@ -198,3 +198,36 @@
 覆盖率：72.6%
 
 未覆盖的大多数都是为了健壮性添加的错误处理，只是简单地返回错误，不需要覆盖。
+
+## DFS测试
+
+在编写DFS的过程中，我们同时编写了详尽的测试脚本，从不同层面测试了DFS各个功能的正确性。以下是每个测试脚本的简介（仅列出 unit test，实际上还有做集成测试与端到端测试）：
+
+**chunkServer test** :
+
+TODO：详见脚本
+
+**client API test**
+
+以使用者的角度，对client提供的接口进行测试，包括了read,write,list,open,close等，同时分为single client和Multi client不同的做不同并发度测试，测试全部通过。
+
+**heartbeat election test**
+
+测试zookeeper支撑下的多Master DFS是否正确实现，测试了心跳，选举等机制，并检查各个回调函数是否正确调用，测试全部通过。
+
+**kafka test**
+
+TODO:详见脚本
+
+**load balance test**
+
+测试负载均衡的两个方面是否正确实现（allocate,reallocate)，集群的负载是否均衡，测试全部通过。
+
+**master log test**
+
+分为两个方面，一个是测试log的持久化与崩溃后从Log进行恢复的功能，另一个是测试多master环境下使用kafka进行元数据同步是否成功，测试全部通过。
+
+**master namespace  test**
+
+专门测试master元数据中文件系统树是否正确实现，不同并发度下测试全部通过。
+
