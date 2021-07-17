@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"sync"
@@ -17,6 +18,7 @@ import (
 )
 
 type Client struct {
+	sync.RWMutex
 	fdLock  sync.Mutex
 	clientAddr      util.Address
 	masterAddr      util.Address
@@ -24,6 +26,7 @@ type Client struct {
 	s               *http.Server
 	LeaderHeartbeat *zkWrap.Heartbeat // only one master(leader) and some clients in this room
 	cidLock         sync.Mutex
+	backupRead 		bool
 	//TODO:add lease
 }
 
@@ -37,6 +40,7 @@ func InitClient(clientAddr util.Address, masterAddr util.Address) *Client {
 		clientAddr: clientAddr,
 		masterAddr: masterAddr, //TODO: we should not use this arg
 		fdTable:    make(map[int]util.DFSPath),
+		backupRead: false,
 	}
 	//to find master leader
 	err := zkWrap.Chroot("/DFS")
@@ -211,13 +215,67 @@ func (c *Client) _Read(path util.DFSPath, offset int, len int) (realReadBytes in
 		if err != nil {
 			return
 		}
-		//logrus.Debugf(" Read ChunkHandle : %d Addresses : %s %s %s\n", retR.ChunkHandle, retR.ChunkServerAddrs[0], retR.ChunkServerAddrs[1], retR.ChunkServerAddrs[2])
-		//TODO : make it random
 		argRCK.Handle = retR.ChunkHandle
 		argRCK.Len = roundReadBytes
 		argRCK.Off = roundOff
-		err = util.Call(string(retR.ChunkServerAddrs[0]), "ChunkServer.ReadChunkRPC", argRCK, &retRCK)
+		err = util.Call(string(retR.ChunkServerAddrs[rand.Int()%util.REPLICATIONTIMES]), "ChunkServer.ReadChunkRPC", argRCK, &retRCK)
 		realReadBytes += retRCK.Len
+		if err != nil {
+			logrus.Panicln("Client read chunk failed :", err)
+			return
+		}
+		buf = append(buf,retRCK.Buf...)
+		if retRCK.Len != roundReadBytes {
+			logrus.Warnf("Client should read %v,buf only read %v", roundReadBytes, retRCK.Len)
+			return
+		}
+		readBytes += roundReadBytes
+		logrus.Debugf(" Read %d bytes from chunkserver %s, bytes read %d\n", roundReadBytes, string(retR.ChunkServerAddrs[0]), readBytes)
+	}
+	return
+}
+
+// func (c *Client) _Read(path util.DFSPath, offset int, len int, fileSize int) (readBytes int, buf []byte, err error) {
+func (c *Client) _backupRead(path util.DFSPath, offset int, lens int) (realReadBytes int, buf []byte, err error) {
+	var argR util.GetReplicasArg
+	var retR util.GetReplicasRet
+	var argRCK util.ReadChunkArgs
+	var retRCK util.ReadChunkReply
+	var retRCK1 util.ReadChunkReply
+	var retRCK2 util.ReadChunkReply
+
+	var readBytes int
+	argR.Path = path
+	for readBytes < lens {
+		roundOff := (offset + readBytes) % util.MAXCHUNKSIZE
+		roundReadBytes := int(math.Min(float64(util.MAXCHUNKSIZE-roundOff), float64(lens-readBytes)))
+
+		argR.ChunkIndex = (offset + readBytes) / util.MAXCHUNKSIZE
+		err = util.Call(string(c.masterAddr), "Master.GetReplicasRPC", argR, &retR)
+		if err != nil {
+			return
+		}
+
+		// Start 2-backup read
+		argRCK.Handle = retR.ChunkHandle
+		argRCK.Len = roundReadBytes
+		argRCK.Off = roundOff
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			err = util.Call(string(retR.ChunkServerAddrs[0]), "ChunkServer.ReadChunkRPC", argRCK, &retRCK1)
+			wg.Done()
+		}()
+		go func() {
+			err = util.Call(string(retR.ChunkServerAddrs[1]), "ChunkServer.ReadChunkRPC", argRCK, &retRCK2)
+			wg.Done()
+		}()
+		wg.Wait()
+		if len(retRCK1.Buf) > len(retRCK2.Buf){
+			retRCK = retRCK1
+		}else{
+			retRCK = retRCK2
+		}
 		if err != nil {
 			logrus.Panicln("Client read failed :", err)
 			return
@@ -279,8 +337,14 @@ func (c *Client) Read(w http.ResponseWriter, r *http.Request) {
 	// Read to chunk
 
 	// readBytes, buf, err := c._Read(path, argR.Offset, argR.Len, fileSize)
-	_, buf, err := c._Read(pathh, argR.Offset, argR.Len)
-
+	buf := make([]byte,0)
+	c.RLock()
+	if c.backupRead{
+		_, buf, err = c._backupRead(pathh, argR.Offset, argR.Len)
+	}else{
+		_, buf, err = c._Read(pathh, argR.Offset, argR.Len)
+	}
+	c.RUnlock()
 	if err != nil {
 		logrus.Warnln("Client read failed :", err)
 		w.WriteHeader(400)
