@@ -236,6 +236,7 @@ func (m *Master) GetReplicasRPC(args util.GetReplicasArg, reply *util.GetReplica
 		if err != nil {
 			logrus.Error(err)
 		}
+		m.AppendLog(MasterLog{OpType: util.ADDVERSIONOPS,Handle: targetChunk.Handle})
 		targetChunk.Version++
 		targetChunk.UpdateFlag = false
 	}

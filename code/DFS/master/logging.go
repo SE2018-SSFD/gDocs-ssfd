@@ -23,6 +23,7 @@ type MasterCKP struct {
 type MasterLog struct {
 	OpType OperationType
 	Path   util.DFSPath
+	Handle util.Handle
 	// Size   int            // for setFileMetaRPC
 	// Addrs []util.Address // for GetReplicasRPC
 	// Addr  util.Address   // for register & unregister RPC
@@ -61,6 +62,7 @@ func (m *Master) AppendLog(ml MasterLog) error {
 	uml := util.MasterLog{
 		OpType: util.OperationType(ml.OpType),
 		Path:   ml.Path,
+		Handle: ml.Handle,
 		// Size:   ml.Size,
 		// Addrs: ml.Addrs,
 		// Addr:  ml.Addr,
@@ -158,6 +160,11 @@ func (m *Master) RecoverLog() error {
 			// for _, addr := range log.Addrs {
 			// 	newChunk.Locations = append(newChunk.Locations, addr)
 			// }
+		case util.ADDVERSIONOPS:
+			m.cs.chunk[log.Handle].UpdateFlag = false
+			m.cs.chunk[log.Handle].Version++
+		case util.SETUPDATEFLAGTOTRUEOPS:
+			m.cs.chunk[log.Handle].UpdateFlag = true
 		}
 
 	}

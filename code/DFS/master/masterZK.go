@@ -80,6 +80,7 @@ func (m *Master) onClusterHeartbeatDisConn(_ string, who string) {
 		for _, handle := range m.GetHandleList(chunkServerAddr) {
 			err = m.DeleteLocationOfChunk(chunkServerAddr, handle)
 			m.cs.chunk[handle].Lock()
+			m.AppendLog(MasterLog{OpType: util.SETUPDATEFLAGTOTRUEOPS,Handle: handle})
 			m.cs.chunk[handle].UpdateFlag = true
 			m.cs.chunk[handle].Unlock()
 			if err != nil {

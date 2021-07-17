@@ -21,6 +21,8 @@ const (
 	GETREPLICASOPS = 1006
 	ADDSERVEROPS   = 1007
 	DELSERVEROPS   = 1008
+	SETUPDATEFLAGTOTRUEOPS = 1009
+	ADDVERSIONOPS = 1010
 	INITIALVERSION = 1
 	HERETRYTIMES   = 3
 	LBLIMIT        = 10
@@ -60,6 +62,7 @@ type OperationType int32
 type MasterLog struct {
 	OpType OperationType
 	Path   DFSPath
+	Handle Handle
 	// Size   int       // for setFileMetaRPC
 	//Addrs []Address // for GetReplicasRPC
 	//Addr  Address   // for register & unregister RPC
