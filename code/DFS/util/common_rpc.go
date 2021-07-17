@@ -163,6 +163,12 @@ type CAppendArg struct {
 type CAppendRet struct {
 	Offset int `json:"offset"`
 }
+
+type LoadBalanceArg struct {
+}
+type LoadBalanceRet struct {
+}
+
 type GetReplicasArg struct {
 	Path       DFSPath `json:"path"`
 	ChunkIndex int     `json:"chunk_index"`
