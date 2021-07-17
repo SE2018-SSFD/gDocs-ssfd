@@ -205,7 +205,7 @@
 
 **chunkServer test** :
 
-TODO：详见脚本
+对Chunk的并发读、写、追加操作进行正确性测试,测试全部通过。
 
 **client API test**
 
@@ -217,7 +217,7 @@ TODO：详见脚本
 
 **kafka test**
 
-TODO:详见脚本
+对kafka的生产消费正确性测试。
 
 **load balance test**
 
