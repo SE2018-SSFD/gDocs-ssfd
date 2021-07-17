@@ -1,0 +1,7 @@
+{"OpType":1007,"Path":"","Size":0,"Addrs":null,"Addr":"127.0.0.1:3000"}
+{"OpType":1007,"Path":"","Size":0,"Addrs":null,"Addr":"127.0.0.1:3001"}
+{"OpType":1007,"Path":"","Size":0,"Addrs":null,"Addr":"127.0.0.1:3002"}
+{"OpType":1007,"Path":"","Size":0,"Addrs":null,"Addr":"127.0.0.1:3003"}
+{"OpType":1007,"Path":"","Size":0,"Addrs":null,"Addr":"127.0.0.1:3004"}
+{"OpType":1000,"Path":"/file1","Size":0,"Addrs":null,"Addr":""}
+{"OpType":1000,"Path":"/file2","Size":0,"Addrs":null,"Addr":""}

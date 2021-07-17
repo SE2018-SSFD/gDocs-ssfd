@@ -1,0 +1,89 @@
+.login-form-container {
+    width: 310px;
+}
+
+.login-form {
+    padding: 20px;
+    border: solid 1px rgb(220, 220, 220);
+    border-radius: 5px;
+}
+
+.login-input {
+    margin-top: 5px;
+    margin-bottom: 15px;
+    display: block;
+    width: 100%;
+    padding: 5px 12px;
+    font-size: 14px;
+    line-height: 20px;
+    color: #24292e;
+    vertical-align: middle;
+    background-color: #fff;
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    outline: none;
+    box-shadow: inset 0 1px 0 rgba(225, 228, 232, 0.2);
+}
+
+.login-password {
+    border-radius: 6px;
+    outline: none;
+    box-shadow: inset 0 1px 0 rgba(225, 228, 232, 0.2);
+}
+
+.login-button {
+    margin-top: 20px;
+    display: block;
+    width: 100%;
+    text-align: center;
+    transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+    color: #fff;
+    background-color: rgb(20,140,253);
+    border-color: rgba(27, 31, 35, 0.15);
+    box-shadow: 0 1px 0 rgba(27, 31, 35, 0.1), inset 0 1px 0 hsla(0, 0%, 100%, 0.03);
+    font-weight: 500;
+}
+
+.login-button:hover {
+    background-color: rgb(20,140,253);
+    color: #fff;
+}
+
+.login-register {
+    margin-top: 15px;
+    height: 53px;
+    border: solid 1px #d8dee2;
+    border-radius: 5px;
+}
+
+.register-link {
+    font-family: 'Microsoft YaHei', 微软雅黑, 'MicrosoftJhengHei', 华文细黑, STHeiti, MingLiu, serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #24292e;
+}
+
+.login-header h1 {
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: -0.5px;
+    margin-bottom: 15px;
+    margin-top: 20px;
+    color: #333;
+}
+
+.login-hint {
+    display: block;
+    margin-bottom: 7px;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    box-sizing: border-box;
+    color: #333;
+}
+
+.icon {
+    font-size: 55px;
+}

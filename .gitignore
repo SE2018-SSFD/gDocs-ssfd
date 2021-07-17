@@ -6,3 +6,7 @@
 .idea/
 target/
 .DS_Store
+code/DFS/data/*
+code/DFS/test/ck/*
+code/DFS/test/log/*
+code/DFS/test/log_*
