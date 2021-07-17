@@ -149,6 +149,7 @@ func (m *Master) RecoverLog() error {
 			newChunk := &chunkState{
 				Locations: make([]util.Address, 0),
 				Handle:    newHandle,
+				Version: util.INITIALVERSION,
 			}
 			m.cs.chunk[newHandle] = newChunk
 			fs, exist := m.cs.file[log.Path]
